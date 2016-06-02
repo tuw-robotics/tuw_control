@@ -51,16 +51,18 @@ public:
     ///@brief Initializes state and covariance of filter.
     public   : void init   ( const cv::Mat& x0, const cv::Mat& Sigma0 );
     
-    ///@brief Preforms Kalman prediction step.
-    ///@param f__xu New predicted state
-    ///@param Phi   State transition matrix
-    ///@param Q     Input noise matrix (computed in state-space)
+    /** @brief Preforms Kalman prediction step.
+     *  @param f__xu New predicted state
+     *  @param Phi   State transition matrix
+     *  @param Q     Input noise matrix (computed in state-space)
+     */
     public   : void predict( const cv::Mat& f__xu, const cv::Mat& Phi, const cv::Mat& Q );
-    ///@brief Preforms Kalman update step.
-    ///@param zHat Expected measurements
-    ///@param z    Measurements
-    ///@param C    State-to-measurement matrix
-    ///@param R    Measurement noise matrix (computed in measurement-space)
+    /** @brief Preforms Kalman update step.
+     *  @param zHat Expected measurements
+     *  @param z    Measurements
+     *  @param C    State-to-measurement matrix
+     *  @param R    Measurement noise matrix (computed in measurement-space)
+     */
     public   : void update ( const cv::Mat& zHat , const cv::Mat& z  , const cv::Mat& C, const cv::Mat& R );
     
     public   : const std::size_t xSize() const { return xSize_; }///>state size

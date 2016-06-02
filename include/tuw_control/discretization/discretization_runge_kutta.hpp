@@ -52,8 +52,15 @@ namespace RungeKutta {
 	template<std::size_t RKOrder> inline constexpr const std::size_t bjIdx (const std::size_t& _j)                         { return RKOrder - 1 + _j; }
     }
     
-    ///@todo make documentation of the functions
-    
+    /** @brief Templetized generic discretization function.
+     *  
+     *  Performs variants of the systematic Runge-Kutta methods.
+     *  @param StateNmSize Size of the numerically-computed state.
+     *  @param RKOrder Order of the Runge-Kutta method.
+     *  @param RKCoeff Butcher tableau coefficients of the method. The specification order is c2..cn, b1..bn, a21 a31 a32 a41 a42 a43...ann-1
+     *  @param _stateSim Entire simulated state. The function starts from its input values and modifies it according to the discretization step.
+     *  @param _arc      Evaluation point of the closed-form functions/state.
+     */
     template<std::size_t StateNmSize, std::size_t RKOrder, typename... RKCoeff>
     void discretize ( StateSim& _stateSim, const double& _arc ) {
 	static constexpr const std::array<double, sizeof...(RKCoeff)> coeff = { {  RKCoeff::val... } };//RungeKutta coefficients (specialized on order).
@@ -83,9 +90,13 @@ namespace RungeKutta {
 	for(std::size_t si=0;si<StateNmSize;++si) { _stateSim.stateNm().state(si) = x0.state(si) + _dArc * deltaX.state(si); }//set final state to the container
     }
     
+    ///@brief Specialization for using a user-defined discretization function.
     template<>
     void discretize<0,0> ( StateSim& _stateSim, const double& _arc ) {
-	_stateSim.stateNmDelta( _arc - _stateSim.stateArc() );
+	static double _dArc; _dArc = _arc - _stateSim.stateArc();
+	_stateSim.setStateCf ( _arc, ParamFuncs::EvalArcGuarantee::AFTER_LAST );
+	State& stateDelta = _stateSim.stateNmDelta( _dArc );
+	for(std::size_t si=0;si<_stateSim.stateNm().stateSize();++si) { _stateSim.stateNm().state(si) += stateDelta.state(si); }//set final state to the container
     }
 }
 

@@ -58,7 +58,7 @@ void discretize<0,0> ( StateSim& _stateSim, const double& _arc );
 
 using DiscretizationFuncPtr = void (*)(StateSim& , const double& );
 
-
+///@brief Several discretization modes.
 enum class DiscretizationType {
     USER_DEF,
     EULER,

@@ -43,7 +43,7 @@ namespace tuw {
     
 /*!@class ParamFuncsSpline0Dist 
  * 
- * @todo Testing distance computation for AV input. 
+ * @todo Test distance computation for AV input. 
  * @todo Should s0 = 0 (the way it is now) or add another function that sets it?
  * @todo cout the control points and their arc parametrizations (override with dist also)
  */
@@ -54,7 +54,7 @@ using ParamFuncsSpline0DistConstPtr = std::shared_ptr<ParamFuncsSpline0Dist cons
 class ParamFuncsSpline0Dist : public ParamFuncsDist {
 
     //--------------------------------------- ParamFunc implementation ---------------------------------------//
-    ///@todo documentation
+    ///@brief Structure referencing a control point and storing cached relevant function evaluation data (derivatives, integrals etc.).
     protected : struct FuncCacheData {
 	FuncCacheData ( const FuncCtrlPt& _ctrlPt ) : val(_ctrlPt.val), arc(_ctrlPt.arc) {}
 	const double& val;
@@ -90,27 +90,18 @@ class ParamFuncsSpline0Dist : public ParamFuncsDist {
     protected: std::vector< std::size_t                  > funcEvalArcCacheIdxUnder_;
     ///@brief Cached values of the used function evaluation modes.
     protected: std::vector< std::vector< FuncCacheData > > funcEvalCache_;
-    
+    ///@brief Maps the arc parametrizations to the functions that use them.
     private  : std::vector< std::vector<std::size_t> > arc2func_;
-    
     
     
     //--------------------------------------- ParamFuncDist implementation ---------------------------------------//
     
-    
+    //(re-)implemented virtual functions
     public   : void setDistCfMode ( TraveledDistCfMode _distCfMode, const std::vector<std::size_t>& _distRelFuncIdx ) override;
-    private  : void precomputeDist ();
-    
-    //re-implemented virtual functions
-    ///@brief Implementation of base class specification.
     public   : double computeS   () const override;
-    ///@brief Implementation of base class specification.
     public   : double computeT ( const double& _s, const EvalArcGuarantee& _evalArcGuarantee = EvalArcGuarantee::NONE  ) override;
-    ///@brief Implementation of base class specification.
     public   : void   setEvalDist ( const double& _funcsDistEval, const EvalArcGuarantee& _evalArcGuarantee = EvalArcGuarantee::NONE ) override;
-    ///@brief Implementation of base class specification.
     public   : void   computeS2TLattice ( const std::vector<double>& _sLattice, std::vector<double>& _tLattice ) override;
-    ///@todo efficient override
     public   : void   computeS2TLattice ( const double& _arc0, const double& _ds, std::vector<double>& _tLattice ) override;
     
     ///@brief Helper function that computes deltaS (from the @ref evalArc\_ position) operating on one function control point interval (used by @ref TraveledDistCfMode::V and @ref TraveledDistCfMode::AV modes).
@@ -118,11 +109,18 @@ class ParamFuncsSpline0Dist : public ParamFuncsDist {
     ///@brief Helper function that computes deltaT (from the @ref evalArc\_ position) operating on one function control point interval (used by @ref TraveledDistCfMode::V and @ref TraveledDistCfMode::AV modes).
     public   : static double computeDeltaT_V_AV ( const double& _ds, const double& _v0, const double& _av );
     
-    private  : double   computeTImpl ( const double& _s, const EvalArcGuarantee& _evalArcGuarantee );
-    private  : double   computeS_V   () const;
-    private  : double   computeS_AV  () const;
-    private  : double   computeT_V   ( const double& _ds ) const;
-    private  : double   computeT_AV  ( const double& _ds ) const;
+    ///@brief Precomputes distance invervals.
+    private  : void     precomputeDist ();
+    ///@brief Internal implementation of computing the arc parametrization given a distance @ref _s.
+    private  : double   computeTImpl   ( const double& _s, const EvalArcGuarantee& _evalArcGuarantee );
+    ///@brief Computes distance on a piecewise linear function describing the center linear velocity.
+    private  : double   computeS_V     () const;
+    ///@brief Computes distance on a piecewise linear function describing the center linear acceleration.
+    private  : double   computeS_AV    () const;
+    ///@brief Computes arc parametrization on a piecewise linear function describing the center linear velocity at a variation @ref _ds.
+    private  : double   computeT_V     ( const double& _ds ) const;
+    ///@brief Computes arc parametrization on a piecewise linear function describing the center linear acceleration at a variation @ref _ds.
+    private  : double   computeT_AV    ( const double& _ds ) const;
     
     ///@brief Indexes of parametric functions used for computing the traveled distance.
     private  : std::vector<std::size_t> distLinkedFuncIdx_;
@@ -130,6 +128,7 @@ class ParamFuncsSpline0Dist : public ParamFuncsDist {
     private  : std::vector<double     > distEvalCache_;
     ///@brief Closed form distance computation mode.
     private  : TraveledDistCfMode distCfMode_;
+    ///@brief Index of the parametrized function that relates to distance computation.
     private  : std::size_t distLinkedArcIdx_;
     
     private  : using ComputeSFuncPtr = double (ParamFuncsSpline0Dist::*)( ) const;

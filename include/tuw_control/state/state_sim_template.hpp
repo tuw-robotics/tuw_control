@@ -63,10 +63,8 @@ class StateSimTemplate : public StateSim {
     public   : StateSimTemplate           (StateSimTemplate&&)          = default;
     public   : StateSimTemplate& operator=(StateSimTemplate&&)          = default;
     
-//     public   : StateSimTemplateUPtr<StateSize, StateNmSize> cloneStateSim () const { return doCloneStateSim(); }
-    
     //implemented virtual functions
-    public   : virtual StateUPtr     cloneState () const override {
+    public   : virtual StateUPtr cloneState () const override {
 	StateUPtr retState = make_unique< StateArray<StateSize> >();
 	const std::size_t sNmS = stateNm_.stateSize();
 	for( std::size_t i = 0; i < sNmS                ; i++ ){ retState->state(i     ) = stateNm_.state(i); } 
@@ -76,11 +74,17 @@ class StateSimTemplate : public StateSim {
     public   : void toState0 () override { 
 	setStateCf (0, ParamFuncs::EvalArcGuarantee::AT_BEGIN);
 	const std::size_t sNmS = stateNm_.stateSize();
-	for( std::size_t i = 0; i < sNmS                 ; i++ ){ stateNm_.state(i) = state0_.state(i     ); } 
+	for( std::size_t i = 0; i < sNmS                ; i++ ){ stateNm_.state(i) = state0_.state(i     ); } 
 	for( std::size_t i = 0; i < stateCf_.stateSize(); i++ ){ stateCf_.state(i) = state0_.state(i+sNmS); } 
     }
     public   : void setDiscrType ( const RungeKutta::DiscretizationType& _discrType ) override { 
 	discrFunc_ = RungeKutta::getDiscrFunc<StateNmSize>(_discrType); 
+    }
+    public   : void setState     ( StateUPtr& _otherState ) override {
+	setStateCf (0, ParamFuncs::EvalArcGuarantee::AT_BEGIN);
+	const std::size_t sNmS = stateNm_.stateSize();
+	for( std::size_t i = 0; i < sNmS                ; i++ ){ stateNm_.state(i) = _otherState->state(i     ); } 
+	for( std::size_t i = 0; i < stateCf_.stateSize(); i++ ){ stateCf_.state(i) = _otherState->state(i+sNmS); } 
     }
     
     public   : State&        state0    ()                              override { return state0_;   }
@@ -90,8 +94,6 @@ class StateSimTemplate : public StateSim {
     public   : double&       state     ( const std::size_t& _i )       override { if ( _i < StateNmSize ) { return stateNm_.state(_i); } else { return stateCf_.state(_i-StateNmSize); } };
     public   : const double& state     ( const std::size_t& _i ) const override { if ( _i < StateNmSize ) { return stateNm_.state(_i); } else { return stateCf_.state(_i-StateNmSize); } };
     public   : void          advance   ( double _arc   )               override { discrFunc_( *this, _arc ); }
-    
-    private  : using StateSim::setStateCf;
     
     ///@brief State array storing the initial state.
     protected: StateArray<StateSize              > state0_;
@@ -104,17 +106,7 @@ class StateSimTemplate : public StateSim {
     ///@brief Pointer to the active discretization-method function.
     private  : RungeKutta::DiscretizationFuncPtr   discrFunc_;
     
-    
-//     private  : virtual StateSimUPtr doCloneStateSim () const override { return make_unique< StateSimTemplate<StateSize, StateNmSize> >(*this); }
-//     private  : virtual StateUPtr    doCloneState    () const override { 
-// 	auto retState = make_unique< StateArray<StateSize> >();
-// 	const std::size_t sNmS = stateNm_.stateSize();
-// 	for( std::size_t i = 0; i < sNmS                ; i++ ){ retState->state(i     ) = stateNm_.state(i); } 
-// 	for( std::size_t i = 0; i < stateCf_.stateSize(); i++ ){ retState->state(i+sNmS) = stateCf_.state(i); } 
-// 	return std::move(retState);
-//     }
-    
-    
+    private  : using StateSim::setStateCf;
 };
 
 }

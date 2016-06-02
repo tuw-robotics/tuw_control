@@ -80,11 +80,6 @@ class StateArray : public State {
     public   : const std::array<double, N>& stateArray () const { return state_; }
     ///@brief State array container.
     private  : std::array<double, N> state_;
-    
-    
-//     private  : virtual StateUPtr doCloneState () const override { return make_unique< StateArray<N> >(*this); }
-    
-    
 };
 
 }

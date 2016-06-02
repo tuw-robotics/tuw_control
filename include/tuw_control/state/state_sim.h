@@ -66,24 +66,31 @@ class StateSim : public State {
     
     //pure virtual functions
     ///@brief Clone-to-base-class-ptr function.
-    public   : virtual StateSimUPtr cloneStateSim () const = 0;
+    public   : virtual StateSimUPtr    cloneStateSim  () const = 0;
     ///@brief Set discretization type used in the simulation.
-    public   : virtual void         setDiscrType  ( const RungeKutta::DiscretizationType& _discrType ) = 0;
+    public   : virtual void            setDiscrType   ( const RungeKutta::DiscretizationType& _discrType ) = 0;
     ///@brief Performs one simulation step to parametrized arc length @ref _arc.
-    public   : virtual void         advance       ( double _arc ) = 0;
-    ///@brief Resets entire state to @ref state0.
-    public   : virtual void         toState0      () = 0;
+    public   : virtual void            advance        ( double _arc ) = 0;
+    ///@brief Resets entire state to @ref state0. It also sets the control structure evaluation point at most at the new arc parametrization (if applicable).
+    public   : virtual void            toState0       () = 0;
     ///@brief Reference to the initial state.
-    public   : virtual State&       state0        () = 0;
+    public   : virtual State&          state0         () = 0;
     ///@brief Reference to the actual numerical-computed state.
-    public   : virtual State&       stateNm       () = 0;
+    public   : virtual State&          stateNm        () = 0;
     ///@brief Reference to the actual closed-form state.
-    public   : virtual State&       stateCf       () = 0;
+    public   : virtual State&          stateCf        () = 0;
     ///@brief Value of the current arc parametrization of the state.
-    public   : virtual double       stateArc      () const = 0;
+    public   : virtual double          stateArc       () const = 0;
     ///@brief Value of the current traveled distance of the state.
-    public   : virtual double       stateDist     () const = 0;
+    public   : virtual double          stateDist      () const = 0;
     
+    ///@todo Returns (if applicable) reference of the parametric functions structure. Otherwise returns nullptr.
+    public   : virtual ParamFuncs*     paramFuncs     () = 0;
+    ///@todo Returns (if applicable) reference of the parametric functions distance-extended structure. Otherwise returns nullptr.
+    public   : virtual ParamFuncsDist* paramFuncsDist () = 0;
+    
+    ///@todo Sets the state variables to the values of @ref _otherState. It also sets the control structure evaluation point at most at the new arc parametrization (if applicable).
+    public   : virtual void     setState         ( StateUPtr& _otherState ) = 0;
     ///@brief Sets closed-form state at arc @ref _arc.
     protected: virtual void     setStateCf       ( const double& _arc, const ParamFuncs::EvalArcGuarantee& _evalArcGuarantee = ParamFuncs::EvalArcGuarantee::AFTER_LAST  ) = 0;
     ///@brief Computes numerical continuous arc state transition (@ref return) based on internal closed-form state (@ref stateCf ).
@@ -92,10 +99,7 @@ class StateSim : public State {
     private  : virtual State&   stateNmDelta     ( const double& _dArc ) = 0;
     
     template<std::size_t StateSize, std::size_t RKOrder, typename... RKCoeff>
-    friend void RungeKutta::discretize( StateSim& _stateSim, const double& _arc );
-    
-    ///@todo documentation
-    public   : virtual ParamFuncs&       paramFuncsManip () = 0;
+    friend void RungeKutta::discretize( StateSim& _stateSim, const double& _arc );    
 };
 
 }

@@ -96,6 +96,7 @@ const size_t& funcIdx          = distLinkedFuncIdx_[0];
 
 void ParamFuncsSpline0Dist::computeS2TLattice ( const double& _arc0, const double& _ds, vector< double >& _tLattice ) {
     setEvalArc ( _arc0, EvalArcGuarantee::NONE );
+    _tLattice.clear(); _tLattice.reserve( distEvalCache_.back() / _ds );
     const size_t idxBeforeStart = static_cast<int>( computeS() / _ds );
     
     size_t i = 0;
@@ -111,7 +112,7 @@ void ParamFuncsSpline0Dist::computeS2TLattice ( const double& _arc0, const doubl
 
 void ParamFuncsSpline0Dist::computeS2TLattice ( const vector< double >& _sLattice, vector< double >& _tLattice ) {
     const size_t slSize = _sLattice.size();
-    _tLattice.clear();_tLattice.reserve( _sLattice.size() );
+    _tLattice.clear(); _tLattice.reserve( _sLattice.size() );
     
     if( slSize > 0 ){
 	size_t i = 0;
@@ -122,7 +123,6 @@ void ParamFuncsSpline0Dist::computeS2TLattice ( const vector< double >& _sLattic
 	}
     }
     _tLattice.emplace_back(funcsArcEnd_);
-    
     setEvalArc ( funcsArcBegin_, EvalArcGuarantee::AT_BEGIN );
 }
 void ParamFuncsSpline0Dist::setEvalDist ( const double& _funcsDistEval, const EvalArcGuarantee& _evalArcGuarantee ) {    

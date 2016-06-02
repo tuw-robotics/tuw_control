@@ -36,7 +36,7 @@ protected:
         // Code here will be called immediately after each test (right
         // before the destructor).
     }
-    ParamFuncsPtr funcs;
+    ParamFuncsSPtr funcs;
 };
 
 ////////////////////////////////////////////--------------------------------------------------////////////////////////////////////////////
@@ -74,7 +74,7 @@ TEST_F ( ParamFuncManipSplineDistTest, Initialization0 ) {
 namespace EvalArcFuncValFuncValDiff1 {
     using PFS = ParamFuncs::ParamFuncsStructure; using PfCpD = ParamFuncs::CtrlPtDim; using FeM = ParamFuncs::FuncEvalMode; using EaG = ParamFuncs::EvalArcGuarantee;
     
-    void initValDiff( ParamFuncsPtr funcs, double initT ) {
+    void initValDiff( ParamFuncsSPtr funcs, double initT ) {
 	size_t funcIdx = 0; vector<PFS> pf( 4 , PFS() );
 	pf[0].ctrlPtsSize = 4; pf[0].ctrlPtsArcRefIdx = 0; 
 	pf[1].ctrlPtsSize = 4; pf[1].ctrlPtsArcRefIdx = 0;
@@ -99,7 +99,7 @@ namespace EvalArcFuncValFuncValDiff1 {
 	funcs->precompute();
     }
     
-    void testValDiff(ParamFuncsPtr funcs, double initT, size_t funcIdx, double funcShift) {
+    void testValDiff(ParamFuncsSPtr funcs, double initT, size_t funcIdx, double funcShift) {
 	funcs->setEvalArc(       0+initT, EaG::NONE); EXPECT_DOUBLE_EQ(     0  +funcShift, funcs->computeFuncVal( funcIdx ) ); 
 	funcs->setEvalArc(       1+initT, EaG::NONE); EXPECT_DOUBLE_EQ(     1  +funcShift, funcs->computeFuncVal( funcIdx ) );
 	funcs->setEvalArc(     1.5+initT, EaG::NONE); EXPECT_DOUBLE_EQ(     1.5+funcShift, funcs->computeFuncVal( funcIdx ) ); 

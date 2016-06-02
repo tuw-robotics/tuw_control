@@ -49,8 +49,10 @@ namespace tuw {
  * 
  */
 class ParamFuncs;
-using ParamFuncsPtr      = std::shared_ptr<ParamFuncs>;
-using ParamFuncsConstPtr = std::shared_ptr<ParamFuncs const>;
+using ParamFuncsUPtr      = std::unique_ptr<ParamFuncs>;
+using ParamFuncsConstUPtr = std::unique_ptr<ParamFuncs const>;
+using ParamFuncsSPtr      = std::shared_ptr<ParamFuncs>;
+using ParamFuncsConstSPtr = std::shared_ptr<ParamFuncs const>;
 class ParamFuncs {
     
     //enums

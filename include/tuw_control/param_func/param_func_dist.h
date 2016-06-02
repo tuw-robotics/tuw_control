@@ -43,7 +43,7 @@ namespace tuw {
 
     
 /*!@class ParamFuncsDist 
- * @brief Distance-based manipulation of parametric functions collection
+ * @brief Extends manipulation of parametric functions collection with closed-form arc length (distance) computation
  * 
  */
 class ParamFuncsDist;
@@ -76,10 +76,18 @@ class ParamFuncsDist : public ParamFuncs {
     public   : virtual double computeS () const = 0;
     ///Solves the equation \f$ \int_{0}^{\_deltaT}{ |v(\mathbf{p}, t)| } dt  = \_s \f$ for @ref \_s (evalArc\_: time, _s: traveled distance, v: body linear velocity,\f$ \mathbf{p} \f$: parametrized control points).
     public   : virtual double computeT ( const double& _s, const ParamFuncs::EvalArcGuarantee& _evalArcGuarantee = ParamFuncs::EvalArcGuarantee::NONE ) = 0;
-    
-    ///@todo documentation
+    /** @brief Computes arc parametrization lattice given a distance-parametrized lattice.
+     *  @param _sLattice Distance-parametrized input lattice. It is assumed that the vector is monotonically increasing.
+     *  @param _tLattice Arc-parametrized output lattice.
+     */
     public   : virtual void   computeS2TLattice ( const std::vector<double>& _sLattice, std::vector<double>& _tLattice ) = 0;
-    ///@todo documentation
+    /** @brief Computes arc parametrization lattice given an inital arc and distance parametrized sampling interval.
+     * 
+     *  The function computes the temporal lattice starting with s(_arc0) + _ds and ending with the maximum value of the arc parametrization.
+     * 
+     *  @param _sLattice Distance-parametrized input lattice. It is assumed that the vector values are monotonically increasing.
+     *  @param _tLattice Arc-parametrized output lattice.
+     */
     public   : virtual void   computeS2TLattice ( const double& _arc0, const double& _ds, std::vector<double>& _tLattice ) = 0;
 };
 

@@ -57,13 +57,11 @@ constexpr auto asInt(Enumeration const value) -> typename std::underlying_type<E
     return static_cast<typename std::underlying_type<Enumeration>::type>(value);
 }
 
-
-
-
 template<typename T, typename... Args>
 std::unique_ptr<T> make_unique(Args&&... args) {
     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
+
 }
 
 #endif // UTILS_H

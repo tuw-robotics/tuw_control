@@ -72,14 +72,11 @@ class State {
     public   : virtual double&       state ( const std::size_t& _i ) = 0;
     ///@brief Const access state variable based on index @ref _i.
     public   : virtual const double& state ( const std::size_t& _i ) const = 0;
+    
 //     ///@brief Adds all state variable with the values of @ref _other.
 //     public   : virtual void add ( StatePtr& _other ) = 0;
 //     ///@brief Multiplies all state variable with the values of @ref _a.
 //     public   : virtual void mlt ( const double _a ) = 0;
-    
-//     private  : virtual StateUPtr doCloneState () const = 0;
-    
-    
 };
 
 }

@@ -60,15 +60,17 @@ class FeedFwdCtrl {
     public   : FeedFwdCtrl           (FeedFwdCtrl&&)      = default;
     public   : FeedFwdCtrl& operator=(FeedFwdCtrl&&)      = default;
     
-    ///@brief Initializes the controller with the system static parameters.
-    ///@param _systemParams Static system parameters.
+    /** @brief Initializes the controller with the system static parameters.
+      * @param _systemParams Static system parameters.
+      */
     public   : virtual void init                                     ( const SystemParamsType&  _systemParams   ) = 0;
-    ///@brief Computes the feed-forward input of the system.
-    ///@param _systemState  State of the system (possibly estimated).
-    ///@param _stateTraj    Parametrized trajectory of some state variables (the control trajectory).
-    ///@param _t            Time stamp of the trajectory evaluation.
-    ///@param _feedFwdState Computed feed-forward desired state.
-    ///@return Computed feed-forward desired state.
+    /** @brief Computes the feed-forward input of the system.
+      * @param _systemState  State of the system (possibly estimated).
+      * @param _stateTraj    Parametrized trajectory of some state variables (the control trajectory).
+      * @param _t            Time stamp of the trajectory evaluation.
+      * @param _feedFwdState Computed feed-forward desired state.
+      * @return Computed feed-forward desired state.
+      */
     public   : virtual FeedForwardStateType& computeFeedForwardInput ( const SystemStateType&   _systemState, 
 	                                                               BodyStateTrajectoryType& _stateTraj, 
 								       const double&            _t, 
