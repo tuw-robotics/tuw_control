@@ -90,7 +90,7 @@ class StateSim : public State {
     public   : virtual ParamFuncsDist* paramFuncsDist () = 0;
     
     ///@todo Sets the state variables to the values of @ref _otherState. It also sets the control structure evaluation point at most at the new arc parametrization (if applicable).
-    public   : virtual void     setState         ( StateUPtr& _otherState ) = 0;
+    public   : virtual void     setState         ( StateSPtr& _otherState ) = 0;
     ///@brief Sets closed-form state at arc @ref _arc.
     protected: virtual void     setStateCf       ( const double& _arc, const ParamFuncs::EvalArcGuarantee& _evalArcGuarantee = ParamFuncs::EvalArcGuarantee::AFTER_LAST  ) = 0;
     ///@brief Computes numerical continuous arc state transition (@ref return) based on internal closed-form state (@ref stateCf ).

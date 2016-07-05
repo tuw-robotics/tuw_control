@@ -64,8 +64,8 @@ class StateSimTemplate : public StateSim {
     public   : StateSimTemplate& operator=(StateSimTemplate&&)          = default;
     
     //implemented virtual functions
-    public   : virtual StateUPtr cloneState () const override {
-	StateUPtr retState = make_unique< StateArray<StateSize> >();
+    public   : virtual StateSPtr cloneState () const override {
+	StateSPtr retState = std::make_shared< StateArray<StateSize> >();
 	const std::size_t sNmS = stateNm_.stateSize();
 	for( std::size_t i = 0; i < sNmS                ; i++ ){ retState->state(i     ) = stateNm_.state(i); } 
 	for( std::size_t i = 0; i < stateCf_.stateSize(); i++ ){ retState->state(i+sNmS) = stateCf_.state(i); } 
@@ -80,7 +80,7 @@ class StateSimTemplate : public StateSim {
     public   : void setDiscrType ( const RungeKutta::DiscretizationType& _discrType ) override { 
 	discrFunc_ = RungeKutta::getDiscrFunc<StateNmSize>(_discrType); 
     }
-    public   : void setState     ( StateUPtr& _otherState ) override {
+    public   : void setState     ( StateSPtr& _otherState ) override {
 	setStateCf (0, ParamFuncs::EvalArcGuarantee::AT_BEGIN);
 	const std::size_t sNmS = stateNm_.stateSize();
 	for( std::size_t i = 0; i < sNmS                ; i++ ){ stateNm_.state(i) = _otherState->state(i     ); } 

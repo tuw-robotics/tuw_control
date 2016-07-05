@@ -65,7 +65,7 @@ class State {
     
     //pure virtual functions
     ///@brief Clone-to-base-class-ptr function.
-    public   : virtual StateUPtr     cloneState () const  = 0;
+    public   : virtual StateSPtr     cloneState () const  = 0;
     ///@brief Size of the full state variables.
     public   : virtual double        stateSize  () const = 0; 
     ///@brief Access state variable based on index @ref _i.

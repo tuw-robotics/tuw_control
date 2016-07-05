@@ -36,6 +36,7 @@
 #include <float.h>
 #include <memory>
 #include <functional>
+#include <tuw_control/utils.h>
 
 namespace tuw {
 
@@ -44,12 +45,6 @@ using StateSimPtr = std::shared_ptr<StateSim>;
     
 namespace RungeKutta {
 
-template<std::intmax_t Num, std::intmax_t Denom = 1 >
-struct RatioEval { 
-    static constexpr const std::intmax_t num   = Num; 
-    static constexpr const std::intmax_t denom = Denom; 
-    static constexpr const double        val   = (double)(Num) / (double)(Denom); 
-}; 
     
 template<std::size_t StateNmSize, std::size_t RKOrder, typename... RKCoeff>
 void discretize      ( StateSim& _stateSim, const double& _arc );

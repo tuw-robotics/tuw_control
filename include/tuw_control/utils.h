@@ -62,6 +62,13 @@ std::unique_ptr<T> make_unique(Args&&... args) {
     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 
+template<std::intmax_t Num, std::intmax_t Denom = 1 >
+struct RatioEval { 
+    static constexpr const std::intmax_t num   = Num; 
+    static constexpr const std::intmax_t denom = Denom; 
+    static constexpr const double        val   = (double)(Num) / (double)(Denom); 
+}; 
+
 }
 
 #endif // UTILS_H

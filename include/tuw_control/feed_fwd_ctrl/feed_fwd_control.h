@@ -64,6 +64,8 @@ class FeedFwdCtrl {
       * @param _systemParams Static system parameters.
       */
     public   : virtual void init                                     ( const SystemParamsType&  _systemParams   ) = 0;
+    /// @brief Re-Initializes internal variables.
+    public   : virtual void reInit () {}
     /** @brief Computes the feed-forward input of the system.
       * @param _systemState  State of the system (possibly estimated).
       * @param _stateTraj    Parametrized trajectory of some state variables (the control trajectory).
@@ -75,6 +77,7 @@ class FeedFwdCtrl {
 	                                                               BodyStateTrajectoryType& _stateTraj, 
 								       const double&            _t, 
 								       FeedForwardStateType&    _feedFwdState   ) = 0;
+						    
 };
 
 }

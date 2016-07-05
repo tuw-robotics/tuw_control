@@ -67,7 +67,7 @@ class StateArray : public State {
     public   : StateArray& operator=(StateArray&&)      = default;
     
     //implementation of virtual functions
-    public   : virtual StateUPtr     cloneState      () const  override { return make_unique< StateArray<N> >(*this); }
+    public   : virtual StateSPtr     cloneState      () const  override { return std::make_shared< StateArray<N> >(*this); }
     public   : virtual double        stateSize       () const  override { return N; } 
     public   : virtual double&       state           ( const std::size_t& _i )       override { return state_[_i]; }
     public   : virtual const double& state           ( const std::size_t& _i ) const override { return state_[_i]; }
