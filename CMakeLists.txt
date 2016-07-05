@@ -26,7 +26,6 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   dynamic_reconfigure
-  tuw_geometry 
 )
 
 find_package(Threads REQUIRED)
