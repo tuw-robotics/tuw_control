@@ -30,73 +30,57 @@
  *   POSSIBILITY OF SUCH DAMAGE.                                           *
  ***************************************************************************/
 
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef STATE_FEEDBACK_1OUTPUT_HPP
+#define STATE_FEEDBACK_1OUTPUT_HPP
 
+#include <float.h>
 #include <memory>
-#include <math.h>
-#include <tuple>
-#include <utility> 
 
-
+#include <tuw_control/filters/state_feedback.hpp>
 
 namespace tuw {
 
-template <typename T> inline constexpr
-int signum(T x, std::false_type is_signed) {
-    return T(0) < x;
+/*!@class StateFeedback1Output
+ *
+ * 
+ */
+template <typename InputStateType>
+class StateFeedback1Output : public StateFeedback<InputStateType, InputStateType, double, State > {
+    
+    //special class member functions
+    public   : StateFeedback1Output           (std::shared_ptr<State> _params) : StateFeedback<InputStateType, InputStateType, double, State >(_params) { 
+	this->output_ = std::make_shared<double>(); reloadParamInternal_ = false; 
+    }
+    public   : virtual ~StateFeedback1Output  ()                            = default;
+    public   : StateFeedback1Output           (const StateFeedback1Output&) = default;
+    public   : StateFeedback1Output& operator=(const StateFeedback1Output&) = default;
+    public   : StateFeedback1Output           (StateFeedback1Output&&)      = default;
+    public   : StateFeedback1Output& operator=(StateFeedback1Output&&)      = default;
+    
+    //pure virtual functions
+    public   : virtual std::shared_ptr<double>& compute ( std::shared_ptr<InputStateType>& _xObs, std::shared_ptr<InputStateType>& _xDes, const double& _t ) override {
+	State::minus( *_xObs, *_xDes, xDiffVec_ );
+	if ( reloadParamInternal_ ) { reloadParamInternal(); }
+	
+	*this->output_    = - ( k_.dot(xDiffVec_)/*.sum()*/ );
+	return this->output_;
+    }
+    public   : void reloadParam () override {
+	reloadParamInternal_ = true;
+    }
+    public   : Eigen::VectorXd& xDiff () { return xDiffVec_; }
+    private  : void reloadParamInternal () {
+	reloadParamInternal_ = false;
+	k_.resize(xDiffVec_.rows());
+	for(size_t i = 0; i < (size_t)xDiffVec_.size(); ++i) { k_(i) = this->params_->value(i); }
+    }
+    private  : bool reloadParamInternal_;
+    private  : Eigen::VectorXd xDiffVec_;
+    private  : Eigen::VectorXd k_;
+};
+
+
+
 }
 
-template <typename T> inline constexpr
-int signum(T x, std::true_type is_signed) {
-    return (T(0) < x) - (x < T(0));
-}
-
-template <typename T> inline constexpr
-int signum(T x) {
-    return signum(x, std::is_signed<T>());
-}
-
-template <typename T> inline constexpr
-T normalizeRad ( T _x ) {
-    constexpr const double TwoPi = 2 * M_PI;
-    _x = fmod( _x        , TwoPi );
-    _x = fmod( _x + TwoPi, TwoPi );
-    if( _x > M_PI ){ _x -= TwoPi; }
-    return _x;
-}
-template <typename Enumeration>
-constexpr auto asInt(Enumeration const value) -> typename std::underlying_type<Enumeration>::type {
-    return static_cast<typename std::underlying_type<Enumeration>::type>(value);
-}
-
-// template<typename T, typename... Args>
-// std::unique_ptr<T> make_unique(Args&&... args) {
-//     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-// }
-
-template<std::intmax_t Num, std::intmax_t Denom = 1 >
-struct RatioEval { 
-    static constexpr const std::intmax_t num   = Num; 
-    static constexpr const std::intmax_t denom = Denom; 
-    static constexpr const double        val   = (double)(Num) / (double)(Denom); 
-}; 
-
-
-template<std::size_t II = 0, typename FuncT, typename... Tp>
-inline typename std::enable_if<II == sizeof...(Tp), void>::type
-  for_each_tuple(std::tuple<Tp...> &, FuncT) { }
-  
-
-template<std::size_t II = 0, typename FuncT, typename... Tp>
-inline typename std::enable_if<II < sizeof...(Tp), void>::type
-  for_each_tuple(std::tuple<Tp...>& t, FuncT f) {
-    f(std::get<II>(t));
-    for_each_tuple<II + 1, FuncT, Tp...>(t, f);
-  }
-}
-
-#endif // UTILS_H
-
-
-
+#endif // STATE_FEEDBACK_1OUTPUT_HPP

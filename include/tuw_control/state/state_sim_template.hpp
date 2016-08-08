@@ -66,42 +66,42 @@ class StateSimTemplate : public StateSim {
     //implemented virtual functions
     public   : virtual StateSPtr cloneState () const override {
 	StateSPtr retState = std::make_shared< StateArray<StateSize> >();
-	const std::size_t sNmS = stateNm_.stateSize();
-	for( std::size_t i = 0; i < sNmS                ; i++ ){ retState->state(i     ) = stateNm_.state(i); } 
-	for( std::size_t i = 0; i < stateCf_.stateSize(); i++ ){ retState->state(i+sNmS) = stateCf_.state(i); } 
+	const std::size_t sNmS = stateNm_.valueSize();
+	for( std::size_t i = 0; i < sNmS                ; i++ ){ retState->value(i     ) = stateNm_.value(i); } 
+	for( std::size_t i = 0; i < stateCf_.valueSize(); i++ ){ retState->value(i+sNmS) = stateCf_.value(i); } 
 	return retState;
     }
     public   : void toState0 () override { 
 	setStateCf (0, ParamFuncs::EvalArcGuarantee::AT_BEGIN);
-	const std::size_t sNmS = stateNm_.stateSize();
-	for( std::size_t i = 0; i < sNmS                ; i++ ){ stateNm_.state(i) = state0_.state(i     ); } 
-	for( std::size_t i = 0; i < stateCf_.stateSize(); i++ ){ stateCf_.state(i) = state0_.state(i+sNmS); } 
+	const std::size_t sNmS = stateNm_.valueSize();
+	for( std::size_t i = 0; i < sNmS                ; i++ ){ stateNm_.value(i) = state0_.value(i     ); } 
+	for( std::size_t i = 0; i < stateCf_.valueSize(); i++ ){ stateCf_.value(i) = state0_.value(i+sNmS); } 
     }
     public   : void setDiscrType ( const RungeKutta::DiscretizationType& _discrType ) override { 
 	discrFunc_ = RungeKutta::getDiscrFunc<StateNmSize>(_discrType); 
     }
     public   : void setState     ( StateSPtr& _otherState ) override {
 	setStateCf (0, ParamFuncs::EvalArcGuarantee::AT_BEGIN);
-	const std::size_t sNmS = stateNm_.stateSize();
-	for( std::size_t i = 0; i < sNmS                ; i++ ){ stateNm_.state(i) = _otherState->state(i     ); } 
-	for( std::size_t i = 0; i < stateCf_.stateSize(); i++ ){ stateCf_.state(i) = _otherState->state(i+sNmS); } 
+	const std::size_t sNmS = stateNm_.valueSize();
+	for( std::size_t i = 0; i < sNmS                ; i++ ){ stateNm_.value(i) = _otherState->value(i     ); } 
+	for( std::size_t i = 0; i < stateCf_.valueSize(); i++ ){ stateCf_.value(i) = _otherState->value(i+sNmS); } 
     }
     
     public   : State&        state0    ()                              override { return state0_;   }
     public   : State&        stateNm   ()                              override { return stateNm_;  }
     public   : State&        stateCf   ()                              override { return stateCf_;  }
-    public   : double        stateSize ()                        const override { return StateSize; }
-    public   : double&       state     ( const std::size_t& _i )       override { if ( _i < StateNmSize ) { return stateNm_.state(_i); } else { return stateCf_.state(_i-StateNmSize); } };
-    public   : const double& state     ( const std::size_t& _i ) const override { if ( _i < StateNmSize ) { return stateNm_.state(_i); } else { return stateCf_.state(_i-StateNmSize); } };
+    public   : size_t        valueSize ()                        const override { return StateSize; }
+    public   : double&       value     ( const std::size_t& _i )       override { if ( _i < StateNmSize ) { return stateNm_.value(_i); } else { return stateCf_.value(_i-StateNmSize); } };
+    public   : const double& value     ( const std::size_t& _i ) const override { if ( _i < StateNmSize ) { return stateNm_.value(_i); } else { return stateCf_.value(_i-StateNmSize); } };
     public   : void          advance   ( double _arc   )               override { discrFunc_( *this, _arc ); }
     
-    ///@brief State array storing the initial state.
+    ///@brief State array storing the initial value.
     protected: StateArray<StateSize              > state0_;
-    ///@brief State array storing the numerical-computed state.
+    ///@brief State array storing the numerical-computed value.
     protected: StateArray<StateNmSize            > stateNm_ ;
-    ///@brief State array caching the evaluation of the last call of the state transition function.
+    ///@brief State array caching the evaluation of the last call of the value transition function.
     protected: StateArray<StateNmSize            > stateNmDotCache_;
-    ///@brief State array storing the closed-form-computed state.
+    ///@brief State array storing the closed-form-computed value.
     protected: StateArray<StateSize - StateNmSize> stateCf_ ;
     ///@brief Pointer to the active discretization-method function.
     private  : RungeKutta::DiscretizationFuncPtr   discrFunc_;

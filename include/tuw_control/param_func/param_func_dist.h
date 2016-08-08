@@ -83,7 +83,7 @@ class ParamFuncsDist : public ParamFuncs {
     public   : virtual void   computeS2TLattice ( const std::vector<double>& _sLattice, std::vector<double>& _tLattice ) = 0;
     /** @brief Computes arc parametrization lattice given an inital arc and distance parametrized sampling interval.
      * 
-     *  The function computes the temporal lattice starting with s(_arc0) + _ds and ending with the maximum value of the arc parametrization.
+     *  The function computes the temporal lattice starting with s(_arc0) and ending with the maximum value of the arc parametrization.
      * 
      *  @param _sLattice Distance-parametrized input lattice. It is assumed that the vector values are monotonically increasing.
      *  @param _tLattice Arc-parametrized output lattice.

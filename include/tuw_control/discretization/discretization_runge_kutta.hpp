@@ -69,25 +69,25 @@ namespace RungeKutta {
 	static double _arc0, _dArc;
 	_arc0 = _stateSim.stateArc();
 	_dArc = _arc - _arc0;
-	if( _stateSim.stateNm().stateSize() != StateNmSize ){ throw "Wrong specialization of RungeKutta::discretize called (system state size != function state size) !"; }
+	if( _stateSim.stateNm().valueSize() != StateNmSize ){ throw "Wrong specialization of RungeKutta::discretize called (system state value size != function state value size) !"; }
 	
 	State& stateDot = _stateSim.stateNmDot(); const double& b0 = coeff[bjIdx<RKOrder>(0)];
 	
-	for(std::size_t si=0;si<StateNmSize;++si) { x0.state(si)=_stateSim.stateNm().state(si); dX[0].state(si)= stateDot.state(si); deltaX.state(si)=b0*dX[0].state(si);   }
+	for(std::size_t si=0;si<StateNmSize;++si) { x0.value(si)=_stateSim.stateNm().value(si); dX[0].value(si)= stateDot.value(si); deltaX.value(si)=b0*dX[0].value(si);   }
 	
 	for(std::size_t i=0;i<RKOrder-1;++i){ 
-	    deltaXi.stateArray().fill(0);
-	    for(std::size_t j=0;j<=i;++j) { const double& aij = coeff[aijIdx<RKOrder>(i,j)]; for( std::size_t si = 0; si < StateNmSize; ++si ) { deltaXi.state(si) += aij * dX[j].state(si); } }//computes deltaX for step i
+	    deltaXi.valuesArray().fill(0);
+	    for(std::size_t j=0;j<=i;++j) { const double& aij = coeff[aijIdx<RKOrder>(i,j)]; for( std::size_t si = 0; si < StateNmSize; ++si ) { deltaXi.value(si) += aij * dX[j].value(si); } }//computes deltaX for step i
 	    
-	    for( std::size_t si = 0; si <  StateNmSize; ++si ) { _stateSim.stateNm().state(si) = x0.state(si) + _dArc * deltaXi.state(si); }
+	    for( std::size_t si = 0; si <  StateNmSize; ++si ) { _stateSim.stateNm().value(si) = x0.value(si) + _dArc * deltaXi.value(si); }
 	    _stateSim.setStateCf ( _arc0 + _dArc * coeff[ciIdx<RKOrder>(i)], ParamFuncs::EvalArcGuarantee::AFTER_LAST );//set the closed form state at new evaluation arc
 	    _stateSim.stateNmDot();//compute continuous time state transition
 	    
 	    const double& bipp = coeff[bjIdx<RKOrder>(i+1)];
-	    for(std::size_t si=0;si<StateNmSize;++si) { dX[i+1].state(si) = stateDot.state(si); deltaX.state(si) += bipp * dX[i+1].state(si); }//store new transition and combine partial answers of the numerical state
+	    for(std::size_t si=0;si<StateNmSize;++si) { dX[i+1].value(si) = stateDot.value(si); deltaX.value(si) += bipp * dX[i+1].value(si); }//store new transition and combine partial answers of the numerical state
 	}//computes all partial deltaXi of the numerical state for all steps
 	_stateSim.setStateCf ( _arc0 + _dArc, ParamFuncs::EvalArcGuarantee::AFTER_LAST );
-	for(std::size_t si=0;si<StateNmSize;++si) { _stateSim.stateNm().state(si) = x0.state(si) + _dArc * deltaX.state(si); }//set final state to the container
+	for(std::size_t si=0;si<StateNmSize;++si) { _stateSim.stateNm().value(si) = x0.value(si) + _dArc * deltaX.value(si); }//set final state to the container
     }
     
     ///@brief Specialization for using a user-defined discretization function.
@@ -96,7 +96,7 @@ namespace RungeKutta {
 	static double _dArc; _dArc = _arc - _stateSim.stateArc();
 	_stateSim.setStateCf ( _arc, ParamFuncs::EvalArcGuarantee::AFTER_LAST );
 	State& stateDelta = _stateSim.stateNmDelta( _dArc );
-	for(std::size_t si=0;si<_stateSim.stateNm().stateSize();++si) { _stateSim.stateNm().state(si) += stateDelta.state(si); }//set final state to the container
+	for(std::size_t si=0;si<_stateSim.stateNm().valueSize();++si) { _stateSim.stateNm().value(si) += stateDelta.value(si); }//set final state to the container
     }
 }
 

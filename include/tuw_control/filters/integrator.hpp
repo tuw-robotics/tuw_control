@@ -30,73 +30,43 @@
  *   POSSIBILITY OF SUCH DAMAGE.                                           *
  ***************************************************************************/
 
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef INTEGRATOR_HPP
+#define INTEGRATOR_HPP
 
+#include <float.h>
 #include <memory>
-#include <math.h>
-#include <tuple>
-#include <utility> 
-
-
 
 namespace tuw {
 
-template <typename T> inline constexpr
-int signum(T x, std::false_type is_signed) {
-    return T(0) < x;
+/*!@class Integrator
+ * @todo document tthe Kahan summation algorithm
+ * 
+ */
+class Integrator {
+    
+    //special class member functions
+//     public   : Integrator           ()                  = default;
+//     public   : virtual ~Integrator  ()                  = default;
+//     public   : Integrator           (const Integrator&) = default;
+//     public   : Integrator& operator=(const Integrator&) = default;
+//     public   : Integrator           (Integrator&&)      = default;
+//     public   : Integrator& operator=(Integrator&&)      = default;
+    
+    public   : const double& output   () { return x_; }
+    public   : void          reset    ( const double& _x0 ) { x_ = _x0; comp_ = 0; }
+    public   : void          integrate( const double& _x  ) {
+	double y = _x - comp_;
+        double t = x_ + y;    
+        comp_ = (t - x_) - y;
+        x_ = t;  
+    }
+    
+    private  : double x_;
+    private  : double comp_;
+};
+
+
+
 }
 
-template <typename T> inline constexpr
-int signum(T x, std::true_type is_signed) {
-    return (T(0) < x) - (x < T(0));
-}
-
-template <typename T> inline constexpr
-int signum(T x) {
-    return signum(x, std::is_signed<T>());
-}
-
-template <typename T> inline constexpr
-T normalizeRad ( T _x ) {
-    constexpr const double TwoPi = 2 * M_PI;
-    _x = fmod( _x        , TwoPi );
-    _x = fmod( _x + TwoPi, TwoPi );
-    if( _x > M_PI ){ _x -= TwoPi; }
-    return _x;
-}
-template <typename Enumeration>
-constexpr auto asInt(Enumeration const value) -> typename std::underlying_type<Enumeration>::type {
-    return static_cast<typename std::underlying_type<Enumeration>::type>(value);
-}
-
-// template<typename T, typename... Args>
-// std::unique_ptr<T> make_unique(Args&&... args) {
-//     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-// }
-
-template<std::intmax_t Num, std::intmax_t Denom = 1 >
-struct RatioEval { 
-    static constexpr const std::intmax_t num   = Num; 
-    static constexpr const std::intmax_t denom = Denom; 
-    static constexpr const double        val   = (double)(Num) / (double)(Denom); 
-}; 
-
-
-template<std::size_t II = 0, typename FuncT, typename... Tp>
-inline typename std::enable_if<II == sizeof...(Tp), void>::type
-  for_each_tuple(std::tuple<Tp...> &, FuncT) { }
-  
-
-template<std::size_t II = 0, typename FuncT, typename... Tp>
-inline typename std::enable_if<II < sizeof...(Tp), void>::type
-  for_each_tuple(std::tuple<Tp...>& t, FuncT f) {
-    f(std::get<II>(t));
-    for_each_tuple<II + 1, FuncT, Tp...>(t, f);
-  }
-}
-
-#endif // UTILS_H
-
-
-
+#endif // STATE_FEEDBACK_HPP

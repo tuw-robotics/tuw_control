@@ -30,73 +30,42 @@
  *   POSSIBILITY OF SUCH DAMAGE.                                           *
  ***************************************************************************/
 
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef STATE_FEEDBACK_BACKSTEP_HPP
+#define STATE_FEEDBACK_BACKSTEP_HPP
 
+#include <float.h>
 #include <memory>
-#include <math.h>
-#include <tuple>
-#include <utility> 
 
-
+#include <tuw_control/filters/state_feedback.hpp>
+#include <tuw_control/filters/state_mapping.hpp>
 
 namespace tuw {
 
-template <typename T> inline constexpr
-int signum(T x, std::false_type is_signed) {
-    return T(0) < x;
+/*!@class StateMapping
+ *
+ * 
+ */
+
+// template <typename InputStateType, typename OutputStateType, typename ParamType, typename StateFeedback1Type, typename StateFeedback2Type, typename StateMappingType>
+// class StateFeedbackBackStep : public StateFeedback<InputStateType, OutputStateType, ParamType>{
+//     
+//     //special class member functions
+//     public   : StateFeedbackBackStep           (ParamType& _params) : StateFeedback<InputStateType, OutputStateType, ParamType>(_params) {}
+//     public   : virtual ~StateFeedbackBackStep  ()                             = default;
+//     public   : StateFeedbackBackStep           (const StateFeedbackBackStep&) = default;
+//     public   : StateFeedbackBackStep& operator=(const StateFeedbackBackStep&) = default;
+//     public   : StateFeedbackBackStep           (StateFeedbackBackStep&&)      = default;
+//     public   : StateFeedbackBackStep& operator=(StateFeedbackBackStep&&)      = default;
+//     
+//     //pure virtual functions
+//     
+//     protected: StateFeedback1Type stateFeedback1_;
+//     protected: StateFeedback2Type stateFeedback2_;
+//     protected: StateMappingType   stateMapping_;
+// };
+
+
+
 }
 
-template <typename T> inline constexpr
-int signum(T x, std::true_type is_signed) {
-    return (T(0) < x) - (x < T(0));
-}
-
-template <typename T> inline constexpr
-int signum(T x) {
-    return signum(x, std::is_signed<T>());
-}
-
-template <typename T> inline constexpr
-T normalizeRad ( T _x ) {
-    constexpr const double TwoPi = 2 * M_PI;
-    _x = fmod( _x        , TwoPi );
-    _x = fmod( _x + TwoPi, TwoPi );
-    if( _x > M_PI ){ _x -= TwoPi; }
-    return _x;
-}
-template <typename Enumeration>
-constexpr auto asInt(Enumeration const value) -> typename std::underlying_type<Enumeration>::type {
-    return static_cast<typename std::underlying_type<Enumeration>::type>(value);
-}
-
-// template<typename T, typename... Args>
-// std::unique_ptr<T> make_unique(Args&&... args) {
-//     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-// }
-
-template<std::intmax_t Num, std::intmax_t Denom = 1 >
-struct RatioEval { 
-    static constexpr const std::intmax_t num   = Num; 
-    static constexpr const std::intmax_t denom = Denom; 
-    static constexpr const double        val   = (double)(Num) / (double)(Denom); 
-}; 
-
-
-template<std::size_t II = 0, typename FuncT, typename... Tp>
-inline typename std::enable_if<II == sizeof...(Tp), void>::type
-  for_each_tuple(std::tuple<Tp...> &, FuncT) { }
-  
-
-template<std::size_t II = 0, typename FuncT, typename... Tp>
-inline typename std::enable_if<II < sizeof...(Tp), void>::type
-  for_each_tuple(std::tuple<Tp...>& t, FuncT f) {
-    f(std::get<II>(t));
-    for_each_tuple<II + 1, FuncT, Tp...>(t, f);
-  }
-}
-
-#endif // UTILS_H
-
-
-
+#endif // STATE_MAPPING_HPP

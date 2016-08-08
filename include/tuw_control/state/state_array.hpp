@@ -33,6 +33,7 @@
 #ifndef STATE_ARRAY_H
 #define STATE_ARRAY_H
 
+
 #include <float.h>
 #include <memory>
 #include <array>
@@ -59,7 +60,8 @@ template<std::size_t N>
 class StateArray : public State {
     
     //special class member functions
-    public   : StateArray           ()                  = default;
+    public   : StateArray           (State* _parent) : State(_parent) { callRootUpdateSize(); }
+    public   : StateArray           ()               : State()        { callRootUpdateSize(); }
     public   : virtual ~StateArray  ()                  = default;
     public   : StateArray           (const StateArray&) = default;
     public   : StateArray& operator=(const StateArray&) = default;
@@ -67,19 +69,43 @@ class StateArray : public State {
     public   : StateArray& operator=(StateArray&&)      = default;
     
     //implementation of virtual functions
-    public   : virtual StateSPtr     cloneState      () const  override { return std::make_shared< StateArray<N> >(*this); }
-    public   : virtual double        stateSize       () const  override { return N; } 
-    public   : virtual double&       state           ( const std::size_t& _i )       override { return state_[_i]; }
-    public   : virtual const double& state           ( const std::size_t& _i ) const override { return state_[_i]; }
-    //public   : virtual void add ( StatePtr& _other )                override { for ( size_t i = 0; i < N; i++ ) { state_[i] += _other->state(i); } }
-    //public   : virtual void mlt ( const double _a  )                override { for ( size_t i = 0; i < N; i++ ) { state_[i] *= _a; } }
+    public   : virtual StateSPtr     cloneState      ()                        const override { return std::make_shared< StateArray<N> >(*this); }
+    public   : virtual double&       value           ( const std::size_t& _i )       override { return values_[_i]; }
+    public   : virtual const double& value           ( const std::size_t& _i ) const override { return values_[_i]; }
+    public   : virtual size_t        valueSize       ()                        const override { return N; }
     
-    ///@brief Reference to the state array.
-    public   :       std::array<double, N>& stateArray ()       { return state_; }
-    ///@brief Const reference to the state array.
-    public   : const std::array<double, N>& stateArray () const { return state_; }
+    ///@brief Reference to the state variables array.
+    public   :       std::array<double, N>& valuesArray ()       { return values_; }
+    ///@brief Const reference to the variables array.
+    public   : const std::array<double, N>& valuesArray () const { return values_; }
     ///@brief State array container.
-    private  : std::array<double, N> state_;
+    private  : std::array<double, N> values_;
+};
+
+template<typename EnumStateVals>
+class StateArrayScoped : public StateArray<asInt(EnumStateVals::ENUM_SIZE)> {
+    
+    //special class member functions
+    public   : StateArrayScoped           (State* _parent) : StateArray<asInt(EnumStateVals::ENUM_SIZE)>(_parent) {}
+    public   : StateArrayScoped           ()               : StateArray<asInt(EnumStateVals::ENUM_SIZE)>()        {}
+    public   : virtual ~StateArrayScoped  ()                        = default;
+    public   : StateArrayScoped           (const StateArrayScoped&) = default;
+    public   : StateArrayScoped& operator=(const StateArrayScoped&) = default;
+    public   : StateArrayScoped           (StateArrayScoped&&)      = default;
+    public   : StateArrayScoped& operator=(StateArrayScoped&&)      = default;
+    
+    //implementation of virtual functions
+    public   : virtual StateSPtr                                 cloneState         () const  override { return std::make_shared< StateArrayScoped<EnumStateVals> >(*this); }
+    public   : std::shared_ptr<StateArrayScoped<EnumStateVals>>  cloneStateExt      () const           { return std::make_shared< StateArrayScoped<EnumStateVals> >(*this); }
+    public   : template<EnumStateVals _i>       double& value ()       { return StateArray<asInt(EnumStateVals::ENUM_SIZE)>::value(asInt(_i)); }
+    public   : template<EnumStateVals _i> const double& value () const { return StateArray<asInt(EnumStateVals::ENUM_SIZE)>::value(asInt(_i)); }
+    public   : using StateArray<asInt(EnumStateVals::ENUM_SIZE)>::value;
+    public   : using StateArray<asInt(EnumStateVals::ENUM_SIZE)>::state;
+
+    template<                         typename... NestedStates1> friend class StateNestedSet;
+    template<typename EnumStateVals1, typename... NestedStates1> friend class StateNestedSetScoped;
+    template<typename SubState                                 > friend class StateNestedVector;
+    
 };
 
 }

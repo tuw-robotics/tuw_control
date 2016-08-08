@@ -97,7 +97,7 @@ const size_t& funcIdx          = distLinkedFuncIdx_[0];
 void ParamFuncsSpline0Dist::computeS2TLattice ( const double& _arc0, const double& _ds, vector< double >& _tLattice ) {
     setEvalArc ( _arc0, EvalArcGuarantee::NONE );
     _tLattice.clear(); _tLattice.reserve( distEvalCache_.back() / _ds );
-    const size_t idxBeforeStart = static_cast<int>( computeS() / _ds );
+    const size_t idxBeforeStart = static_cast<int>( computeS() / _ds ) - 1;
     
     size_t i = 0;
     setEvalDist ( _ds * ( ++i + idxBeforeStart ), EvalArcGuarantee::AFTER_LAST );

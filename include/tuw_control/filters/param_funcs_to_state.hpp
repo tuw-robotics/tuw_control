@@ -30,73 +30,46 @@
  *   POSSIBILITY OF SUCH DAMAGE.                                           *
  ***************************************************************************/
 
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef PARAM_FUNCS_2_STATE_HPP
+#define PARAM_FUNCS_2_STATE_HPP
 
+#include <float.h>
 #include <memory>
-#include <math.h>
-#include <tuple>
-#include <utility> 
 
-
+#include <tuw_control/state/state.h>
 
 namespace tuw {
 
-template <typename T> inline constexpr
-int signum(T x, std::false_type is_signed) {
-    return T(0) < x;
+/*!@class ParamFuncs2State
+ *
+ * 
+ */
+
+template <typename InputStateType, typename ParamFuncsType, typename OutputStateType, typename ParamType>
+class ParamFuncs2State;
+
+template <typename InputStateType, typename ParamFuncsType, typename OutputStateType, typename ParamType>
+class ParamFuncs2State {
+    
+    //special class member functions
+    public   : ParamFuncs2State           (std::shared_ptr<ParamType> _params) : params_(_params) {}
+    public   : virtual ~ParamFuncs2State  ()                        = default;
+    public   : ParamFuncs2State           (const ParamFuncs2State&) = default;
+    public   : ParamFuncs2State& operator=(const ParamFuncs2State&) = default;
+    public   : ParamFuncs2State           (ParamFuncs2State&&)      = default;
+    public   : ParamFuncs2State& operator=(ParamFuncs2State&&)      = default;
+    
+    //pure virtual functions
+    public   : virtual std::shared_ptr<OutputStateType>& compute ( std::shared_ptr<InputStateType>& _x, std::shared_ptr<ParamFuncsType>& _funcs, const double& _t ) = 0;
+    public   : virtual void reloadParam ()  = 0;
+    public   : std::shared_ptr<OutputStateType>& output  () { return output_; }
+    
+    protected: std::shared_ptr<ParamType>        params_;
+    protected: std::shared_ptr<OutputStateType>  output_;
+};
+
+
+
 }
 
-template <typename T> inline constexpr
-int signum(T x, std::true_type is_signed) {
-    return (T(0) < x) - (x < T(0));
-}
-
-template <typename T> inline constexpr
-int signum(T x) {
-    return signum(x, std::is_signed<T>());
-}
-
-template <typename T> inline constexpr
-T normalizeRad ( T _x ) {
-    constexpr const double TwoPi = 2 * M_PI;
-    _x = fmod( _x        , TwoPi );
-    _x = fmod( _x + TwoPi, TwoPi );
-    if( _x > M_PI ){ _x -= TwoPi; }
-    return _x;
-}
-template <typename Enumeration>
-constexpr auto asInt(Enumeration const value) -> typename std::underlying_type<Enumeration>::type {
-    return static_cast<typename std::underlying_type<Enumeration>::type>(value);
-}
-
-// template<typename T, typename... Args>
-// std::unique_ptr<T> make_unique(Args&&... args) {
-//     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-// }
-
-template<std::intmax_t Num, std::intmax_t Denom = 1 >
-struct RatioEval { 
-    static constexpr const std::intmax_t num   = Num; 
-    static constexpr const std::intmax_t denom = Denom; 
-    static constexpr const double        val   = (double)(Num) / (double)(Denom); 
-}; 
-
-
-template<std::size_t II = 0, typename FuncT, typename... Tp>
-inline typename std::enable_if<II == sizeof...(Tp), void>::type
-  for_each_tuple(std::tuple<Tp...> &, FuncT) { }
-  
-
-template<std::size_t II = 0, typename FuncT, typename... Tp>
-inline typename std::enable_if<II < sizeof...(Tp), void>::type
-  for_each_tuple(std::tuple<Tp...>& t, FuncT f) {
-    f(std::get<II>(t));
-    for_each_tuple<II + 1, FuncT, Tp...>(t, f);
-  }
-}
-
-#endif // UTILS_H
-
-
-
+#endif // PARAM_FUNCS_2_STATE_HPP

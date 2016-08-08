@@ -33,8 +33,11 @@
 #ifndef STATE_H
 #define STATE_H
 
+
 #include <float.h>
 #include <memory>
+
+#include <eigen3/Eigen/Eigen>
 
 namespace tuw {
 
@@ -43,6 +46,9 @@ namespace tuw {
  * @todo cout the the state variables (horizontally)
  * 
  */
+
+
+
 class State;
 using StateSPtr      = std::shared_ptr<State>;
 using StateConstSPtr = std::shared_ptr<State const>;
@@ -53,10 +59,13 @@ using StateConstUPtr = std::unique_ptr<State const>;
 using StateVectorSPtr     = std::shared_ptr<std::vector<State   > >;
 using StateSPtrVectorSPtr = std::shared_ptr<std::vector<StateSPtr> >;
 
+
+
 class State {
     
     //special class member functions
-    public   : State           ()             = default;
+    public   : State           (State* _parent) : parent_(_parent) { callRootUpdateSize(); }
+    public   : State           ()               : parent_(nullptr) { callRootUpdateSize(); }
     public   : virtual ~State  ()             = default;
     public   : State           (const State&) = default;
     public   : State& operator=(const State&) = default;
@@ -65,19 +74,91 @@ class State {
     
     //pure virtual functions
     ///@brief Clone-to-base-class-ptr function.
-    public   : virtual StateSPtr     cloneState () const  = 0;
-    ///@brief Size of the full state variables.
-    public   : virtual double        stateSize  () const = 0; 
+    public   : virtual StateSPtr     cloneState () const = 0;
+
     ///@brief Access state variable based on index @ref _i.
-    public   : virtual double&       state ( const std::size_t& _i ) = 0;
+    public   : virtual double&       value      ( const std::size_t& _i ) = 0;
     ///@brief Const access state variable based on index @ref _i.
-    public   : virtual const double& state ( const std::size_t& _i ) const = 0;
+    public   : virtual const double& value      ( const std::size_t& _i ) const = 0;
+    ///@brief Size of the state variables.
+    public   : virtual size_t        valueSize  () const = 0;
+    ///@todo documentation
+    public   : virtual void          updateSize () {}
     
-//     ///@brief Adds all state variable with the values of @ref _other.
-//     public   : virtual void add ( StatePtr& _other ) = 0;
-//     ///@brief Multiplies all state variable with the values of @ref _a.
-//     public   : virtual void mlt ( const double _a ) = 0;
+    public   : virtual void          resize     ( const size_t& _i ) { throw "function not supported for the instantiated class"; }
+    
+    ///@brief Access sub-state based on index @ref _i.
+    public   : virtual StateSPtr&    state      ( const std::size_t& _i ) { static StateSPtr stateNullPtr_ = nullptr; return stateNullPtr_; }
+    ///@brief Size of the sub-states.
+    public   : virtual size_t        stateSize  () const { return 0; }
+    
+    public   : void toSTLVec    (std::vector<double>& _vec) { _vec.resize( valueSize() ); for(size_t i = 0; i < _vec.size(); ++i) { _vec[i] = value(i); } }
+    public   : void toEIGENVec  (Eigen::VectorXd&     _vec) { _vec.resize( valueSize() ); for(size_t i = 0; i < (size_t)_vec.rows(); ++i) { _vec(i) = value(i); } }
+    public   : void fromSTLVec  (std::vector<double>& _vec) { if( _vec.size() != valueSize  () ) { throw "cannot copy from container of different size"; }; for(size_t i = 0; i < _vec.size(); ++i) { value(i) = _vec[i]; } }
+    public   : void fromEIGENVec(Eigen::VectorXd&     _vec) { if( (size_t)_vec.rows() != valueSize  () ) { throw "cannot copy from container of different size"; }; for(size_t i = 0; i < (size_t)_vec.rows(); ++i) { value(i) = _vec(i); } }
+//     State& operator+(const State& rhs) {
+// 	if ( valueSize() != rhs.valueSize() ){ throw "cannot add two containers of different sizes"; }
+// 	for(size_t i = 0; i < valueSize(); ++i) { value(i) += rhs.value(i); }
+// 	return *this;
+//     }
+//     State& operator-(const State& rhs) {
+// 	if ( valueSize() != rhs.valueSize() ){ throw "cannot substract two containers of different sizes"; }
+// 	for(size_t i = 0; i < valueSize(); ++i) { value(i) -= rhs.value(i); }
+// 	return *this;
+//     }
+//     static State& plus(State& _lhs, State& _rhs, State& _ans) {
+// 	if (!(( _ans.valueSize() == _rhs.valueSize() ) && ( _lhs.valueSize() == _rhs.valueSize() ))){ throw "cannot add two containers of different sizes"; }
+// 	for(size_t i = 0; i < _ans.valueSize(); ++i) { _ans.value(i) = _lhs.value(i) + _rhs.value(i); }
+// 	return _ans;
+//     }
+//     static State& minus(State& _lhs, State& _rhs, State& _ans) {
+// 	if (!(( _ans.valueSize() == _rhs.valueSize() ) && ( _lhs.valueSize() == _rhs.valueSize() ))){ throw "cannot add two containers of different sizes"; }
+// 	for(size_t i = 0; i < _ans.valueSize(); ++i) { _ans.value(i) = _lhs.value(i) - _rhs.value(i); }
+// 	return _ans;
+//     }
+    static std::vector<double>& plus(State& _lhs, State& _rhs, std::vector<double>& _ans) {
+	if ( _lhs.valueSize() != _rhs.valueSize() ){ throw "cannot add two containers of different sizes"; }
+	_ans.resize(_lhs.valueSize());
+	for(size_t i = 0; i < _lhs.valueSize(); ++i) { _ans[i] = _lhs.value(i) + _rhs.value(i); }
+	return _ans;
+    }
+    static Eigen::VectorXd& plus(State& _lhs, State& _rhs, Eigen::VectorXd& _ans) { 
+	if ( _lhs.valueSize() != _rhs.valueSize() ){ throw "cannot add two containers of different sizes"; }
+	_ans.resize(_lhs.valueSize());
+	for(size_t i = 0; i < _lhs.valueSize(); ++i) { _ans[i] = _lhs.value(i) + _rhs.value(i); }
+	return _ans;
+    }
+    static State& plus(State& _lhs, State& _rhs, State& _ans) {
+	if (!(( _ans.valueSize() == _rhs.valueSize() ) && ( _lhs.valueSize() == _rhs.valueSize() ))){ throw "cannot add two containers of different sizes"; }
+	for(size_t i = 0; i < _ans.valueSize(); ++i) { _ans.value(i) = _lhs.value(i) + _rhs.value(i); }
+	return _ans;
+    }
+    static std::vector<double>& minus(State& _lhs, State& _rhs, std::vector<double>& _ans) {
+	if ( _lhs.valueSize() != _rhs.valueSize() ){ throw "cannot add two containers of different sizes"; }
+	_ans.resize(_lhs.valueSize());
+	for(size_t i = 0; i < _lhs.valueSize(); ++i) { _ans[i] = _lhs.value(i) - _rhs.value(i); }
+	return _ans;
+    }
+    static Eigen::VectorXd& minus(State& _lhs, State& _rhs, Eigen::VectorXd& _ans) { 
+	if ( _lhs.valueSize() != _rhs.valueSize() ){ throw "cannot add two containers of different sizes"; }
+	_ans.resize(_lhs.valueSize());
+	for(size_t i = 0; i < _lhs.valueSize(); ++i) { _ans[i] = _lhs.value(i) - _rhs.value(i); }
+	return _ans;
+    }
+    static State& minus(State& _lhs, State& _rhs, State& _ans) {
+	if (!(( _ans.valueSize() == _rhs.valueSize() ) && ( _lhs.valueSize() == _rhs.valueSize() ))){ throw "cannot add two containers of different sizes"; }
+	for(size_t i = 0; i < _ans.valueSize(); ++i) { _ans.value(i) = _lhs.value(i) - _rhs.value(i); }
+	return _ans;
+    }
+    
+    
+    ///@todo documentation
+    protected: void          callRootUpdateSize ()       { if(parent_){ parent_->callRootUpdateSize(); } else { updateSize(); } }
+    ///@todo documentation
+    protected: State* parent_;
 };
+
+
 
 }
 
