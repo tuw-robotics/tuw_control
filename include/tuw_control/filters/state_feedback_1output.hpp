@@ -62,7 +62,7 @@ class StateFeedback1Output : public StateFeedback<InputStateType, InputStateType
 	State::minus( *_xObs, *_xDes, xDiffVec_ );
 	if ( reloadParamInternal_ ) { reloadParamInternal(); }
 	
-	*this->output_    = - ( k_.dot(xDiffVec_)/*.sum()*/ );
+	*this->output_    = - ( k_.dot(xDiffVec_) );
 	return this->output_;
     }
     public   : void reloadParam () override {

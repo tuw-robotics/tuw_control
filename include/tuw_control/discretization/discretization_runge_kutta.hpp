@@ -92,7 +92,7 @@ namespace RungeKutta {
     
     ///@brief Specialization for using a user-defined discretization function.
     template<>
-    void discretize<0,0> ( StateSim& _stateSim, const double& _arc ) {
+    inline void discretize<0,0> ( StateSim& _stateSim, const double& _arc ) {
 	static double _dArc; _dArc = _arc - _stateSim.stateArc();
 	_stateSim.setStateCf ( _arc, ParamFuncs::EvalArcGuarantee::AFTER_LAST );
 	State& stateDelta = _stateSim.stateNmDelta( _dArc );

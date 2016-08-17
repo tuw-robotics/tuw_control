@@ -30,6 +30,8 @@
  *   POSSIBILITY OF SUCH DAMAGE.                                           *
  ***************************************************************************/
 #include <tuw_control/filters/ekf.h>
+#include <tuw_control/filters/kalman_filter.hpp>
+
 
 using namespace cv;
 using namespace std;
@@ -38,6 +40,21 @@ using namespace tuw;
 EKFBase::EKFBase( const std::size_t xSize, const size_t uSize, const size_t zSize ): xSize_(xSize), uSize_(uSize), zSize_(zSize) {
     MatEyexSize    = Mat::eye(xSize_  , xSize_  , CV_64F);
     x_ = Mat::zeros(xSize_,1,CV_64F);
+    
+    
+//     Paramss testParams;
+//     KFTest kfTest(testParams);
+//     Eigen::Matrix<double, 0, 0> testU;
+//     kfTest.predict(testU,0);
+//     Eigen::Matrix<double, 3, 1> zUpd1;
+//     kfTest.update<KFUpdate1>(zUpd1);
+//     kfTest.resize();
+//     
+//     
+//     KFConstTest kfConstTest(testParams);
+//     kfConstTest.predict(testU,0);
+//     kfConstTest.update<KFConstUpdate1>(zUpd1);
+//     kfConstTest.resize();
 }
 
 void EKFBase::init ( const cv::Mat& x0, const cv::Mat& Sigma0 ) {
