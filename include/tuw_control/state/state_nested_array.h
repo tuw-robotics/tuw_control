@@ -118,8 +118,8 @@ class StateNestedArrayScoped : public StateNestedArray<SubState, asInt(EnumState
     public   : StateNestedArrayScoped& operator=(StateNestedArrayScoped&&)      = default;
     
     //implementation of virtual functions
-    public   : virtual StateSPtr                                                 cloneState         () const  override { return std::make_shared< StateNestedArrayScoped<EnumStateVals, SubState> >(*this); }
-    public   : std::shared_ptr<StateNestedArrayScoped<EnumStateVals, SubState>>  cloneStateExt      () const           { return std::make_shared< StateNestedArrayScoped<EnumStateVals, SubState> >(*this); }
+    public   : virtual StateSPtr                                                cloneState    () const  override { return std::make_shared< StateNestedArrayScoped<EnumStateVals, SubState> >(*this); }
+    public   : std::shared_ptr<StateNestedArrayScoped<EnumStateVals, SubState>> cloneStateExt () const           { return std::make_shared< StateNestedArrayScoped<EnumStateVals, SubState> >(*this); }
     public   : template<EnumStateVals _i>       double& value ()       { return StateNestedArray<SubState, asInt(EnumStateVals::ENUM_SIZE)>::value(asInt(_i)); }
     public   : template<EnumStateVals _i> const double& value () const { return StateNestedArray<SubState, asInt(EnumStateVals::ENUM_SIZE)>::value(asInt(_i)); }
     public   : template<EnumStateVals _i> typename std::shared_ptr<SubState>& state () { return this->states_[asInt(_i)]; }

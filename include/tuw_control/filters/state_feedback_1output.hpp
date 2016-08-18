@@ -37,6 +37,7 @@
 #include <memory>
 
 #include <tuw_control/filters/state_feedback.hpp>
+#include <tuw_control/filters/integrator.hpp>
 
 namespace tuw {
 
@@ -44,12 +45,12 @@ namespace tuw {
  *
  * 
  */
-template <typename InputStateType>
-class StateFeedback1Output : public StateFeedback<InputStateType, InputStateType, double, State > {
+template <typename InputStateType, typename ParamsType>
+class StateFeedback1Output : public StateFeedback<InputStateType, InputStateType, double, ParamsType >, public Integrator {
     
     //special class member functions
-    public   : StateFeedback1Output           (std::shared_ptr<State> _params) : StateFeedback<InputStateType, InputStateType, double, State >(_params) { 
-	this->output_ = std::make_shared<double>(); reloadParamInternal_ = false; 
+    public   : StateFeedback1Output           (std::shared_ptr<ParamsType> _params) : StateFeedback<InputStateType, InputStateType, double, ParamsType >(_params), reloadParamInternal_(false) { 
+	this->output_ = std::make_shared<double>(); 
     }
     public   : virtual ~StateFeedback1Output  ()                            = default;
     public   : StateFeedback1Output           (const StateFeedback1Output&) = default;
@@ -57,26 +58,38 @@ class StateFeedback1Output : public StateFeedback<InputStateType, InputStateType
     public   : StateFeedback1Output           (StateFeedback1Output&&)      = default;
     public   : StateFeedback1Output& operator=(StateFeedback1Output&&)      = default;
     
-    //pure virtual functions
-    public   : virtual std::shared_ptr<double>& compute ( std::shared_ptr<InputStateType>& _xObs, std::shared_ptr<InputStateType>& _xDes, const double& _t ) override {
-	State::minus( *_xObs, *_xDes, xDiffVec_ );
+    public   : std::shared_ptr<double>& compute ( std::shared_ptr<InputStateType>& _xObs, std::shared_ptr<InputStateType>& _xDes, const double& _t ) override {
+	desSize_ = _xDes->valueSize();
 	if ( reloadParamInternal_ ) { reloadParamInternal(); }
 	
-	*this->output_    = - ( k_.dot(xDiffVec_) );
+	for( size_t i =            0; i < outputOrder_; ++i ) { xDiffVec_(i) = _xObs->value(i) - _xDes->value(i); }
+	for( size_t i = outputOrder_; i <   xDiffSize_; ++i ) { xDiffVec_(i) =                 - _xDes->value(i); }
+	
+	*this->output_    = - k_.dot(xDiffVec_) - kInt_* intOutput();
+	if( fabs(*this->output_) < intSaturateVal_ ) { integrate( xDiffVec_(0) * (_t - t_) ); }
+	t_ = _t;
 	return this->output_;
     }
-    public   : void reloadParam () override {
-	reloadParamInternal_ = true;
-    }
-    public   : Eigen::VectorXd& xDiff () { return xDiffVec_; }
     private  : void reloadParamInternal () {
 	reloadParamInternal_ = false;
-	k_.resize(xDiffVec_.rows());
-	for(size_t i = 0; i < (size_t)xDiffVec_.size(); ++i) { k_(i) = this->params_->value(i); }
+	xDiffSize_ = std::min(outputOrder_ + 1, desSize_);
+	xDiffVec_.resize(xDiffSize_);
+	k_       .conservativeResize(xDiffSize_);
+	if( outputOrder_ != xDiffSize_ ) { k_( k_.rows()-1 ) = 1; }
+	if ( kInt_ == 0 ) { Integrator::reset(0); t_ = 0; }
     }
-    private  : bool reloadParamInternal_;
+    
+    protected: size_t outputOrder_;
+    protected: double intSaturateVal_;
+    protected: double kInt_;
+    protected: Eigen::VectorXd k_;
+    protected: bool   reloadParamInternal_;
+    
+    private  : size_t desSize_;
+    private  : size_t xDiffSize_;
+    private  : size_t outputOrderRelXDes_;
+    private  : double t_;
     private  : Eigen::VectorXd xDiffVec_;
-    private  : Eigen::VectorXd k_;
 };
 
 

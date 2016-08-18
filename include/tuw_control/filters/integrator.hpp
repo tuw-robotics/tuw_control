@@ -45,16 +45,17 @@ namespace tuw {
 class Integrator {
     
     //special class member functions
-//     public   : Integrator           ()                  = default;
-//     public   : virtual ~Integrator  ()                  = default;
-//     public   : Integrator           (const Integrator&) = default;
-//     public   : Integrator& operator=(const Integrator&) = default;
-//     public   : Integrator           (Integrator&&)      = default;
-//     public   : Integrator& operator=(Integrator&&)      = default;
+    public   : Integrator           ()                  = default;
+    public   : virtual ~Integrator  ()                  = default;
+    public   : Integrator           (const Integrator&) = default;
+    public   : Integrator& operator=(const Integrator&) = default;
+    public   : Integrator           (Integrator&&)      = default;
+    public   : Integrator& operator=(Integrator&&)      = default;
     
-    public   : const double& output   () { return x_; }
-    public   : void          reset    ( const double& _x0 ) { x_ = _x0; comp_ = 0; }
-    public   : void          integrate( const double& _x  ) {
+    public   : virtual void     reset ( const double& _x0 )       { x_ = _x0; comp_ = 0; }
+    
+    public   : const double& intOutput()                    const { return x_; }
+    public   : void          integrate( const double& _x  )       {
 	double y = _x - comp_;
         double t = x_ + y;    
         comp_ = (t - x_) - y;

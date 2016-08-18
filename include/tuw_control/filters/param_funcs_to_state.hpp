@@ -59,9 +59,13 @@ class ParamFuncs2State {
     public   : ParamFuncs2State           (ParamFuncs2State&&)      = default;
     public   : ParamFuncs2State& operator=(ParamFuncs2State&&)      = default;
     
+    public   : using ParamFuncType = ParamFuncsType;
+    
     //pure virtual functions
     public   : virtual std::shared_ptr<OutputStateType>& compute ( std::shared_ptr<InputStateType>& _x, std::shared_ptr<ParamFuncsType>& _funcs, const double& _t ) = 0;
     public   : virtual void reloadParam ()  = 0;
+    public   : virtual bool finished() const = 0;
+    public   : virtual void reset   () = 0;
     public   : std::shared_ptr<OutputStateType>& output  () { return output_; }
     
     protected: std::shared_ptr<ParamType>        params_;
