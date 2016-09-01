@@ -41,13 +41,8 @@
 namespace tuw {
 
 /*!@class ParamFuncs2State
- *
- * 
+ * @brief Interface for a filter that outputs a desired %state given an observed %state and a parametric functions structure.
  */
-
-template <typename InputStateType, typename ParamFuncsType, typename OutputStateType, typename ParamType>
-class ParamFuncs2State;
-
 template <typename InputStateType, typename ParamFuncsType, typename OutputStateType, typename ParamType>
 class ParamFuncs2State {
     
@@ -59,17 +54,33 @@ class ParamFuncs2State {
     public   : ParamFuncs2State           (ParamFuncs2State&&)      = default;
     public   : ParamFuncs2State& operator=(ParamFuncs2State&&)      = default;
     
-    public   : using ParamFuncType = ParamFuncsType;
+    public   : using ParamFuncType = ParamFuncsType;///< Parametric functions class type
     
     //pure virtual functions
+    /** @brief Computes the desired %state at the specified time instant given the observed %state and a parametric functions structure.
+     *  @param _x Observed %state
+     *  @param _funcs Parametric functions structure
+     *  @param _t Temporal evaluation point
+     *  @return computed output %state
+     */
     public   : virtual std::shared_ptr<OutputStateType>& compute ( std::shared_ptr<InputStateType>& _x, std::shared_ptr<ParamFuncsType>& _funcs, const double& _t ) = 0;
+    /** @brief Reloads class parameters.
+     *  To be called when parameters that influence the class variables are changed.
+     */
     public   : virtual void reloadParam ()  = 0;
-    public   : virtual bool finished() const = 0;
-    public   : virtual void reset   () = 0;
+    /** @brief Returns wether the parametric functions evaluation has reached the end of the parametric functions domain definition.
+     *  @return True if evaluation is outside/on the border of the domain definition of the parametric functions.
+     */
+    public   : virtual bool finished    () const = 0;
+    /** @brief Resets class structures/variables.
+     */
+    public   : virtual void reset       () = 0;
+    /** @brief Access to the last computed output %state.
+     */
     public   : std::shared_ptr<OutputStateType>& output  () { return output_; }
     
-    protected: std::shared_ptr<ParamType>        params_;
-    protected: std::shared_ptr<OutputStateType>  output_;
+    protected: std::shared_ptr<ParamType>        params_;///< Pointer to the class parameters object
+    protected: std::shared_ptr<OutputStateType>  output_;///< Last computet output %state
 };
 
 

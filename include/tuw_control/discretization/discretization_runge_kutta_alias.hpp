@@ -62,6 +62,7 @@ enum class DiscretizationType {
     RK4_38
 };
 
+///@brief Returns a discretization function pointer for pre-defined Runge-Kutta specializations defined in @ref DiscretizationType
 template <std::size_t StateNmSize>
 DiscretizationFuncPtr getDiscrFunc (DiscretizationType _discrType) {
     using Dtp = DiscretizationType;

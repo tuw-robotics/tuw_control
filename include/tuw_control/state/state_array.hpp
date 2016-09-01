@@ -43,19 +43,19 @@
 
 namespace tuw {
 
+/*!@class StateArray
+ * @brief Implementation of @ref State for a fixed size array of double values.
+ */
 template<std::size_t N> 
 class StateArray;
-
 template<std::size_t N> 
 using StateArraySPtr      = std::shared_ptr<StateArray<N> >;
 template<std::size_t N> 
 using StateArrayConstSPtr = std::shared_ptr<StateArray<N> const>;
-
 template<std::size_t N> 
 using StateArrayUPtr      = std::unique_ptr<StateArray<N> >;
 template<std::size_t N> 
 using StateArrayConstUPtr = std::unique_ptr<StateArray<N> const>;
-    
 template<std::size_t N>
 class StateArray : public State {
     
@@ -78,10 +78,13 @@ class StateArray : public State {
     public   :       std::array<double, N>& valuesArray ()       { return values_; }
     ///@brief Const reference to the variables array.
     public   : const std::array<double, N>& valuesArray () const { return values_; }
-    ///@brief State array container.
-    private  : std::array<double, N> values_;
+    private  : std::array<double, N> values_;///< State array container
 };
 
+/*!@class StateArrayScoped
+ * @brief Extension of @ref StateArray providing value access based on a scoped enumeration (compile-time).
+ * @tparam EnumStateVals Scoped enumeration that defines semantic access to the values of the state array. Has to have ENUM_SIZE representing the number of enum values.
+ */
 template<typename EnumStateVals>
 class StateArrayScoped : public StateArray<asInt(EnumStateVals::ENUM_SIZE)> {
     
@@ -96,8 +99,11 @@ class StateArrayScoped : public StateArray<asInt(EnumStateVals::ENUM_SIZE)> {
     
     //implementation of virtual functions
     public   : virtual StateSPtr                                 cloneState         () const  override { return std::make_shared< StateArrayScoped<EnumStateVals> >(*this); }
+    ///@brief Clone-to-this-class-ptr function.
     public   : std::shared_ptr<StateArrayScoped<EnumStateVals>>  cloneStateExt      () const           { return std::make_shared< StateArrayScoped<EnumStateVals> >(*this); }
+    ///@brief Scoped access (compile-time) to the values of the state object.
     public   : template<EnumStateVals _i>       double& value ()       { return StateArray<asInt(EnumStateVals::ENUM_SIZE)>::value(asInt(_i)); }
+    ///@brief Const scoped access (compile-time) to the values of the state object.
     public   : template<EnumStateVals _i> const double& value () const { return StateArray<asInt(EnumStateVals::ENUM_SIZE)>::value(asInt(_i)); }
     public   : using StateArray<asInt(EnumStateVals::ENUM_SIZE)>::value;
     public   : using StateArray<asInt(EnumStateVals::ENUM_SIZE)>::state;
@@ -105,7 +111,6 @@ class StateArrayScoped : public StateArray<asInt(EnumStateVals::ENUM_SIZE)> {
     template<                         typename... NestedStates1> friend class StateNestedSet;
     template<typename EnumStateVals1, typename... NestedStates1> friend class StateNestedSetScoped;
     template<typename SubState                                 > friend class StateNestedVector;
-    
 };
 
 }

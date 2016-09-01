@@ -39,8 +39,7 @@
 namespace tuw {
 
 /*!@class Integrator
- * @todo document tthe Kahan summation algorithm
- * 
+ * @brief Minimal class performing numerically stable integration (using the Kahan summation algorithm).
  */
 class Integrator {
     
@@ -52,18 +51,26 @@ class Integrator {
     public   : Integrator           (Integrator&&)      = default;
     public   : Integrator& operator=(Integrator&&)      = default;
     
-    public   : virtual void     reset ( const double& _x0 )       { x_ = _x0; comp_ = 0; }
-    
+    /** @brief resets the integrated value and compensation variable.
+     *  @param _x0 Value the integrator is resetted to
+     */
+    public   : void          reset    ( const double& _x0 )       { x_ = _x0; comp_ = 0; }
+    /** @brief Returns the integrator value.
+     *  @return Const reference to integrated value.
+     */
     public   : const double& intOutput()                    const { return x_; }
-    public   : void          integrate( const double& _x  )       {
-	double y = _x - comp_;
+    /** @brief Addds a new value to the integrated value.
+     *  @param _dx Added value
+     */
+    public   : void          integrate( const double& _dx  )       {
+	double y = _dx - comp_;
         double t = x_ + y;    
         comp_ = (t - x_) - y;
         x_ = t;  
     }
     
-    private  : double x_;
-    private  : double comp_;
+    private  : double x_;///< Integrated value
+    private  : double comp_;///< Summation compensation variable.
 };
 
 

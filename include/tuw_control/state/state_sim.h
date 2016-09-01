@@ -45,10 +45,11 @@
 
 namespace tuw {
 
+
 /*! @class StateSim 
+ *  @brief Interface for a state simulator structure that performs numerical integration of not-closed-form state variables.
  *  @todo cout the the state variables (horizontally) (override to split on Nm and Cf?)
- */
-    
+ */   
 class StateSim;
 using StateSimSPtr      = std::shared_ptr<StateSim>;
 using StateSimConstSPtr = std::shared_ptr<StateSim const>;
@@ -84,12 +85,12 @@ class StateSim : public State {
     ///@brief Value of the current traveled distance of the state.
     public   : virtual double          stateDist      () const = 0;
     
-    ///@todo Returns (if applicable) reference of the parametric functions structure. Otherwise returns nullptr.
+    ///@brief Returns (if applicable) reference of the parametric functions structure. Otherwise returns nullptr.
     public   : virtual ParamFuncs*     paramFuncs     () = 0;
-    ///@todo Returns (if applicable) reference of the parametric functions distance-extended structure. Otherwise returns nullptr.
+    ///@brief Returns (if applicable) reference of the parametric functions distance-extended structure. Otherwise returns nullptr.
     public   : virtual ParamFuncsDist* paramFuncsDist () = 0;
     
-    ///@todo Sets the state variables to the values of @ref _otherState. It also sets the control structure evaluation point at most at the new arc parametrization (if applicable).
+    ///@brief Sets the state variables to the values of @ref _otherState. It also sets the control structure evaluation point at most at the new arc parametrization (if applicable).
     public   : virtual void     setState         ( StateSPtr& _otherState ) = 0;
     ///@brief Sets closed-form state at arc @ref _arc.
     protected: virtual void     setStateCf       ( const double& _arc, const ParamFuncs::EvalArcGuarantee& _evalArcGuarantee = ParamFuncs::EvalArcGuarantee::AFTER_LAST  ) = 0;

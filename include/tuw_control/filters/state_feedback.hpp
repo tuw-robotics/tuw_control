@@ -41,15 +41,8 @@
 namespace tuw {
 
 /*!@class StateFeedback
- *
- * 
+ * @brief Interface for a filter that outputs a desired %state given an observed %state and a desired %state.
  */
-
-template <typename InputObsStateType, typename InputDesStateType, typename OutputStateType, typename ParamType>
-class StateFeedback;
-
-// using BasePtrType = std::shared_ptr<State>;
-
 template <typename InputObsStateType, typename InputDesStateType, typename OutputStateType, typename ParamType>
 class StateFeedback {
     
@@ -62,16 +55,27 @@ class StateFeedback {
     public   : StateFeedback& operator=(StateFeedback&&)      = default;
     
     //pure virtual functions
-    public   : virtual std::shared_ptr<OutputStateType>& compute ( std::shared_ptr<InputObsStateType>& _xObs, std::shared_ptr<InputDesStateType>& _xDes, const double& _t ) = 0;
-    public   : virtual void reloadParam ()  = 0;
-    public   : std::shared_ptr<OutputStateType>& output  () { return output_; }
-    public   : std::shared_ptr<ParamType>& params(){ return params_; }
+    /** @brief Computes the output %state at the specified time instant given the observed %state and the desired state.
+     *  @param _xObs Observed %state
+     *  @param _xDes Desired %state
+     *  @param _t Temporal evaluation point
+     *  @return computed output %state
+     */
+    public   : virtual std::shared_ptr<OutputStateType>& compute     ( std::shared_ptr<InputObsStateType>& _xObs, std::shared_ptr<InputDesStateType>& _xDes, const double& _t ) = 0;
+    /** @brief Reloads class parameters.
+     *  To be called when parameters that influence the class variables are changed.
+     */
+    public   : virtual void                              reloadParam ()  = 0;
+    /** @brief Access to the last computed output %state.
+     */
+    public   : std::shared_ptr<OutputStateType>&         output      () { return output_; }
+    /** @brief Access to the last parameters object pointer.
+     */
+    public   : std::shared_ptr<ParamType>&               params      () { return params_; }
     
-    protected: std::shared_ptr<ParamType>        params_;
-    protected: std::shared_ptr<OutputStateType>  output_;
+    protected: std::shared_ptr<ParamType>        params_;///< Pointer to the class parameters object
+    protected: std::shared_ptr<OutputStateType>  output_;///< Last computet output %state
 };
-
-
 
 }
 

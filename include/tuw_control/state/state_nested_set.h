@@ -43,24 +43,19 @@
 namespace tuw {
 
 /*!@class StateNestedSet
- * 
- * @todo cout the the state variables (horizontally)
- * 
+ * @brief Implementation of @ref State being formed by tuple of substates.
+ * @tparam NestedStates Parameter pack of the underlying substates types.
  */
-
-
 template<typename... NestedStates>
 class StateNestedSet;
 template<typename... NestedStates>
 using StateNestedSetSPtr      = std::shared_ptr< StateNestedSet<NestedStates...> >;
 template<typename... NestedStates>
 using StateNestedSetConstSPtr = std::shared_ptr< StateNestedSet<NestedStates...> const>;
-
 template<typename... NestedStates>
 using StateNestedSetUPtr      = std::unique_ptr< StateNestedSet<NestedStates...> >;
 template<typename... NestedStates>
 using StateNestedSetConstUPtr = std::unique_ptr< StateNestedSet<NestedStates...> const>;
-
 template<typename... NestedStates>
 class StateNestedSet : public State {
     //special class member functions
@@ -71,7 +66,6 @@ class StateNestedSet : public State {
 	callRootUpdateSize (); 
     }
     public   : StateNestedSet           ()               : State(), isInit_(false)        { 
-// 	for_each_tuple( states_, [this](auto& stateI) { stateI = std::make_shared<typeid(*stateI)>(*this); } );
 	states_     = std::make_tuple(std::make_shared<NestedStates>(this)...);
 	statesBase_ = std::initializer_list<StateSPtr>{std::make_shared<NestedStates>(this)...}; 
 	isInit_ = true;
@@ -109,12 +103,16 @@ class StateNestedSet : public State {
     protected: static constexpr const size_t statesSize_ = sizeof...(NestedStates);
     
     protected: std::tuple < std::shared_ptr<NestedStates>... > states_;
-    protected: std::vector< StateSPtr/*, statesSize_*/       > statesBase_;
+    protected: std::vector< StateSPtr                        > statesBase_;
     protected: std::vector< double*                          > values_;
     protected: bool isInit_;
 };
 
-
+/*!@class StateNestedSetScoped
+ * @brief Extension of @ref StateNestedSet providing sub-state access based on a scoped enumeration (compile-time).
+ * @tparam EnumStateVals Scoped enumeration that defines semantic access to the values of the state array. Has to have ENUM_SIZE representing the number of enum values.
+ * @tparam NestedStates Parameter pack of the underlying substates types.
+ */
 template<typename EnumStateVals, typename... NestedStates>
 class StateNestedSetScoped : public StateNestedSet<NestedStates...> {
     
@@ -129,14 +127,10 @@ class StateNestedSetScoped : public StateNestedSet<NestedStates...> {
     
     public   : using StateNestedSet<NestedStates...>::value;
     public   : using StateNestedSet<NestedStates...>::state;
-    public   : template<EnumStateVals _i>       double& value ()       { return *this->values_[asInt(_i)]; }
-    public   : template<EnumStateVals _i> const double& value () const { return *this->values_[asInt(_i)]; }
+    //public   : template<EnumStateVals _i>       double& value ()       { return *this->values_[asInt(_i)]; }
+    //public   : template<EnumStateVals _i> const double& value () const { return *this->values_[asInt(_i)]; }
+    ///@brief Scoped access (compile-time) to the sub-states of the state object.
     public   : template<EnumStateVals _i> typename std::tuple_element<asInt(_i), std::tuple<std::shared_ptr<NestedStates>...> >::type& state () { return std::get<asInt(_i)>(this->states_); }
-    
-//     template<                         typename... NestedStates1> friend class StateNestedSet;
-//     template<typename EnumStateVals1, typename... NestedStates1> friend class StateNestedSetScoped;
-//     template<typename SubState                                 > friend class StateNestedVector;
-//     template< typename, template<typename, typename...> class, typename...> friend class StateNestedVectorScoped;
 };
 
 

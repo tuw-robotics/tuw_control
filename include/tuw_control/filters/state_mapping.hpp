@@ -39,13 +39,8 @@
 namespace tuw {
 
 /*!@class StateMapping
- *
- * 
+ * @brief Interface for a filter that performs a (nonlinear) mapping from the input %state to an output %state.
  */
-
-template <typename InputStateType, typename OutputStateType, typename ParamType>
-class StateMapping;
-
 template <typename InputStateType, typename OutputStateType, typename ParamType>
 class StateMapping {
     
@@ -58,12 +53,22 @@ class StateMapping {
     public   : StateMapping& operator=(StateMapping&&)      = default;
     
     //pure virtual functions
-    public   : virtual std::shared_ptr<OutputStateType>& compute ( std::shared_ptr<InputStateType>& _x ) = 0;
-    public   : virtual std::shared_ptr<OutputStateType>& output  () { return output_; }
-    public   : virtual void reloadParam ()  = 0;
+    /** @brief Computes the output %state after a (nonlinear) %state mapping.
+     *  @param _x Input %state
+     *  @param _t Actual temporal evaluation point
+     *  @return Output %state
+     */
+    public   : virtual std::shared_ptr<OutputStateType>& compute ( std::shared_ptr<InputStateType>& _x, const double& _t  ) = 0;
+    /** @brief Reloads class parameters.
+     *  To be called when parameters that influence the class variables are changed.
+     */
+    public   : virtual void reloadParam                          ()  = 0;
+    /** @brief Access to the last computed output %state.
+     */
+    public   : std::shared_ptr<OutputStateType>&         output  () { return output_; }
     
-    protected: std::shared_ptr<ParamType> params_;
-    protected: std::shared_ptr<OutputStateType> output_;
+    protected: std::shared_ptr<ParamType>       params_;///< Pointer to the class parameters object
+    protected: std::shared_ptr<OutputStateType> output_;///< Last computet output %state
 };
 
 

@@ -42,12 +42,10 @@
 
 namespace tuw {
 
-/*!@class StateNestedVector
- * 
- * @todo cout the the state variables (horizontally)
- * 
+/*!@class StateNestedSet
+ * @brief Implementation of @ref State being formed by a vector (variable size) of sub-states.
+ * @tparam SubState Type of state defining the sub-states of the object.
  */
-
 template<typename SubState>
 class StateNestedVector;
 template<typename SubState>
@@ -58,8 +56,6 @@ template<typename SubState>
 using StateNestedVectorUPtr      = std::unique_ptr< StateNestedVector<SubState> >;
 template<typename SubState>
 using StateNestedVectorConstUPtr = std::unique_ptr< StateNestedVector<SubState> const>;
-
-
 template<typename SubState>
 class StateNestedVector : public State {
     public   : StateNestedVector           (State* _parent) : State(_parent) { this->callRootUpdateSize (); }
@@ -72,13 +68,11 @@ class StateNestedVector : public State {
     
     
     public   : virtual StateSPtr              cloneState       () const override { return std::make_shared< StateNestedVector<SubState> >(*this); }
-    public   : size_t        stateSize  ()                        const override { return statesSize_;     }
-    public   : size_t        valueSize  ()                        const override { return valueSize_;      }
-    public   : double&       value      ( const std::size_t& _i )       override { return *values_[_i];    }
-    public   : const double& value      ( const std::size_t& _i ) const override { return *values_[_i];    }
-    public   : StateSPtr&    state      ( const std::size_t& _i )       override { return statesBase_[_i]; }
-    public   : std::shared_ptr<SubState>& stateScoped ( const size_t& _i )       { return this->states_[_i]; }
-    
+    public   : size_t        stateSize  ()                        const override { return statesSize_;       }
+    public   : size_t        valueSize  ()                        const override { return valueSize_;        }
+    public   : double&       value      ( const std::size_t& _i )       override { return *values_[_i];      }
+    public   : const double& value      ( const std::size_t& _i ) const override { return *values_[_i];      }
+    public   : StateSPtr&    state      ( const std::size_t& _i )       override { return statesBase_[_i];   }
     public   : void updateSize () override { 
 	valueSize_ = 0; 
 	for(auto& stateI : states_){ stateI->updateSize(); valueSize_ += stateI->valueSize(); } 
@@ -93,20 +87,19 @@ class StateNestedVector : public State {
     public   : void resize ( const size_t& _i ) override { 
 	statesSize_ = _i;
 	statesBase_.resize(_i); 
-	if( _i < states_.size() ) { 
-	    states_.resize(_i); 
-	} else { 
-	    for(size_t i = states_.size(); i < _i; ++i) { states_.emplace_back( std::make_shared< SubState >(this) ); statesBase_[i] = states_[i]; } 
-	} 
+	if( _i < states_.size() ) { states_.resize(_i); } 
+	else                      { for(size_t i = states_.size(); i < _i; ++i) { states_.emplace_back( std::make_shared< SubState >(this) ); statesBase_[i] = states_[i]; } } 
 	this->callRootUpdateSize ();
     }
+    ///@brief returns pointer to the extended class of the sub-state at index _i.
+    public   : std::shared_ptr<SubState>& stateScoped ( const size_t& _i ) { return this->states_[_i]; }
     
     protected: size_t valueSize_;
     protected: size_t statesSize_ ;
     
-    protected: std::vector< std::shared_ptr<SubState>        > states_;
-    protected: std::vector< StateSPtr/*, statesSize_*/       > statesBase_;
-    protected: std::vector< double*                          > values_;
+    protected: std::vector< std::shared_ptr<SubState> > states_;
+    protected: std::vector< StateSPtr                 > statesBase_;
+    protected: std::vector< double*                   > values_;
 };
 
 

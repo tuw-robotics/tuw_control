@@ -39,7 +39,6 @@
 #include <utility> 
 
 
-
 namespace tuw {
 
 template <typename T> inline constexpr
@@ -70,11 +69,6 @@ constexpr auto asInt(Enumeration const value) -> typename std::underlying_type<E
     return static_cast<typename std::underlying_type<Enumeration>::type>(value);
 }
 
-// template<typename T, typename... Args>
-// std::unique_ptr<T> make_unique(Args&&... args) {
-//     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-// }
-
 template<std::intmax_t Num, std::intmax_t Denom = 1 >
 struct RatioEval { 
     static constexpr const std::intmax_t num   = Num; 
@@ -96,7 +90,8 @@ inline typename std::enable_if<II < sizeof...(Tp), void>::type
   }
 }
 
+template <class T, class    Tuple>          struct Get_Tuple_Index;
+template <class T,          class... Types> struct Get_Tuple_Index<T, std::tuple<T, Types...>> { static const std::size_t value = 0; };
+template <class T, class U, class... Types> struct Get_Tuple_Index<T, std::tuple<U, Types...>> { static const std::size_t value = 1 + Get_Tuple_Index<T, std::tuple<Types...>>::value; };
+
 #endif // UTILS_H
-
-
-

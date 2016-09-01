@@ -43,11 +43,10 @@
 namespace tuw {
 
 /*!@class StateNestedArray
- * 
- * @todo cout the the state variables (horizontally)
- * 
+ * @brief Implementation of @ref State being formed by an array of substates.
+ * @tparam SubState Type of state defining the sub-states of the object.
+ * @tparam N Size of sub-states.
  */
-
 template<typename SubState, size_t N>
 class StateNestedArray;
 template<typename SubState, size_t N>
@@ -58,8 +57,6 @@ template<typename SubState, size_t N>
 using StateNestedArrayUPtr      = std::unique_ptr< StateNestedArray<SubState, N> >;
 template<typename SubState, size_t N>
 using StateNestedArrayConstUPtr = std::unique_ptr< StateNestedArray<SubState, N> const>;
-
-
 template<typename SubState, size_t N>
 class StateNestedArray : public State {
     public   : StateNestedArray           (State* _parent) : State(_parent) { 
@@ -100,11 +97,16 @@ class StateNestedArray : public State {
     protected: size_t valueSize_;
     protected: size_t statesSize_ ;
     
-    protected: std::array< std::shared_ptr<SubState>, N     > states_;
-    protected: std::array< StateSPtr,                 N     > statesBase_;
-    protected: std::vector< double*                         > values_;
+    protected: std::array< std::shared_ptr<SubState>, N> states_;
+    protected: std::array< StateSPtr,                 N> statesBase_;
+    protected: std::vector< double*                    > values_;
 };
 
+/*!@class StateNestedArrayScoped
+ * @brief Extension of @ref StateNestedArray providing sub-state access based on a scoped enumeration (compile-time).
+ * @tparam EnumStateVals Scoped enumeration that defines semantic access to the values of the state array. Has to have ENUM_SIZE representing the number of enum values.
+ * @tparam SubState Type of state defining the sub-states of the object.
+ */
 template<typename EnumStateVals, typename SubState>
 class StateNestedArrayScoped : public StateNestedArray<SubState, asInt(EnumStateVals::ENUM_SIZE)> {
     
@@ -119,9 +121,11 @@ class StateNestedArrayScoped : public StateNestedArray<SubState, asInt(EnumState
     
     //implementation of virtual functions
     public   : virtual StateSPtr                                                cloneState    () const  override { return std::make_shared< StateNestedArrayScoped<EnumStateVals, SubState> >(*this); }
+    ///@brief Clone-to-this-class-ptr function.
     public   : std::shared_ptr<StateNestedArrayScoped<EnumStateVals, SubState>> cloneStateExt () const           { return std::make_shared< StateNestedArrayScoped<EnumStateVals, SubState> >(*this); }
-    public   : template<EnumStateVals _i>       double& value ()       { return StateNestedArray<SubState, asInt(EnumStateVals::ENUM_SIZE)>::value(asInt(_i)); }
-    public   : template<EnumStateVals _i> const double& value () const { return StateNestedArray<SubState, asInt(EnumStateVals::ENUM_SIZE)>::value(asInt(_i)); }
+    //public   : template<EnumStateVals _i>       double& value ()       { return StateNestedArray<SubState, asInt(EnumStateVals::ENUM_SIZE)>::value(asInt(_i)); }
+    //public   : template<EnumStateVals _i> const double& value () const { return StateNestedArray<SubState, asInt(EnumStateVals::ENUM_SIZE)>::value(asInt(_i)); }
+    ///@brief Scoped access (compile-time) to the sub-states of the state object.
     public   : template<EnumStateVals _i> typename std::shared_ptr<SubState>& state () { return this->states_[asInt(_i)]; }
     public   : using StateNestedArray<SubState, asInt(EnumStateVals::ENUM_SIZE)>::value;
     public   : using StateNestedArray<SubState, asInt(EnumStateVals::ENUM_SIZE)>::state;
@@ -129,7 +133,6 @@ class StateNestedArrayScoped : public StateNestedArray<SubState, asInt(EnumState
     template<                         typename... NestedStates1> friend class StateNestedSet;
     template<typename EnumStateVals1, typename... NestedStates1> friend class StateNestedSetScoped;
     template<typename SubState1                                > friend class StateNestedVector;
-    
 };
 
 }

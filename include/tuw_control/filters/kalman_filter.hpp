@@ -41,6 +41,9 @@
 
 namespace tuw {
 
+/*!@class KalmanFilter
+ * @brief Minimal cass implementing the Extended Kalman Filter algorithm
+ */
 template<typename NumType, int XDim>
 class KalmanFilter {
     
@@ -72,11 +75,6 @@ class KalmanFilter {
     public   : void predict( const Eigen::Matrix<NumType, XDim, 1   >& _f, 
 	                     const Eigen::Matrix<NumType, XDim, XDim>& _Phi, 
 			     const Eigen::Matrix<NumType, XDim, XDim>& _Q ) {
-// 	std::cout<<"x_="<<std::endl<<x_<<std::endl<<std::endl;
-// 	std::cout<<"_f="<<std::endl<<_f<<std::endl<<std::endl;
-// 	std::cout<<"Sigma_="<<std::endl<<Sigma_<<std::endl<<std::endl;
-// 	std::cout<<"_Phi="<<std::endl<<_Phi<<std::endl<<std::endl;
-// 	std::cout<<"_Q="<<std::endl<<_Q<<std::endl<<std::endl;
 	x_     = _f;
 	Sigma_ = _Phi * Sigma_ * _Phi.transpose() + _Q;
     }
@@ -94,11 +92,6 @@ class KalmanFilter {
 	
 	Eigen::Matrix<NumType, UpdateDim, UpdateDim> S = _C * Sigma_ * _C.transpose() + _R;
 	Eigen::Matrix<NumType, XDim     , UpdateDim> K = Sigma_ * _C.transpose() * S.inverse();
-// 	std::cout<<"Sigma_="<<std::endl<<Sigma_<<std::endl<<std::endl;
-// 	std::cout<<"_C="<<std::endl<<_C<<std::endl<<std::endl;
-// 	std::cout<<"K="<<std::endl<<K<<std::endl<<std::endl;
-// 	std::cout<<"_hPred="<<std::endl<<_hPred<<std::endl<<std::endl;
-// 	std::cout<<"_hObs="<<std::endl<<_hObs<<std::endl<<std::endl;
 	Eigen::Matrix<NumType, UpdateDim, 1> deltaH = _hObs - _hPred;
 	for(int i = 0; i < deltaH.rows(); ++i) { if( deltaH(i) != deltaH(i) ){ deltaH(i) = 0; } }
 	x_     += K * ( deltaH/*_hObs - _hPred*/ );
@@ -115,6 +108,9 @@ class KalmanFilter {
     protected: Eigen::Matrix<NumType, XDim, XDim> Sigma_;///< %State covariance matrix
 };
 
+/*!@class KalmanFilterPredictInterface
+ * @brief Interface for simplified manipulation of specialized (Extended) Kalman Filter prediction part.
+ */
 template<typename NumType, int XDim, size_t UDim, typename ParamType>
 class KalmanFilterPredictInterface : public KalmanFilter<NumType, XDim> {
     
@@ -204,6 +200,9 @@ class KalmanFilterPredictInterface : public KalmanFilter<NumType, XDim> {
     protected: virtual void computeQ        () = 0;
 };
 
+/*!@class KalmanFilterUpdateInterface
+ * @brief Interface for simplified manipulation of specialized (Extended) Kalman Filter updates. To be used with @ref KalmanFilterPredictInterface.
+ */
 template<typename KFPredType, int HDim>
 class KalmanFilterUpdateInterface {
     //special class member functions
@@ -236,6 +235,10 @@ class KalmanFilterUpdateInterface {
     template<typename KFPredTypeI, typename...  KFUpdateType > friend class KalmanFilterInterface;
 };
 
+/*!@class KalmanFilterInterface
+ * @brief Interface for simplified manipulation of specialized (Extended) Kalman Filter implementations. 
+ * As building blocks, a @ref KalmanFilterPredictInterface and multilple @ref KalmanFilterUpdateInterface have to be defined.
+ */
 template<typename KFPredType, typename...  KFUpdateType >
 class KalmanFilterInterface : public KFPredType {
     //special class member functions
@@ -290,4 +293,4 @@ class KalmanFilterInterface : public KFPredType {
 
 }
 
-#endif // KALMAN_FILTER_BASE_H
+#endif // KALMAN_FILTER_H

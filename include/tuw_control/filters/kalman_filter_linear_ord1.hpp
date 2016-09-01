@@ -36,9 +36,12 @@
 
 namespace tuw {
 
+/*!@class KalmanFilterLinOrd1
+ * @brief Partial implementation of @ref KalmanFilterPredictInterface for 1st order multivariate (linear) integrator systems. 
+ * The state variables are expected to be ordered in a 2 * XDim vector where the first XDim variables are the order 0 %states and the 2nd XDim variables are their corresponding derivatives.
+ */
 template<typename NumType, size_t XDim, size_t UDim, typename ParamType>
 class KalmanFilterLinOrd1 : public KalmanFilterPredictInterface<NumType, 2 * XDim, UDim, ParamType> {
-    public: static constexpr const size_t stateVarDim = XDim;
     public: KalmanFilterLinOrd1(ParamType& _params) : KalmanFilterPredictInterface<NumType, 2 * XDim, UDim, ParamType>(_params), Ta_(0), recalculate_(false) {
 	this->Phi_  .setZero(); for ( size_t i = 0; i < 2 * XDim; ++i ) { this->Phi_(i,i) = 1; }
 	this->f_    .setZero();
@@ -67,8 +70,12 @@ class KalmanFilterLinOrd1 : public KalmanFilterPredictInterface<NumType, 2 * XDi
 	    recalculateQ_ = false;
 	}
     }
+    /** @brief Sets a noise variance parameter.
+     *  @param _i Index of the state correspoing variance
+     *  @param _val Variance value
+     */
     public   : void setNN(const size_t& _i, const double& _val){ nn_(_i) = _val; recalculateQ_ = true; }
-    private  : Eigen::Matrix<NumType, XDim, 1> nn_;
+    private  : Eigen::Matrix<NumType, XDim, 1> nn_;///< container storing state noise variance values.
     private  : double Ta_, TaSqr_, TaCub_;
     private  : bool   recalculate_;
     private  : bool   recalculateQ_;

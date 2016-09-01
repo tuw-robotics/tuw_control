@@ -38,20 +38,21 @@
 
 namespace tuw {
 
-    
+/*! @class StateSimTemplate 
+ *  @brief Templated partial implementation of @ref StateSim.
+ *  @tparam StateSize Size of the full state.
+ *  @tparam StateNmSize Size of the numerically-evaluated state.
+ */ 
 template<std::size_t StateSize, std::size_t StateNmSize>
 class StateSimTemplate;
-
 template<std::size_t StateSize, std::size_t StateNmSize> 
 using StateSimTemplateSPtr      = std::shared_ptr<StateSimTemplate<StateSize, StateNmSize> >;
 template<std::size_t StateSize, std::size_t StateNmSize>
 using StateSimTemplateConstSPtr = std::shared_ptr<StateSimTemplate<StateSize, StateNmSize> const>;
-
 template<std::size_t StateSize, std::size_t StateNmSize>
 using StateSimTemplateUPtr      = std::unique_ptr<StateSimTemplate<StateSize, StateNmSize> >;
 template<std::size_t StateSize, std::size_t StateNmSize>
 using StateSimTemplateConstUPtr = std::unique_ptr<StateSimTemplate<StateSize, StateNmSize> const>;
-    
 template<std::size_t StateSize, std::size_t StateNmSize>
 class StateSimTemplate : public StateSim {
     

@@ -55,9 +55,9 @@ namespace RungeKutta {
     /** @brief Templetized generic discretization function.
      *  
      *  Performs variants of the systematic Runge-Kutta methods.
-     *  @param StateNmSize Size of the numerically-computed state.
-     *  @param RKOrder Order of the Runge-Kutta method.
-     *  @param RKCoeff Butcher tableau coefficients of the method. The specification order is c2..cn, b1..bn, a21 a31 a32 a41 a42 a43...ann-1
+     *  @tparam StateNmSize Size of the numerically-computed state.
+     *  @tparam RKOrder Order of the Runge-Kutta method.
+     *  @tparam RKCoeff Butcher tableau coefficients of the method. The specification order is c2..cn, b1..bn, a21 a31 a32 a41 a42 a43...ann-1
      *  @param _stateSim Entire simulated state. The function starts from its input values and modifies it according to the discretization step.
      *  @param _arc      Evaluation point of the closed-form functions/state.
      */
