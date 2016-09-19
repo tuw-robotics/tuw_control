@@ -92,11 +92,11 @@ class StateFeedback1Output : public StateFeedback<InputStateType, InputStateType
 	if ( kInt_ == 0 ) { Integrator::reset(0); t_ = 0; }
     }
     
-    protected: size_t outputOrder_;         //< Order of the output variable in the defined state
-    protected: double intSaturateVal_;      //< Box constraint. When output outside of it, error integration is not performed.
-    protected: double kInt_;                //< gain of the integrated error.
-    protected: Eigen::VectorXd kX_;         //< state error gains.
-    protected: bool   reloadParamInternal_; //<triggers base class reconfiguration. To be called on any parameter change.
+    protected: size_t outputOrder_;         ///< Order of the output variable in the defined state
+    protected: double intSaturateVal_;      ///< Box constraint. When output outside of it, error integration is not performed
+    protected: double kInt_;                ///< gain of the integrated error
+    protected: Eigen::VectorXd kX_;         ///< %State error gains
+    protected: bool   reloadParamInternal_; ///< Triggers base class reconfiguration. To be set to true on any parameter change
     
     private  : size_t desSize_;
     private  : size_t xDiffSize_;
