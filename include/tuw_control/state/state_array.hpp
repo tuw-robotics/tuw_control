@@ -45,6 +45,7 @@ namespace tuw {
 
 /*!@class StateArray
  * @brief Implementation of @ref State for a fixed size array of double values.
+ * @tparam N Number of values contained in the stateArray
  */
 template<std::size_t N> 
 class StateArray;

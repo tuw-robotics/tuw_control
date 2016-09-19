@@ -43,6 +43,8 @@ namespace tuw {
 
 /*!@class KalmanFilter
  * @brief Minimal cass implementing the Extended Kalman Filter algorithm
+ * @tparam NumType Numerical type of the underlying variables (matrices, vectors)
+ * @tparam XDim    Dimension of the state vector. Value -1 relates to dynamic size state vector
  */
 template<typename NumType, int XDim>
 class KalmanFilter {
@@ -110,6 +112,9 @@ class KalmanFilter {
 
 /*!@class KalmanFilterPredictInterface
  * @brief Interface for simplified manipulation of specialized (Extended) Kalman Filter prediction part.
+ * @tparam NumType Numerical type of the underlying variables (matrices, vectors)
+ * @tparam XDim    Dimension of the state vector. Value -1 relates to dynamic size state vector
+ * @tparam UDim    Dimension of the input vector. Value 0 relates to an input-less filter
  */
 template<typename NumType, int XDim, size_t UDim, typename ParamType>
 class KalmanFilterPredictInterface : public KalmanFilter<NumType, XDim> {
@@ -202,6 +207,8 @@ class KalmanFilterPredictInterface : public KalmanFilter<NumType, XDim> {
 
 /*!@class KalmanFilterUpdateInterface
  * @brief Interface for simplified manipulation of specialized (Extended) Kalman Filter updates. To be used with @ref KalmanFilterPredictInterface.
+ * @tparam KFPredType Kalman prediction class (extended from @ref KalmanFilterPredictInterface)
+ * @tparam HDim       Dimension of the measurement vector. Value -1 relates to dynamic size measurement vector
  */
 template<typename KFPredType, int HDim>
 class KalmanFilterUpdateInterface {
@@ -237,6 +244,8 @@ class KalmanFilterUpdateInterface {
 
 /*!@class KalmanFilterInterface
  * @brief Interface for simplified manipulation of specialized (Extended) Kalman Filter implementations. 
+ * @tparam KFPredType   Kalman prediction class (extended from @ref KalmanFilterPredictInterface)
+ * @tparam KFUpdateType Parameter pack of implemented @ref KalmanFilterUpdateInterface classes that are used to update the filter
  * As building blocks, a @ref KalmanFilterPredictInterface and multilple @ref KalmanFilterUpdateInterface have to be defined.
  */
 template<typename KFPredType, typename...  KFUpdateType >

@@ -161,7 +161,7 @@ class State {
     }
     
     
-    protected: void          callRootUpdateSize () { if(parent_){ parent_->callRootUpdateSize(); } else { updateSize(); } }///< Calls (if present) the parent @ref updateSize procedure. Otherwise performs root @ref updateSize
+    protected: void callRootUpdateSize () { if(parent_){ parent_->callRootUpdateSize(); } else { updateSize(); } }///< Calls (if present) the parent @ref updateSize procedure. Otherwise performs root @ref updateSize
     protected: State* parent_;///< Pointer to the parent @ref State structure
 };
 

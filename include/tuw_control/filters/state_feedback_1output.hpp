@@ -43,6 +43,8 @@ namespace tuw {
 
 /*!@class StateFeedback1Output
  * @brief Partial implementation of the @ref StateFeedback interface for 1-dimensional output linear state-feedback filter types.
+ * @tparam InputStateType Class defining the current state of the afferent system
+ * @tparam ParamType      Class defining the filter parameters
  * The class represents a generic state-feedback filter (with integrator term) for 1-dimensional output states:
  * 
  * Given an observed state vector \f$ \mathbf{x_{obs}} = [xo_0, xo_1, xo_2, ..., xo_n]^T \f$, a desired state vector \f$ \mathbf{x_{des}} = [xd_0, xd_1, xd_2,..., xd_m]^T \f$, and a specified output order \f$ 0 \leq ord_u \leq n+1 \f$ (@ref outputOrder_), the filter computes \f$u\f$ as follows:

@@ -40,6 +40,9 @@ namespace tuw {
 
 /*!@class StateMapping
  * @brief Interface for a filter that performs a (nonlinear) mapping from the input %state to an output %state.
+ * @tparam InputStateType  Class defining the current state of the afferent system
+ * @tparam OutputStateType Class defining the computed state of the filter
+ * @tparam ParamType       Class defining the filter parameters
  */
 template <typename InputStateType, typename OutputStateType, typename ParamType>
 class StateMapping {

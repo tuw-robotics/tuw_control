@@ -42,6 +42,10 @@ namespace tuw {
 
 /*!@class ParamFuncs2State
  * @brief Interface for a filter that outputs a desired %state given an observed %state and a parametric functions structure.
+ * @tparam InputStateType Class defining the current (observed) state of the afferent system
+ * @tparam ParamFuncsType Class defining the parametric functions structure to be evaluated (e.g. multivariate splines)
+ * @tparam OutputStateType Class defining the computed state of the filter
+ * @tparam ParamType       Class defining the filter parameters
  */
 template <typename InputStateType, typename ParamFuncsType, typename OutputStateType, typename ParamType>
 class ParamFuncs2State {

@@ -42,6 +42,10 @@ namespace tuw {
 
 /*!@class StateFeedback
  * @brief Interface for a filter that outputs a desired %state given an observed %state and a desired %state.
+ * @tparam InputObsStateType Class defining the current observed state of the afferent system
+ * @tparam InputDesStateType Class defining the current desired state of the afferent system
+ * @tparam OutputStateType Class defining the computed state of the filter
+ * @tparam ParamType       Class defining the filter parameters
  */
 template <typename InputObsStateType, typename InputDesStateType, typename OutputStateType, typename ParamType>
 class StateFeedback {
