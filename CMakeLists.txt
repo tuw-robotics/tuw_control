@@ -54,7 +54,8 @@ catkin_package(
   
   LIBRARIES 
   tuw_control_param_func_spline
-  tuw_control_filters
+  tuw_trajectory_evaluator
+  tuw_trajectory_simulator
   
   DEPENDS 
   OpenCV
