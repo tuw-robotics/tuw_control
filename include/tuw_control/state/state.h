@@ -159,7 +159,17 @@ class State {
 	for(size_t i = 0; i < _ans.valueSize(); ++i) { _ans.value(i) = _lhs.value(i) - _rhs.value(i); }
 	return _ans;
     }
-    
+    /** @brief prints the state value to an output stream.
+     *  @param os 
+     *  @param o 
+     *  @return stream
+     */
+    friend std::ostream &operator << ( std::ostream &os, const State &o ) {
+        for(size_t i = 0; i < o.valueSize(); i++){
+          os << (i==0?"[ ":", ") << o.value(i); 
+        }
+        return os << "]";
+    };
     
     protected: void callRootUpdateSize () { if(parent_){ parent_->callRootUpdateSize(); } else { updateSize(); } }///< Calls (if present) the parent @ref updateSize procedure. Otherwise performs root @ref updateSize
     protected: State* parent_;///< Pointer to the parent @ref State structure
