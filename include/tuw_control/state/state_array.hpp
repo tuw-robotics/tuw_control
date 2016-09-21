@@ -79,7 +79,7 @@ class StateArray : public State {
     public   :       std::array<double, N>& valuesArray ()       { return values_; }
     ///@brief Const reference to the variables array.
     public   : const std::array<double, N>& valuesArray () const { return values_; }
-    private  : std::array<double, N> values_;///< State array container
+    protected: std::array<double, N> values_;///< State array container
 };
 
 /*!@class StateArrayScoped
