@@ -106,6 +106,7 @@ template <class T, class U, class... Types> struct Get_Tuple_Index<T, std::tuple
 };
 
 #if __cplusplus <= 201103L
+/// Helper function needed to upgrade c++ 2011 
 namespace std {
 template<typename T, typename... Args>
 std::unique_ptr<T> make_unique(Args&&... args)
@@ -138,5 +139,5 @@ T& get(std::tuple<Args...>& t)
     return std::get<get_number_of_element_from_tuple_by_type_impl<T, 0, Args...>::value>(t);
 }
 };
-#endif
+#endif // __cplusplus <= 201103L
 #endif // UTILS_H

@@ -297,7 +297,6 @@ class KalmanFilterInterface : public KFPredType {
 	updI.R_.resize(_zObs.rows(),    _zObs.rows() ); 
 	update<KFUpdateTypeI, 0>(_zObs);
     }
-    get_element_by_type
     private  : std::tuple< KFUpdateType... > updaters_;///< Container
 };
 

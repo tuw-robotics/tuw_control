@@ -75,18 +75,6 @@ public:
     OneWheelType &wheel ( size_t i ) {
         return *states_[i];
     }
-    const OneWheelType& operator[] ( size_t i ) const {
-        return *states_[i];
-    }
-    OneWheelType& operator[] ( size_t i ) {
-        return *states_[i];
-    }
-    const OneWheelType& at ( size_t i ) const {
-        return *states_[i];
-    }
-    OneWheelType& at ( size_t i ) {
-        return *states_[i];
-    }
 };
 
 using StateWhInpPtrType = std::shared_ptr<StateWhInpType>;
