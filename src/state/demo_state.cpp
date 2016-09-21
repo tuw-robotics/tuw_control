@@ -40,46 +40,18 @@
 
 using namespace tuw;
 
-struct I2WS_Wheel_State {
-    double steering;
-    double revolute;
-    void fromState ( const StateSPtr state ) {
-        steering = state->value ( 0 );
-        revolute = state->value ( 1 );
-    }
-    friend std::ostream &operator << ( std::ostream &os, const I2WS_Wheel_State &o ) {
-        os << "[" << o.steering <<  ", " << o.revolute << "]";
-        return os;
-    };
-};
-struct I2WS_Wheels_State {
-    I2WS_Wheel_State left;
-    I2WS_Wheel_State right;
-    void fromState ( const StateSPtr state ) {
-#ifdef true
-        left. fromState ( state->state ( 0 ) );
-        right.fromState ( state->state ( 1 ) );
-#else
-        left. steering = state->value ( 0 );
-        left. revolute = state->value ( 1 );
-        right.steering = state->value ( 2 );
-        right.revolute = state->value ( 3 );
-#endif
-    }
-    friend std::ostream &operator << ( std::ostream &os, const I2WS_Wheels_State &o ) {
-        os << "[" << o.left <<  ", " << o.right << "]";
-        return os;
-    };
-};
-
 ///@brief Enum defining the semantics of the Iws wheel state.
 enum class StateWheel {
     Steer, Revol, ENUM_SIZE
 };
-///@brief State definition for the wheels input. It is thus a vector of @ref StateWheel sub-states.
+///@brief OneWheelType with access via varialbe and enums
 class OneWheelType : public StateArrayScoped<StateWheel> {
 public:
     using StateArrayScoped::StateArrayScoped;
+    OneWheelType(double steering, double revolute)
+    : StateArrayScoped<StateWheel>(){
+      steer() = steering, revol() = revolute;
+    }
     const double &steer() const {
         return values_[0];
     }
@@ -116,20 +88,16 @@ public:
     }
 };
 
-
-
-//using StateWhInpType   = StateNestedVector<StateArrayScoped<StateWheel>>;
 using StateWhInpPtrType = std::shared_ptr<StateWhInpType>;
-
 
 int main ( int argc, char **argv ) {
     std::cout << "iws utils test" << std::endl;
     StateWhInpPtrType tuw_i2ws_wheel_state = std::make_shared<StateWhInpType>();
     tuw_i2ws_wheel_state->resize ( 2 );
-    tuw_i2ws_wheel_state->value ( 0 ) = 10;
-    tuw_i2ws_wheel_state->value ( 1 ) = 11;
-    tuw_i2ws_wheel_state->value ( 2 ) = 12;
-    tuw_i2ws_wheel_state->value ( 3 ) = 13;
+    tuw_i2ws_wheel_state->wheel ( 0 ).steer() = 10;
+    tuw_i2ws_wheel_state->wheel ( 0 ).revol() = 11;
+    tuw_i2ws_wheel_state->wheel ( 1 ).steer() = 12;
+    tuw_i2ws_wheel_state->wheel ( 1 ).revol() = 13;
     /// printing the state
     std::cout << "tuw      : "  << *tuw_i2ws_wheel_state << std::endl;
 
@@ -139,12 +107,6 @@ int main ( int argc, char **argv ) {
     std::vector<double> values;
     tuw_i2ws_wheel_state->toSTLVec ( values );
 
-    /// to a classical struct
-    I2WS_Wheels_State classical_state;
-    classical_state.fromState ( tuw_i2ws_wheel_state );
-
-    /// printing the classical struct
-    std::cout << "classical: " << classical_state << std::endl;
     /// printing the classical struct
     std::cout << "tuw      : [" << *tuw_i2ws_wheel_state->state ( 0 ) << ", " << *tuw_i2ws_wheel_state->state ( 1 ) << "]" << std::endl;
 
