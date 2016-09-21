@@ -5,7 +5,7 @@ _version(2016 04 01)
 _set_output_paths()
 _installation_destinations() # must be befor add_subdirectory
 
-add_compile_options(-std=c++14) ## for c++ 2011
+add_compile_options(-std=c++11) ## for c++ 2011
 
 #SET(CMAKE_BUILD_TYPE Release)
 

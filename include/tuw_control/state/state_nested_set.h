@@ -89,10 +89,10 @@ class StateNestedSet : public State {
 	if(!isInit_){ return; }
 	valueSize_ = 0; 
 	size_t _i = 0;
-	for_each_tuple( states_, [this, &_i](auto& stateI) { statesBase_[_i] = stateI; _i++; stateI->updateSize(); valueSize_ += stateI->valueSize();  } );
+	for_each_tuple( states_, [this, &_i](StateSPtr stateI) { statesBase_[_i] = stateI; _i++; stateI->updateSize(); valueSize_ += stateI->valueSize();  } );
 	values_.resize(valueSize_);
 	size_t valSizeSum = 0;
-	auto funcBindVals = [this, &valSizeSum](auto& stateI){ 
+	auto funcBindVals = [this, &valSizeSum](StateSPtr stateI){ 
 	    size_t valSizeI = stateI->valueSize();
 	    for(size_t i = 0; i < valSizeI; ++i){ values_[valSizeSum + i] = &stateI->value(i);  } valSizeSum += valSizeI;
 	};
@@ -137,3 +137,8 @@ class StateNestedSetScoped : public StateNestedSet<NestedStates...> {
 }
 
 #endif // STATE_NESTED_SET_H
+
+
+
+
+

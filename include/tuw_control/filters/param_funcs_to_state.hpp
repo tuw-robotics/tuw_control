@@ -40,6 +40,24 @@
 
 namespace tuw {
 
+/*!@class ParamFuncs2StateBase
+ */
+class ParamFuncs2StateBase { 
+    
+    
+    /** @brief Reloads class parameters.
+     *  To be called when parameters that influence the class variables are changed.
+     */
+    public   : virtual void reloadParam ()  = 0;
+    /** @brief Returns wether the parametric functions evaluation has reached the end of the parametric functions domain definition.
+     *  @return True if evaluation is outside/on the border of the domain definition of the parametric functions.
+     */
+    public   : virtual bool finished    () const = 0;
+    /** @brief Resets class structures/variables.
+     */
+    public   : virtual void reset       () = 0;
+};
+
 /*!@class ParamFuncs2State
  * @brief Interface for a filter that outputs a desired %state given an observed %state and a parametric functions structure.
  * @tparam InputStateType Class defining the current (observed) state of the afferent system
@@ -48,10 +66,10 @@ namespace tuw {
  * @tparam ParamType       Class defining the filter parameters
  */
 template <typename InputStateType, typename ParamFuncsType, typename OutputStateType, typename ParamType>
-class ParamFuncs2State {
+class ParamFuncs2State: public ParamFuncs2StateBase {
     
     //special class member functions
-    public   : ParamFuncs2State           (std::shared_ptr<ParamType> _params) : params_(_params) {}
+    public   : ParamFuncs2State           (std::shared_ptr<ParamType> _params) : ParamFuncs2StateBase(), params_(_params) {}
     public   : virtual ~ParamFuncs2State  ()                        = default;
     public   : ParamFuncs2State           (const ParamFuncs2State&) = default;
     public   : ParamFuncs2State& operator=(const ParamFuncs2State&) = default;
@@ -68,17 +86,7 @@ class ParamFuncs2State {
      *  @return computed output %state
      */
     public   : virtual std::shared_ptr<OutputStateType>& compute ( std::shared_ptr<InputStateType>& _x, std::shared_ptr<ParamFuncsType>& _funcs, const double& _t ) = 0;
-    /** @brief Reloads class parameters.
-     *  To be called when parameters that influence the class variables are changed.
-     */
-    public   : virtual void reloadParam ()  = 0;
-    /** @brief Returns wether the parametric functions evaluation has reached the end of the parametric functions domain definition.
-     *  @return True if evaluation is outside/on the border of the domain definition of the parametric functions.
-     */
-    public   : virtual bool finished    () const = 0;
-    /** @brief Resets class structures/variables.
-     */
-    public   : virtual void reset       () = 0;
+   
     /** @brief Access to the last computed output %state.
      */
     public   : std::shared_ptr<OutputStateType>& output  () { return output_; }

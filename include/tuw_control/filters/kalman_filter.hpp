@@ -36,6 +36,7 @@
 #include <eigen3/Eigen/Dense>
 #include <cmath>
 #include <cfloat>
+#include <tuw_control/utils.h>
 
 #include <iostream>
 
@@ -154,7 +155,7 @@ class KalmanFilterPredictInterface : public KalmanFilter<NumType, XDim> {
      * 
      *  @see @ref precompute, @ref computePhi, @ref computef, @ref computeQ
      */
-    public   : template<int i = XDim, typename std::enable_if_t< (i >=  0) >* = nullptr> void predict ( const Eigen::Matrix<NumType, UDim, 1>& _u,  const double& _Ta   ) { 
+    public   : template<int i = XDim, typename std::enable_if< (i >=  0) >::type* = nullptr> void predict ( const Eigen::Matrix<NumType, UDim, 1>& _u,  const double& _Ta   ) { 
 	precompute(_Ta);
 	computePhi(); 
 	computef  (_u);
@@ -170,14 +171,14 @@ class KalmanFilterPredictInterface : public KalmanFilter<NumType, XDim> {
      * 
      *  @see @ref predict version for constant state vector size.
      */
-    public   : template<int i = XDim, typename std::enable_if_t< (i == -1) >* = nullptr> void predict ( const Eigen::Matrix<NumType, UDim, 1>& _u,  const double& _Ta   ) { 
+    public   : template<int i = XDim, typename std::enable_if< (i == -1) >::type* = nullptr> void predict ( const Eigen::Matrix<NumType, UDim, 1>& _u,  const double& _Ta   ) { 
 	f_    .resize( this->x_.rows(),               1 ); 
 	Phi_  .resize( this->x_.rows(), this->x_.rows() ); 
 	Q_    .resize( this->x_.rows(), this->x_.rows() ); 
 	predict<0>(_u, _Ta);
     }
     
-    public   : template<int i = UDim, typename std::enable_if_t< (i == 0) >* = nullptr> void predict ( const double& _Ta ) { 
+    public   : template<int i = UDim, typename std::enable_if< (i == 0) >::type* = nullptr> void predict ( const double& _Ta ) { 
 	static Eigen::Matrix<double, 0, 1> uEmpty_;
 	f_    .resize( this->x_.rows(),               1 ); 
 	Phi_  .resize( this->x_.rows(), this->x_.rows() ); 
@@ -270,7 +271,7 @@ class KalmanFilterInterface : public KFPredType {
      * 
      *  @see @ref KalmanFilterUpdateInterface::precompute, @ref KalmanFilterUpdateInterface::computeH, @ref KalmanFilterUpdateInterface::computeh, @ref KalmanFilterUpdateInterface::computeR
      */
-    public   : template<typename KFUpdateTypeI = typename std::tuple_element<0, std::tuple< KFUpdateType... >>::type, int i = KFUpdateTypeI::hDim, typename std::enable_if_t< (i >=  0) >* = nullptr> 
+    public   : template<typename KFUpdateTypeI = typename std::tuple_element<0, std::tuple< KFUpdateType... >>::type, int i = KFUpdateTypeI::hDim, typename std::enable_if< (i >=  0) >::type* = nullptr> 
 	       void update  ( const Eigen::Matrix<typename KFPredType::NumericalType, KFUpdateTypeI::hDim, 1>& _zObs ) { 
 	auto& updI = std::get<KFUpdateTypeI>(updaters_); 
 	updI.precompute(this);
@@ -288,7 +289,7 @@ class KalmanFilterInterface : public KFPredType {
      * 
      *  @see @ref update for constant measurement vector size
      */
-    public   : template<typename KFUpdateTypeI = typename std::tuple_element<0, std::tuple< KFUpdateType... >>::type, int i = KFUpdateTypeI::hDim, typename std::enable_if_t< (i == -1) >* = nullptr> 
+    public   : template<typename KFUpdateTypeI = typename std::tuple_element<0, std::tuple< KFUpdateType... >>::type, int i = KFUpdateTypeI::hDim, typename std::enable_if< (i == -1) >::type* = nullptr> 
 	       void update  ( const Eigen::Matrix<typename KFPredType::NumericalType, KFUpdateTypeI::hDim, 1>& _zObs ) { 
 	auto& updI = std::get<KFUpdateTypeI>(updaters_); 
 	updI.h_.resize(_zObs.rows(), 1               ); 
@@ -296,7 +297,7 @@ class KalmanFilterInterface : public KFPredType {
 	updI.R_.resize(_zObs.rows(),    _zObs.rows() ); 
 	update<KFUpdateTypeI, 0>(_zObs);
     }
-    
+    get_element_by_type
     private  : std::tuple< KFUpdateType... > updaters_;///< Container
 };
 

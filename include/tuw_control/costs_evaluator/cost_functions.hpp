@@ -258,7 +258,7 @@ class CfPowTrapSqr : public CFLatMap1Weight<Lattice, MapData> { public: CfPowTra
 
 template<typename Lattice, typename MapData, typename CostFunction>
 class CostsArrayLat : public CostsArrayLatBase<Lattice, MapData> {
-    private  : CostFuncLatMap1WeightPtr<Lattice,MapData> allocateCostFunc() override { return std::make_unique< CostFunction >(); }
+    private  : CostFuncLatMap1WeightPtr<Lattice,MapData> allocateCostFunc() override { return std::unique_ptr<CostFunction>(new CostFunction); }
 };
 
 

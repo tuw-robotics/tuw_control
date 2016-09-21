@@ -65,6 +65,7 @@ public:
         return values_[1];
     }
 };
+
 class StateWhInpType : public StateNestedVector<OneWheelType> {
 public:
     using StateNestedVector::StateNestedVector;
