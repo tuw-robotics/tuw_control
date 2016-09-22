@@ -128,9 +128,9 @@ class State;
 using StateSPtr      = std::shared_ptr<State>;
 using StateConstSPtr = std::shared_ptr<State const>;
 using StateUPtr      = std::unique_ptr<State>;
-using StateConstUPtr = std::unique_ptr<State const>;
+using StateConstUPtr = std::unique_ptr<State const>;/*
 using StateVectorSPtr     = std::shared_ptr<std::vector<State   > >;
-using StateSPtrVectorSPtr = std::shared_ptr<std::vector<StateSPtr> >;
+using StateSPtrVectorSPtr = std::shared_ptr<std::vector<StateSPtr> >;*/
 class State {
     
     //special class member functions
