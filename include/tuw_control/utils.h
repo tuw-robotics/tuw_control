@@ -39,6 +39,7 @@
 #include <utility> 
 
 
+
 namespace tuw {
 
 template <typename T> inline constexpr
@@ -56,14 +57,23 @@ int signum(T x) {
     return signum(x, std::is_signed<T>());
 }
 
-template <typename T> inline constexpr
+#if __cplusplus <= 201103L
+template <typename T> inline 
 T normalizeRad ( T _x ) {
-    constexpr const double TwoPi = 2 * M_PI;
-    _x = fmod( _x        , TwoPi );
-    _x = fmod( _x + TwoPi, TwoPi );
-    if( _x > M_PI ){ _x -= TwoPi; }
+    while ( _x > + M_PI ) _x -= ( 2 * M_PI );
+    while ( _x < - M_PI ) _x += ( 2 * M_PI );
     return _x;
 }
+#else
+template <typename T> inline constexpr
+T normalizeRad ( T _x ) {
+    _x = fmod( _x           , 2 * M_PI );
+    _x = fmod( _x + 2 * M_PI, 2 * M_PI );
+    if( _x > M_PI ){ _x -= (2 * M_PI); }
+    return _x;
+}
+#endif
+
 template <typename Enumeration>
 constexpr auto asInt(Enumeration const value) -> typename std::underlying_type<Enumeration>::type {
     return static_cast<typename std::underlying_type<Enumeration>::type>(value);
@@ -88,10 +98,46 @@ inline typename std::enable_if<II < sizeof...(Tp), void>::type
     f(std::get<II>(t));
     for_each_tuple<II + 1, FuncT, Tp...>(t, f);
   }
-}
 
 template <class T, class    Tuple>          struct Get_Tuple_Index;
 template <class T,          class... Types> struct Get_Tuple_Index<T, std::tuple<T, Types...>> { static const std::size_t value = 0; };
 template <class T, class U, class... Types> struct Get_Tuple_Index<T, std::tuple<U, Types...>> { static const std::size_t value = 1 + Get_Tuple_Index<T, std::tuple<Types...>>::value; };
 
+};
+
+#if __cplusplus <= 201103L
+/// Helper function needed to upgrade c++ 2011 
+namespace std {
+template<typename T, typename... Args>
+std::unique_ptr<T> make_unique(Args&&... args)
+{
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
+namespace {
+template <class T, std::size_t N, class... Args>
+struct get_number_of_element_from_tuple_by_type_impl
+{
+    static constexpr auto value = N;
+};
+
+template <class T, std::size_t N, class... Args>
+struct get_number_of_element_from_tuple_by_type_impl<T, N, T, Args...>
+{
+    static constexpr auto value = N;
+};
+
+template <class T, std::size_t N, class U, class... Args>
+struct get_number_of_element_from_tuple_by_type_impl<T, N, U, Args...>
+{
+    static constexpr auto value = get_number_of_element_from_tuple_by_type_impl<T, N + 1, Args...>::value;
+};
+};
+
+template <class T, class... Args>
+T& get(std::tuple<Args...>& t)
+{
+    return std::get<get_number_of_element_from_tuple_by_type_impl<T, 0, Args...>::value>(t);
+}
+};
+#endif // __cplusplus <= 201103L
 #endif // UTILS_H

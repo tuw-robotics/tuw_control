@@ -100,6 +100,10 @@ class StateNestedVector : public State {
     protected: std::vector< std::shared_ptr<SubState> > states_;
     protected: std::vector< StateSPtr                 > statesBase_;
     protected: std::vector< double*                   > values_;
+    public   : const SubState& operator[] ( size_t i )                  const { return *states_[i]; }
+    public   : SubState& operator[] ( size_t i )                              { return *states_[i]; }
+    public   : const std::shared_ptr<SubState>& at( size_t i )          const { return  states_[i]; }
+    public   : std::shared_ptr<SubState>& at ( size_t i )                     { return  states_[i]; }
 };
 
 
