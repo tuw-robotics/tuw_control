@@ -247,8 +247,8 @@ public:
 	trajSimGrade->trajSim()->stateSim()->setDiscrType( RungeKutta::DiscretizationType::HEUN );
 	
 	ParamFuncs* funcs  = trajSimGrade->trajSim()->stateSim()->paramFuncs();
-	vector< vector<double> > funcKnotsLattice(1, vector<double>(funcs->funcsArcSize(0),0) ); 
-	for(size_t i = 0; i < funcKnotsLattice[0].size();++i){ funcKnotsLattice[0][i] = funcs->funcsArc(0,i); }
+	vector< vector<double*> > funcKnotsLattice(1, vector<double*>(funcs->funcsArcSize(0),0) ); 
+	for(size_t i = 0; i < funcKnotsLattice[0].size();++i){ funcKnotsLattice[0][i] = &funcs->funcsArc(0,i); }
 	trajSimGrade->trajSim()->setUserDefLattice(funcKnotsLattice);    
 	
 	trajSimGrade->setSimMode(TrajectorySimulator::SimMode::PRECALC);
@@ -278,7 +278,7 @@ public:
 	trajSimGrade->setSimMode(TrajectorySimulator::SimMode::ONLINE);
 	shared_ptr< vector<double> > ansOnline  = make_shared< vector<double> >();
 	
-	for(size_t i = 0; i < funcKnotsLattice[0].size();++i){ funcKnotsLattice[0][i] = funcs->funcsArc(0,i); } trajSimGrade->trajSim()->setUserDefLattice(funcKnotsLattice);  
+	for(size_t i = 0; i < funcKnotsLattice[0].size();++i){ funcKnotsLattice[0][i] = &funcs->funcsArc(0,i); } trajSimGrade->trajSim()->setUserDefLattice(funcKnotsLattice);  
 	trajSimGrade->trajSim()->dt() = _dt; 
 	trajSimGrade->trajSim()->ds() = -1;
 	trajSimGrade->evaluateTrajectory();
@@ -288,7 +288,7 @@ public:
 	for(size_t i = 0; i < ansOnline->size(); ++i) { EXPECT_TRUE( ansOnline->at(i) >= 0 ); EXPECT_DOUBLE_EQ( expPreEq->at(i), ansOnline->at(i) ); }
 	
 	
-	for(size_t i = 0; i < funcKnotsLattice[0].size();++i){ funcKnotsLattice[0][i] = funcs->funcsArc(0,i); } trajSimGrade->trajSim()->setUserDefLattice(funcKnotsLattice);  
+	for(size_t i = 0; i < funcKnotsLattice[0].size();++i){ funcKnotsLattice[0][i] = &funcs->funcsArc(0,i); } trajSimGrade->trajSim()->setUserDefLattice(funcKnotsLattice);  
 	trajSimGrade->trajSim()->dt() = _dt / 10.; 
 	trajSimGrade->trajSim()->ds() = _ds;
 	trajSimGrade->evaluateTrajectory();
@@ -298,7 +298,7 @@ public:
 	for(size_t i = 0; i < ansOnline->size(); ++i) { EXPECT_TRUE( ansOnline->at(i) >= 0 ); EXPECT_DOUBLE_EQ( expPreSm->at(i), ansOnline->at(i) ); }
 	
 	
-	for(size_t i = 0; i < funcKnotsLattice[0].size();++i){ funcKnotsLattice[0][i] = funcs->funcsArc(0,i); } trajSimGrade->trajSim()->setUserDefLattice(funcKnotsLattice);  
+	for(size_t i = 0; i < funcKnotsLattice[0].size();++i){ funcKnotsLattice[0][i] = &funcs->funcsArc(0,i); } trajSimGrade->trajSim()->setUserDefLattice(funcKnotsLattice);  
 	trajSimGrade->trajSim()->dt() = _dt * 10; 
 	trajSimGrade->trajSim()->ds() = -1;
 	trajSimGrade->evaluateTrajectory();
@@ -308,7 +308,7 @@ public:
 	for(size_t i = 0; i < ansOnline->size(); ++i) { EXPECT_TRUE( ansOnline->at(i) >= 0 ); EXPECT_DOUBLE_EQ( expPreGr->at(i), ansOnline->at(i) ); }
 	
 	
-	for(size_t i = 0; i < funcKnotsLattice[0].size();++i){ funcKnotsLattice[0][i] = funcs->funcsArc(0,i); } trajSimGrade->trajSim()->setUserDefLattice(funcKnotsLattice);  
+	for(size_t i = 0; i < funcKnotsLattice[0].size();++i){ funcKnotsLattice[0][i] = &funcs->funcsArc(0,i); } trajSimGrade->trajSim()->setUserDefLattice(funcKnotsLattice);  
 	trajSimGrade->trajSim()->dt() = _dt / 10.; 
 	trajSimGrade->trajSim()->ds() = _ds;
 	trajSimGrade->evaluateTrajectory();

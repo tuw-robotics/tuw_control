@@ -52,6 +52,7 @@ using BSLT = TrajectorySimulator::BaseSimLatticeType;
 void TrajectorySimulatorOnline::simulateTrajectory( double _lastValidArc ) {
     _lastValidArc = 0;
     size_t firstLaticeInvalidIdx = 0;
+    updateUserDefLattice();
     if ( initSimLatticeState0(_lastValidArc, firstLaticeInvalidIdx) ) { 
 	
 	populateTrajSimPartLattice( firstLaticeInvalidIdx ); 

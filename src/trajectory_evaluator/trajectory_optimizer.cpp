@@ -41,62 +41,51 @@ using namespace std;
 using namespace tuw;
 
 TrajectoryOptimizer::TrajectoryOptimizer ( StateSimPtr& _stateSim, unique_ptr< TrajectorySimulator::CostsEvaluatorClass > _costsEvaluator, OptimizationStateSPtr _optState ) :
-      trajSimGrade_(_stateSim, std::move(_costsEvaluator) ),
-      stateSim_(trajSimGrade_.trajSim()->stateSim()),
-      paramFuncs_(trajSimGrade_.trajSim()->stateSim()->paramFuncs()),
-      optState_(_optState) {
-	
-// 	state0varAccess_           = [this](size_t i)           -> double& { return stateSim_->state(i); };
-//     	paramFuncCtrlPtAccess_     = [this](size_t i, size_t j) -> double& { return paramFuncs_->ctrlPtVal(i,j, ParamFuncs::CtrlPtDim::VAL); };
-//     	paramFuncArcAccess_        = [this](size_t i, size_t j) -> double& { return paramFuncs_->funcsArc (i,j); };
-//     	paramFuncCtrlPtEndAccess_  = [this](size_t i)           -> double& { return paramFuncs_->ctrlPtVal(i,paramFuncs_->funcCtrlPtSize(i)-1, ParamFuncs::CtrlPtDim::VAL); };
-//     	paramFuncArcEndAccess_     = [this](size_t i)           -> double& { return paramFuncs_->funcsArc (i,paramFuncs_->funcsArcSize  (i)-1); };
-	
-// 	varsAccess_[asInt(AccessType::STATE_0      )] = [this](size_t i, size_t j) -> double& { return stateSim_->state0().value(i); };
-//     	varsAccess_[asInt(AccessType::PARAM_CP     )] = [this](size_t i, size_t j) -> double& { return paramFuncs_->ctrlPtVal(i,j, ParamFuncs::CtrlPtDim::VAL); };
-//     	varsAccess_[asInt(AccessType::PARAM_ARC    )] = [this](size_t i, size_t j) -> double& { return paramFuncs_->funcsArc (i,j); };
-//     	varsAccess_[asInt(AccessType::PARAM_CP_END )] = [this](size_t i, size_t j) -> double& { return paramFuncs_->ctrlPtVal(i,paramFuncs_->funcCtrlPtSize(i)-1, ParamFuncs::CtrlPtDim::VAL); };
-//     	varsAccess_[asInt(AccessType::PARAM_ARC_END)] = [this](size_t i, size_t j) -> double& { return paramFuncs_->funcsArc (i,paramFuncs_->funcsArcSize  (i)-1); };
+      TrajectorySimGrade(_stateSim, std::move(_costsEvaluator) ), 
+      optState_         (_optState) {
+	  optState_->bindVariables( *trajSim() );
 }
 
-void TrajectoryOptimizer::cacheVarsSize() {
-    varsSize_[0] = varsIdx_[0].size();
-    varsSize_[1] = 0; for(size_t i = 0; i < varsIdx_[1].size(); ++i) { varsSize_[1] += varsIdx_[1][i] * ( paramFuncs_->funcCtrlPtSize(i)-2 ); }
-    varsSize_[2] = 0; for(size_t i = 0; i < varsIdx_[1].size(); ++i) { varsSize_[2] += varsIdx_[2][i] * ( paramFuncs_->funcsArcSize  (i)-2 ); }
-    varsSize_[3] = varsIdx_[3].size();
-    varsSize_[4] = varsIdx_[4].size();
+void TrajectoryOptimizer::optimize() {
+    throw "not implemented";
 }
 
-void TrajectoryOptimizer::operateOnSimpleVar ( const std::size_t& _varClass, OperatorFunction _func ) {
-    for(size_t i = 0; i < varsIdx_[_varClass].size(); ++i) {
-	(this->*_func)( _varClass, i, 0);
+double& TrajectoryOptimizer::stepSize() {
+    return stepSize_;
+}
+void TrajectoryOptimizer::computeJacobian( bool _efficient ) {
+    
+    evaluateTrajectory(0);
+    auto& costsEvaluator = trajSim()->costsEvaluator_;
+    
+    costsEvaluator->gradF.resize( optState_->valueSize() );
+    costsEvaluator->gradG.resize( costsEvaluator->g.size(), optState_->valueSize() );
+    costsEvaluator->gradH.resize( costsEvaluator->h.size(), optState_->valueSize() );
+    
+    fCache = costsEvaluator->f;
+    gCache = costsEvaluator->g;
+    hCache = costsEvaluator->h;
+    
+    for ( size_t i = 0; i < optState_->valueSize(); ++i ) {
+	computeJacobian1Entry( i, _efficient );
     }
-}
-void TrajectoryOptimizer::operateOnCtrlPtVar ( TrajectoryOptimizer::OperatorFunction _func ) {
-    for(size_t i = 0; i < varsIdx_[asInt(AccessType::PARAM_CP)].size(); ++i) {
-	for(size_t j = 1; j < paramFuncs_->funcCtrlPtSize(i) - 1; ++j) {
-	    (this->*_func)(asInt(AccessType::PARAM_CP), i, j);
-	}
-    }
-}
-void TrajectoryOptimizer::operateOnFuncArcVar ( TrajectoryOptimizer::OperatorFunction _func ) {
-    for(size_t i = 0; i < varsIdx_[asInt(AccessType::PARAM_ARC)].size(); ++i) {
-	for(size_t j = 1; j < paramFuncs_->funcsArcSize(i) - 1; ++j) {
-	    (this->*_func)(asInt(AccessType::PARAM_ARC), i, j );
-	}
-    }
+    
+    costsEvaluator->f = fCache;
+    costsEvaluator->g = gCache;
+    costsEvaluator->h = hCache;
 }
 
-void TrajectoryOptimizer::computeJacobian() {
-//     operateOnSimpleVar ( asInt(AccessType::STATE_0      ), &TrajectoryOptimizer::computeJacobianEntryGeneric );
-//     operateOnCtrlPtVar (                                   &TrajectoryOptimizer::computeJacobianEntryGeneric );
-//     operateOnFuncArcVar(                                   &TrajectoryOptimizer::computeJacobianEntryGeneric );
-//     operateOnSimpleVar ( asInt(AccessType::PARAM_CP_END ), &TrajectoryOptimizer::computeJacobianEntryGeneric );
-//     operateOnSimpleVar ( asInt(AccessType::PARAM_ARC_END), &TrajectoryOptimizer::computeJacobianEntryGeneric );
-}
-
-
-void TrajectoryOptimizer::computeJacobianEntryGeneric ( std::size_t _varClass, std::size_t _varType, std::size_t _varIdx ) {
-
+void TrajectoryOptimizer::computeJacobian1Entry ( std::size_t _idx, bool _efficient ) {
+    const double optStateIFix = optState_->value(_idx);
+    optState_->value(_idx) += stepSize_;
+    
+    evaluateTrajectory( _efficient * optState_->arcBegin(_idx) );
+    
+    auto& costsEvaluator = trajSim()->costsEvaluator_;
+    costsEvaluator->gradF[_idx] = (costsEvaluator->f - fCache) / stepSize_;
+    for ( int j = 0; j < costsEvaluator->gradG.rows(); ++j ){ costsEvaluator->gradG(j,_idx) = ( costsEvaluator->g[j] - gCache[j] ) / stepSize_; }
+    for ( int j = 0; j < costsEvaluator->gradH.rows(); ++j ){ costsEvaluator->gradH(j,_idx) = ( costsEvaluator->h[j] - hCache[j] ) / stepSize_; }
+    
+    optState_->value(_idx) = optStateIFix;
 }
 

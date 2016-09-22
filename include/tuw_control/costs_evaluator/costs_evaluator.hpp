@@ -80,9 +80,14 @@ class CostsEvaluatorBase {
 	computeArrayCost (h, CostEvaluatorCostType::H);
 	computeArrayCost (g, CostEvaluatorCostType::G);
     }
+    public   : bool hIsValid(){ for( auto& hI : h ) { if(hI < 0) { return false; } } return true; }
     public   : double f;
     public   : std::vector<double> h;
     public   : std::vector<double> g;
+    
+    public   : std::vector<double> gradF;
+    public   : Eigen::MatrixXd     gradH;
+    public   : Eigen::MatrixXd     gradG;
 };
 
 
@@ -141,7 +146,6 @@ class CostsEvaluator : public CostsEvaluatorBase<Lattice> {
 	double minCost = FLT_MAX;
 	double arcMin  = FLT_MAX;
 	{ 
-// 	    std::cout<<"shot"<<std::endl;
 	    auto& funcI = partialCostsArray_[asInt(_arrayType)]; 
 	    for(auto& partFuncI:funcI) { 
 		size_t k  = partFuncI->iterIdxPartBegin_; partFuncI->calcCosts1KnotStep(_arcNow); 
@@ -154,18 +158,12 @@ class CostsEvaluator : public CostsEvaluatorBase<Lattice> {
 			    minCost = costK; arcMin = violLatNew; _violatingLatIdx =  partFuncI->knotLatIdx(); _arcMax = partFuncI->arcAtLattIdxPrev();
 			}
 		    }
-// 		    std::cout<<partFuncI->cost(k)<<", ";
 		} 
-// 		std::cout<<std::endl;
 	    } 
-// 	    std::cout<<std::endl;
 	}
 	return minCost >= 0;
     }
     public   : std::vector< std::vector< std::unique_ptr< cost_functions::CostsArrayLatBase<Lattice, MapData> > > > partialCostsArray_;
-    
-    public   : std::vector<double> gradF;
-    public   : Eigen::MatrixXd     gradH;
     
     private  : std::shared_ptr<MapData> mapDataPtr_;
     private  : bool firstAfterReset_;

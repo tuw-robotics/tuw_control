@@ -59,18 +59,21 @@ TrajectorySimulator::TrajectorySimulator ( StateSimPtr _stateSim, unique_ptr< Tr
 }
 
 
-void TrajectorySimulator::setUserDefLattice ( const vector< vector< double > >& _userDefLattices ) {
+void TrajectorySimulator::setUserDefLattice ( const vector< vector< double* > >& _userDefLattices ) {
+    userDefPartLattices_ = _userDefLattices;
     partLattices_   .resize(asInt(BaseSimLatticeType::LATTICE_ENUM_SIZE) + _userDefLattices.size()); 
     for(size_t i = asInt(BaseSimLatticeType::LATTICE_ENUM_SIZE); i < partLattices_.size(); ++i) { partLattices_[i] = make_shared<LatticeVec>(); }
     partLatIdxCache_.resize(partLattices_.size());
-    size_t i = 0;
-    for ( ; i < _userDefLattices.size(); ++i ) {
-	size_t lattIdx = lattTypeIdx(i);
-	partLattices_[lattIdx]->resize( _userDefLattices[i].size() );
-	for ( size_t j = 0; j < _userDefLattices[i].size(); ++j ) { partLattices_[lattIdx]->at(j).arc = _userDefLattices[i][j]; }
-    }
+    for ( size_t i = 0; i < _userDefLattices.size(); ++i ) { partLattices_[lattTypeIdx(i)]->resize( _userDefLattices[i].size() ); }
+    updateUserDefLattice();
     if(costsEvaluator_) { costsEvaluator_->init(partLattices_); }
-//     for (size_t iPart =  lattTypeIdx(i); iPart < partLattices_.size(); ++iPart ) { partLattices_[iPart]->clear(); }
+}
+
+void TrajectorySimulator::updateUserDefLattice() {
+    
+    for ( size_t i = 0; i < userDefPartLattices_.size(); ++i ) {
+	for ( size_t j = 0; j < userDefPartLattices_[i].size(); ++j ) { partLattices_[lattTypeIdx(i)]->at(j).arc = *userDefPartLattices_[i][j]; }
+    }
 }
 
 void TrajectorySimulator::simAppendToSimPartLat ( const double& _arcNow, const int& _latticePtType, const std::size_t& _minArcLatCacheIdx ) {

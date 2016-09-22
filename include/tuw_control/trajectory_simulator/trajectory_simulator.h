@@ -116,7 +116,9 @@ class TrajectorySimulator {
     ///@brief Const reference to the lattice that requested each simulated trajectory state.
     public   : const std::vector<LatticePointType>& simLattice () const;
     ///@todo documentation
-    public   : void setUserDefLattice( const std::vector< std::vector< double > >& _userDefLattices );
+    public   : void setUserDefLattice   ( const std::vector< std::vector< double* > >& _userDefLattices );
+    
+    public   : void updateUserDefLattice(  );
     
     //pure virtual function
     /** @brief Simulates (discrete numerical evaluation) an entire trajectory according to the specified intervals and lattices.
@@ -168,9 +170,13 @@ class TrajectorySimulator {
     ///@brief Arc parametrization interval used for the equal distance lattice.
     private  : double ds_;
     
+    private  : std::vector<std::vector<double*> > userDefPartLattices_;
+    
 
     public   : std::unique_ptr<CostsEvaluatorClass> costsEvaluator_;
     
+    
+    friend class TrajectorySimGrade;
 //     public   : size_t partLatticeActiveSize_;
 };
 

@@ -337,7 +337,8 @@ TEST_F ( TrajectorySimulatorsTest, SimPrecalcFrom0DtDsCtrlPt ) {
     funcs->precompute();
     
     //equal dt, equal arc dist and control ponints arcs lattices
-    vector< vector<double> > funcKnotsLattice(1, vector<double>(funcs->funcsArcSize(0),0) ); for(size_t i = 0; i < funcKnotsLattice[0].size();++i){ funcKnotsLattice[0][i] = funcs->funcsArc(0,i); }
+    vector< vector<double*> > funcKnotsLattice(1, vector<double*>(funcs->funcsArcSize(0),0) ); 
+    for(size_t i = 0; i < funcKnotsLattice[0].size();++i){ funcKnotsLattice[0][i] = &funcs->funcsArc(0,i); }
     trajSim->setUserDefLattice(funcKnotsLattice);
     size_t statesBeginEnd  = 2, statesDt, statesDs, statesLattice0;  size_t statesSimExp;
     double sumStates = 0;
@@ -385,7 +386,8 @@ TEST_F ( TrajectorySimulatorsTest, SimPrecalcFromNon0DtDsCtrlPt ) {
     funcs->precompute();
     
     //equal dt, equal arc dist and control ponints arcs lattices
-    vector< vector<double> > funcKnotsLattice(1, vector<double>(funcs->funcsArcSize(0),0) ); for(size_t i = 0; i < funcKnotsLattice[0].size();++i){ funcKnotsLattice[0][i] = funcs->funcsArc(0,i); }
+    vector< vector<double*> > funcKnotsLattice(1, vector<double*>(funcs->funcsArcSize(0),0) ); 
+    for(size_t i = 0; i < funcKnotsLattice[0].size();++i){ funcKnotsLattice[0][i] = &funcs->funcsArc(0,i); }
     trajSim->setUserDefLattice(funcKnotsLattice);
     
     trajSim->dt() = 0.13; trajSim->ds() = 0.0795; trajSim->simulateTrajectory(0);     
@@ -475,8 +477,8 @@ TEST_F ( TrajectorySimulatorsTest, SimOnlineFrom0DtDsCtrlPt ) {
     
     funcs->precompute();
     
-    vector< vector<double> > funcKnotsLattice(1, vector<double>(funcs->funcsArcSize(0),0) ); 
-    for(size_t i = 0; i < funcKnotsLattice[0].size();++i){ funcKnotsLattice[0][i] = funcs->funcsArc(0,i); }
+    vector< vector<double*> > funcKnotsLattice(1, vector<double*>(funcs->funcsArcSize(0),0) ); 
+    for(size_t i = 0; i < funcKnotsLattice[0].size();++i){ funcKnotsLattice[0][i] = &funcs->funcsArc(0,i); }
     trajSim      ->setUserDefLattice(funcKnotsLattice);
     trajSimOnline->setUserDefLattice(funcKnotsLattice);
     
@@ -516,7 +518,8 @@ TEST_F ( TrajectorySimulatorsTest, SimOnlineFromNon0DtDsCtrlPt ) {
     
     funcs->precompute();
     
-    vector< vector<double> > funcKnotsLattice(1, vector<double>(funcs->funcsArcSize(0),0) ); for(size_t i = 0; i < funcKnotsLattice[0].size();++i){ funcKnotsLattice[0][i] = funcs->funcsArc(0,i); }
+    vector< vector<double*> > funcKnotsLattice(1, vector<double*>(funcs->funcsArcSize(0),0) ); 
+    for(size_t i = 0; i < funcKnotsLattice[0].size();++i){ funcKnotsLattice[0][i] = &funcs->funcsArc(0,i); }
     trajSim      ->setUserDefLattice(funcKnotsLattice);
     trajSimOnline->setUserDefLattice(funcKnotsLattice);
     

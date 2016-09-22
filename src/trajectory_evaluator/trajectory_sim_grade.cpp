@@ -64,15 +64,17 @@ void TrajectorySimGrade::modifyTrajSimMode() {
 	ds = trajSim_->ds();
 	simulationLattice     = trajSim_->simLattice();
 	partLattices          = trajSim_->partLattices_;
+	userPartLattices_     = trajSim_->userDefPartLattices_;
     }
-    if      ( simMode_ == TrajectorySimulator::SimMode::ONLINE  ) { trajSim_ = make_shared<TrajectorySimulatorOnline >(stateSim_, std::move(trajSim_->costsEvaluator_) ); }
-    else if ( simMode_ == TrajectorySimulator::SimMode::PRECALC ) { trajSim_ = make_shared<TrajectorySimulatorPrecalc>(stateSim_, std::move(trajSim_->costsEvaluator_) ); }
+    if      ( simMode_ == TrajectorySimulator::SimMode::ONLINE  ) { trajSim_ = make_shared<TrajectorySimulatorOnline >(trajSim_->stateSim(), std::move(trajSim_->costsEvaluator_) ); }
+    else if ( simMode_ == TrajectorySimulator::SimMode::PRECALC ) { trajSim_ = make_shared<TrajectorySimulatorPrecalc>(trajSim_->stateSim(), std::move(trajSim_->costsEvaluator_) ); }
     if ( copy ) {
 	trajSim_->dt() = dt;
 	trajSim_->ds() = ds;
 	trajSim_->simLattice()   = simulationLattice;
 	trajSim_->partLattices_  = partLattices;
-	if( trajSim_->costsEvaluator_ ) { trajSim_->costsEvaluator_->init(trajSim_->partLattices_); }
+	trajSim_->userDefPartLattices_ = userPartLattices_;
+	if( trajSim_->costsEvaluator_ ) { trajSim_->updateUserDefLattice(); trajSim_->costsEvaluator_->init(trajSim_->partLattices_); }
     }
 }
 

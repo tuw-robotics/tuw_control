@@ -86,9 +86,9 @@ class State {
     ///@brief Converts all the array values to an Eigen vector.
     public   : void toEIGENVec  (Eigen::VectorXd&     _vec) { _vec.resize( valueSize() ); for(size_t i = 0; i < (size_t)_vec.rows(); ++i) { _vec(i) = value(i); } }
     ///@brief Copies all values from an STL vector. The @ref valueSize of the State object has to be equal with the STL vector size.
-    public   : void fromSTLVec  (std::vector<double>& _vec) { if( _vec.size() != valueSize  () ) { throw "cannot copy from container of different size"; }; for(size_t i = 0; i < _vec.size(); ++i) { value(i) = _vec[i]; } }
+    public   : void fromSTLVec  (const std::vector<double>& _vec) { if( _vec.size() != valueSize  () ) { throw "cannot copy from container of different size"; }; for(size_t i = 0; i < _vec.size(); ++i) { value(i) = _vec[i]; } }
     ///@brief Copies all values from an Eigen vector. The @ref valueSize of the State object has to be equal with the Eigen vector size.
-    public   : void fromEIGENVec(Eigen::VectorXd&     _vec) { if( (size_t)_vec.rows() != valueSize  () ) { throw "cannot copy from container of different size"; }; for(size_t i = 0; i < (size_t)_vec.rows(); ++i) { value(i) = _vec(i); } }
+    public   : void fromEIGENVec(const Eigen::VectorXd&     _vec) { if( (size_t)_vec.rows() != valueSize  () ) { throw "cannot copy from container of different size"; }; for(size_t i = 0; i < (size_t)_vec.rows(); ++i) { value(i) = _vec(i); } }
     /** @brief Performs addition. Left and right operand are required to have the same @ref valueSize.
      *  @param _lhs Left operand
      *  @param _rhs Right operand

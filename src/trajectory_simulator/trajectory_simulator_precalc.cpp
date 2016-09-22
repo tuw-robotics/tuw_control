@@ -51,6 +51,9 @@ TrajectorySimulatorPrecalc::TrajectorySimulatorPrecalc ( StateSimPtr _stateSim, 
 
 
 void TrajectorySimulatorPrecalc::simulateTrajectory( double _lastValidArc ) {  
+    
+    updateUserDefLattice();
+    
     //resize equal dt lattice
     const double arcParamMax    = stateSim_->paramFuncs()->funcsArcEnd();
     size_t simLatticeSize = max( 0, (int)( ceil( arcParamMax / dt() ) + 1  ) ); 

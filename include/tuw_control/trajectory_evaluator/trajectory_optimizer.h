@@ -49,9 +49,10 @@ using OptimizationStateConstUPtr = std::unique_ptr<OptimizationState const>;
 class OptimizationState : public State {
     
     public   : struct OptStateData {
-	OptStateData ( double* _val, double* _arcBegin = 0 ) : val(_val), arcBegin(_arcBegin){}
+	OptStateData ( double* _val, const double* _arcBegin = 0 ) : val(_val), arcBegin(_arcBegin){}
+	virtual ~OptStateData() = default;
 	double* val;
-	double* arcBegin;
+	const double* arcBegin;
     };
     
     public   : OptimizationState           ()                         = default;
@@ -61,33 +62,15 @@ class OptimizationState : public State {
     public   : OptimizationState           (OptimizationState&&)      = default;
     public   : OptimizationState& operator=(OptimizationState&&)      = default;
     
-    public   : virtual void bindValues(TrajectorySimulator& _trajOpt) = 0;
-    public   : double&       value      ( const std::size_t& _i )       override { return *values[_i].val; }
-    public   : const double& value      ( const std::size_t& _i ) const override { return *values[_i].val; }
-    public   : size_t        valueSize  () const override { return values.size(); }
+    public   : virtual void bindVariables(TrajectorySimulator& _trajOpt) = 0;
+    public   : double&       value      ( const std::size_t& _i )       override { return *variables[_i].val; }
+    public   : const double& value      ( const std::size_t& _i ) const override { return *variables[_i].val; }
+    public   : size_t        valueSize  () const override { return variables.size(); }
     
-    public   : const double& arcBegin   ( const std::size_t& _i ) const { return *values[_i].arcBegin; }
+    public   : const double& arcBegin   ( const std::size_t& _i ) const { return *variables[_i].arcBegin; }
     
-    protected: std::vector<OptStateData> values;
-};
-
-class OptimizationStateTest : public OptimizationState {
-    public   : StateSPtr     cloneState () const override { return std::make_shared<OptimizationStateTest>(*this); }
-    public   : void bindValues(TrajectorySimulator& _trajSim) override {
-// 	static double valueZero = 0;
-	values.clear();
-// 	values.emplace_back( OptStateData( *_trajOpt.stateSim_->state0().value(0), valueZero ) );
-	auto* paramFuncs = _trajSim.stateSim()->paramFuncs();
-	for ( size_t i = 0; i < paramFuncs->funcsSize(); ++i ) {
-	    for ( size_t j = 1; j < paramFuncs->funcCtrlPtSize(i); ++j ) {
-		values.emplace_back(  &paramFuncs->ctrlPtVal ( i, j, ParamFuncs::CtrlPtDim::VAL ), &paramFuncs->ctrlPtVal( i, j-1, ParamFuncs::CtrlPtDim::ARC ) );
-	    }
-	}
-	
-	for ( size_t j = 1; j < paramFuncs->funcsArcSize(0); ++j ) {
-	    values.emplace_back(  &paramFuncs->funcsArc ( 0, j ), &paramFuncs->funcsArc( 0, j-1 ) );
-	}
-    }
+    protected: std::vector<OptStateData>     variables;
+    protected: static constexpr const double valueZero = 0;
 };
     
     
@@ -97,7 +80,7 @@ using TrajectoryOptimizerConstSPtr = std::shared_ptr<TrajectoryOptimizer const>;
 using TrajectoryOptimizerUPtr      = std::unique_ptr<TrajectoryOptimizer>;
 using TrajectoryOptimizerConstUPtr = std::unique_ptr<TrajectoryOptimizer const>;
 
-class TrajectoryOptimizer {
+class TrajectoryOptimizer : public TrajectorySimGrade {
     public  : enum class AccessType {
 	STATE_0,
 	PARAM_CP,
@@ -107,41 +90,22 @@ class TrajectoryOptimizer {
     
     //special class member functions
     public   : TrajectoryOptimizer           ( StateSimPtr& _stateSim, std::unique_ptr<TrajectorySimulator::CostsEvaluatorClass> _costsEvaluator, OptimizationStateSPtr _optState );
-    public   : ~TrajectoryOptimizer          ()                          = default;
+    public   : ~TrajectoryOptimizer          ()                           = default;
     public   : TrajectoryOptimizer           (const TrajectoryOptimizer&) = default;
     public   : TrajectoryOptimizer& operator=(const TrajectoryOptimizer&) = default;
     public   : TrajectoryOptimizer           (TrajectoryOptimizer&&)      = default;
     public   : TrajectoryOptimizer& operator=(TrajectoryOptimizer&&)      = default;
     
-    protected: void cacheVarsSize();
+    public   : virtual void optimize();
+    public   : void computeJacobian ( bool _efficient = true);
+    public   : void computeJacobian1Entry ( size_t _idx, bool _efficient = true);
+    public   : double& stepSize();
     
-    public   : virtual void setVars() = 0;
-    
-    using OperatorFunction = void(TrajectoryOptimizer::*)(size_t, size_t, size_t);
-    
-    private  : void operateOnSimpleVar ( const size_t& _varClass, OperatorFunction _func );
-    private  : void operateOnCtrlPtVar ( OperatorFunction _func );
-    private  : void operateOnFuncArcVar( OperatorFunction _func );
-    
-    private  : void computeJacobian ();
-    private  : void computeJacobianEntryGeneric(size_t _varClass, size_t _varType, size_t _varIdx);
-    
-    public   : std::function<double&(size_t        )> state0varAccess_;
-    public   : std::function<double&(size_t, size_t)> paramFuncCtrlPtAccess_;
-    public   : std::function<double&(size_t, size_t)> paramFuncArcAccess_;
-    public   : std::function<double&(size_t        )> paramFuncCtrlPtEndAccess_;
-    public   : std::function<double&(size_t        )> paramFuncArcEndAccess_;
-    
-    protected: std::array<std::vector<size_t>                   , asInt(AccessType::ENUM_SIZE) > varsIdx_;
-    private  : std::array<std::function<double&(size_t, size_t)>, asInt(AccessType::ENUM_SIZE) > varsAccess_;
-    private  : std::array<size_t                                , asInt(AccessType::ENUM_SIZE) > varsSize_;
-    
-    private  : TrajectorySimGrade    trajSimGrade_;
-    private  : StateSimPtr           stateSim_;
-    private  : ParamFuncsSPtr        paramFuncs_;
-    private  : OptimizationStateSPtr optState_;
-    
-//     public   : std::unique_ptr<CostsEvaluatorClass> costsEvaluator_;
+    protected: OptimizationStateSPtr optState_;
+    private  : double fCache;
+    private  : std::vector<double> hCache;
+    private  : std::vector<double> gCache;
+    private  : double stepSize_;
 };
 
 }

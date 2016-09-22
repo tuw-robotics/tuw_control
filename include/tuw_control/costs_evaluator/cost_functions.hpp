@@ -195,6 +195,7 @@ class CostsArrayLatBase {
 	size_t latIdx;
 	latIdx = latFuncLayerIdx(); lattFuncPtr_ = nullptr; if(_lattPtr.size() > latIdx) { lattFuncPtr_ = _lattPtr[latIdx]; } 
 	latIdx = latKnotLayerIdx(); lattKnotPtr_ = nullptr; if(_lattPtr.size() > latIdx) { lattKnotPtr_ = _lattPtr[latIdx]; knotLatIdx_ = latIdx; } 
+	mapDataPtr_ = _mapDataPtr;
 	pieceWiseCosts.clear(); pieceWiseCosts.reserve(1000);///@todo not nice!
 	resizeInitNew();
     }

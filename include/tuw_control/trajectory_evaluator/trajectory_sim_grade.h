@@ -71,6 +71,8 @@ class TrajectorySimGrade {
     private  : TrajectorySimulatorSPtr trajSim_;
     private  : StateSimPtr stateSim_;
     private  : TrajectorySimulator::SimMode simMode_;
+    private  : std::vector< std::vector< double* > > userPartLattices_;
+    
     
 //     public   : std::unique_ptr<CostsEvaluatorClass> costsEvaluator_;
 };
