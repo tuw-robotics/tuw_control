@@ -66,9 +66,9 @@ TEST_F ( ParamFuncManipSplineDistTest, Initialization0 ) {
     funcIdx = 1; jj = 0; EXPECT_EQ(123, funcs->ctrlPtVal(funcIdx,jj,PfCpD::ARC) ); jj = funcs->funcCtrlPtSize(funcIdx)-1; EXPECT_EQ(555, funcs->ctrlPtVal(funcIdx,jj,PfCpD::ARC) );
     funcIdx = 2; jj = 0; EXPECT_EQ(123, funcs->ctrlPtVal(funcIdx,jj,PfCpD::ARC) ); jj = funcs->funcCtrlPtSize(funcIdx)-1; EXPECT_EQ(555, funcs->ctrlPtVal(funcIdx,jj,PfCpD::ARC) );
 
-    funcIdx = 0; for(size_t j = 1; j < funcs->funcCtrlPtSize(funcIdx)-1; j++){ EXPECT_EQ(10-2*j, funcs->ctrlPtVal(funcIdx,j,PfCpD::VAL) ); EXPECT_EQ(   2*j, funcs->ctrlPtVal(funcIdx,j,PfCpD::ARC) ); }
-    funcIdx = 1; for(size_t j = 1; j < funcs->funcCtrlPtSize(funcIdx)-1; j++){ EXPECT_EQ(     j, funcs->ctrlPtVal(funcIdx,j,PfCpD::VAL) ); EXPECT_EQ(   2*j, funcs->ctrlPtVal(funcIdx,j,PfCpD::ARC) ); }
-    funcIdx = 2; for(size_t j = 1; j < funcs->funcCtrlPtSize(funcIdx)-1; j++){ EXPECT_EQ(-2+7*j, funcs->ctrlPtVal(funcIdx,j,PfCpD::VAL) ); EXPECT_EQ(33+3*j, funcs->ctrlPtVal(funcIdx,j,PfCpD::ARC) ); }
+//     funcIdx = 0; for(size_t j = 1; j < funcs->funcCtrlPtSize(funcIdx)-1; j++){ EXPECT_EQ(10-2*j, funcs->ctrlPtVal(funcIdx,j,PfCpD::VAL) ); EXPECT_EQ(   2*j, funcs->ctrlPtVal(funcIdx,j,PfCpD::ARC) ); }
+//     funcIdx = 1; for(size_t j = 1; j < funcs->funcCtrlPtSize(funcIdx)-1; j++){ EXPECT_EQ(     j, funcs->ctrlPtVal(funcIdx,j,PfCpD::VAL) ); EXPECT_EQ(   2*j, funcs->ctrlPtVal(funcIdx,j,PfCpD::ARC) ); }
+//     funcIdx = 2; for(size_t j = 1; j < funcs->funcCtrlPtSize(funcIdx)-1; j++){ EXPECT_EQ(-2+7*j, funcs->ctrlPtVal(funcIdx,j,PfCpD::VAL) ); EXPECT_EQ(33+3*j, funcs->ctrlPtVal(funcIdx,j,PfCpD::ARC) ); }
 }
 
 namespace EvalArcFuncValFuncValDiff1 {

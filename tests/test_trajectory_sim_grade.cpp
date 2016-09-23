@@ -437,21 +437,21 @@ class Test1CostArray_LinIntWNorm: public CostsArrayLat<TSLatVec,MapData,TestCost
 
 class TestCostsEvaluatorT1C1 : public CostsEvaluator<TSLatVec, MapData> {
     public   : TestCostsEvaluatorT1C1(std::shared_ptr<MapData>& _mapDataPtr) : CostsEvaluator(_mapDataPtr) {}
-    public   : void setCosts() override {
+    public   : void loadCostFunctions() override {
 	partialCostsArray_[asInt(CostEvaluatorCostType::F)].resize(1);
 	partialCostsArray_[asInt(CostEvaluatorCostType::F)][0] = std::make_unique< Test1CostArray_LinSumW    >();
     }
 };
 class TestCostsEvaluatorT1C2 : public CostsEvaluator<TSLatVec, MapData> {
     public   : TestCostsEvaluatorT1C2(std::shared_ptr<MapData>& _mapDataPtr) : CostsEvaluator(_mapDataPtr) {}
-    public   : void setCosts() override {
+    public   : void loadCostFunctions() override {
 	partialCostsArray_[asInt(CostEvaluatorCostType::F)].resize(1);
 	partialCostsArray_[asInt(CostEvaluatorCostType::F)][0] = std::make_unique< Test1CostArray_LinSumWNorm    >();
     }
 };
 class TestCostsEvaluatorT1C3 : public CostsEvaluator<TSLatVec, MapData> {
     public   : TestCostsEvaluatorT1C3(std::shared_ptr<MapData>& _mapDataPtr) : CostsEvaluator(_mapDataPtr) {}
-    public   : void setCosts() override {
+    public   : void loadCostFunctions() override {
 	partialCostsArray_[asInt(CostEvaluatorCostType::F)].resize(1);
 	partialCostsArray_[asInt(CostEvaluatorCostType::F)][0] = std::make_unique< Test1CostArray_LinIntWNorm    >();
     }
@@ -512,21 +512,21 @@ class Test2CostArray_LinIntWNorm: public CostsArrayLat<TSLatVec,MapData,TestCost
 
 class TestCostsEvaluatorT2C1 : public CostsEvaluator<TSLatVec, MapData> {
     public   : TestCostsEvaluatorT2C1(std::shared_ptr<MapData>& _mapDataPtr) : CostsEvaluator(_mapDataPtr) {}
-    public   : void setCosts() override {
+    public   : void loadCostFunctions() override {
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)].resize(1);
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)][0] = std::make_unique< Test2CostArray_LinSumW    >();
     }
 };
 class TestCostsEvaluatorT2C2 : public CostsEvaluator<TSLatVec, MapData> {
     public   : TestCostsEvaluatorT2C2(std::shared_ptr<MapData>& _mapDataPtr) : CostsEvaluator(_mapDataPtr) {}
-    public   : void setCosts() override {
+    public   : void loadCostFunctions() override {
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)].resize(1);
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)][0] = std::make_unique< Test2CostArray_LinSumWNorm    >();
     }
 };
 class TestCostsEvaluatorT2C3 : public CostsEvaluator<TSLatVec, MapData> {
     public   : TestCostsEvaluatorT2C3(std::shared_ptr<MapData>& _mapDataPtr) : CostsEvaluator(_mapDataPtr) {}
-    public   : void setCosts() override {
+    public   : void loadCostFunctions() override {
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)].resize(1);
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)][0] = std::make_unique< Test2CostArray_LinIntWNorm    >();
     }
@@ -577,21 +577,21 @@ class Test3CostArray_LinIntWNorm: public Test2CostArray_LinIntWNorm{ size_t latK
 
 class TestCostsEvaluatorT3C1 : public CostsEvaluator<TSLatVec, MapData> {
     public   : TestCostsEvaluatorT3C1(std::shared_ptr<MapData>& _mapDataPtr) : CostsEvaluator(_mapDataPtr) {}
-    public   : void setCosts() override {
+    public   : void loadCostFunctions() override {
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)].resize(1);
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)][0] = std::make_unique< Test3CostArray_LinSumW    >();
     }
 };
 class TestCostsEvaluatorT3C2 : public CostsEvaluator<TSLatVec, MapData> {
     public   : TestCostsEvaluatorT3C2(std::shared_ptr<MapData>& _mapDataPtr) : CostsEvaluator(_mapDataPtr) {}
-    public   : void setCosts() override {
+    public   : void loadCostFunctions() override {
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)].resize(1);
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)][0] = std::make_unique< Test3CostArray_LinSumWNorm    >();
     }
 };
 class TestCostsEvaluatorT3C3 : public CostsEvaluator<TSLatVec, MapData> {
     public   : TestCostsEvaluatorT3C3(std::shared_ptr<MapData>& _mapDataPtr) : CostsEvaluator(_mapDataPtr) {}
-    public   : void setCosts() override {
+    public   : void loadCostFunctions() override {
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)].resize(1);
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)][0] = std::make_unique< Test3CostArray_LinIntWNorm    >();
     }
@@ -640,21 +640,21 @@ class Test4CostArray_LinIntWNorm: public CostsArrayLat<TSLatVec,MapData,TestCost
 
 class TestCostsEvaluatorT4C1 : public CostsEvaluator<TSLatVec, MapData> {
     public   : TestCostsEvaluatorT4C1(std::shared_ptr<MapData>& _mapDataPtr) : CostsEvaluator(_mapDataPtr) {}
-    public   : void setCosts() override {
+    public   : void loadCostFunctions() override {
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)].resize(1);
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)][0] = std::make_unique< Test4CostArray_LinSumW    >();
     }
 };
 class TestCostsEvaluatorT4C2 : public CostsEvaluator<TSLatVec, MapData> {
     public   : TestCostsEvaluatorT4C2(std::shared_ptr<MapData>& _mapDataPtr) : CostsEvaluator(_mapDataPtr) {}
-    public   : void setCosts() override {
+    public   : void loadCostFunctions() override {
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)].resize(1);
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)][0] = std::make_unique< Test4CostArray_LinSumWNorm    >();
     }
 };
 class TestCostsEvaluatorT4C3 : public CostsEvaluator<TSLatVec, MapData> {
     public   : TestCostsEvaluatorT4C3(std::shared_ptr<MapData>& _mapDataPtr) : CostsEvaluator(_mapDataPtr) {}
-    public   : void setCosts() override {
+    public   : void loadCostFunctions() override {
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)].resize(1);
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)][0] = std::make_unique< Test4CostArray_LinIntWNorm    >();
     }
@@ -708,21 +708,21 @@ class Test6CostArray_LinIntWNorm: public CostsArrayLat<TSLatVec,MapData,TestCost
 
 class TestCostsEvaluatorT6C1 : public CostsEvaluator<TSLatVec, MapData> {
     public   : TestCostsEvaluatorT6C1(std::shared_ptr<MapData>& _mapDataPtr) : CostsEvaluator(_mapDataPtr) {}
-    public   : void setCosts() override {
+    public   : void loadCostFunctions() override {
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)].resize(1);
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)][0] = std::make_unique< Test6CostArray_LinSumW    >();
     }
 };
 class TestCostsEvaluatorT6C2 : public CostsEvaluator<TSLatVec, MapData> {
     public   : TestCostsEvaluatorT6C2(std::shared_ptr<MapData>& _mapDataPtr) : CostsEvaluator(_mapDataPtr) {}
-    public   : void setCosts() override {
+    public   : void loadCostFunctions() override {
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)].resize(1);
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)][0] = std::make_unique< Test6CostArray_LinSumWNorm    >();
     }
 };
 class TestCostsEvaluatorT6C3 : public CostsEvaluator<TSLatVec, MapData> {
     public   : TestCostsEvaluatorT6C3(std::shared_ptr<MapData>& _mapDataPtr) : CostsEvaluator(_mapDataPtr) {}
-    public   : void setCosts() override {
+    public   : void loadCostFunctions() override {
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)].resize(1);
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)][0] = std::make_unique< Test6CostArray_LinIntWNorm    >();
     }
@@ -758,21 +758,21 @@ class Test7CostArray_LinIntWNorm: public CostsArrayLat<TSLatVec,MapData,TestCost
 
 class TestCostsEvaluatorT7C1 : public CostsEvaluator<TSLatVec, MapData> {
     public   : TestCostsEvaluatorT7C1(std::shared_ptr<MapData>& _mapDataPtr) : CostsEvaluator(_mapDataPtr) {}
-    public   : void setCosts() override {
+    public   : void loadCostFunctions() override {
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)].resize(1);
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)][0] = std::make_unique< Test7CostArray_LinSumW    >();
     }
 };
 class TestCostsEvaluatorT7C2 : public CostsEvaluator<TSLatVec, MapData> {
     public   : TestCostsEvaluatorT7C2(std::shared_ptr<MapData>& _mapDataPtr) : CostsEvaluator(_mapDataPtr) {}
-    public   : void setCosts() override {
+    public   : void loadCostFunctions() override {
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)].resize(1);
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)][0] = std::make_unique< Test7CostArray_LinSumWNorm    >();
     }
 };
 class TestCostsEvaluatorT7C3 : public CostsEvaluator<TSLatVec, MapData> {
     public   : TestCostsEvaluatorT7C3(std::shared_ptr<MapData>& _mapDataPtr) : CostsEvaluator(_mapDataPtr) {}
-    public   : void setCosts() override {
+    public   : void loadCostFunctions() override {
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)].resize(1);
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)][0] = std::make_unique< Test7CostArray_LinIntWNorm    >();
     }

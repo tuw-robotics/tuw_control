@@ -63,6 +63,12 @@ void ParamFuncsSpline0Dist::initImpl() {
 void ParamFuncsSpline0Dist::precompute() {
     using fem = FuncEvalMode;
     
+    for( size_t arcIdx = 0; arcIdx < funcsArcSize(); ++arcIdx ) { 
+	for( size_t arcKnot = 1; arcKnot < funcsArcSize(arcIdx); ++arcKnot ) { 
+	    funcsArc(arcIdx, arcKnot) = fmax( funcsArc(arcIdx, arcKnot), funcsArc(arcIdx, arcKnot-1) );
+	}
+    }
+    
     const double funcSize = funcCtrlPt_.size();
     for( size_t funcIdx = 0; funcIdx < funcSize; ++funcIdx ) {
 	

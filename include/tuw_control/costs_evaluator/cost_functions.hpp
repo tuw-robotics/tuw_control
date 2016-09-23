@@ -127,14 +127,14 @@ using CostFuncLatMap1WeightPtr = std::unique_ptr< CFLatMap1WeightBase<Lattice, M
 
 template<typename Lattice, typename MapData>
 class CostsArrayLatBase {
-
+    public   : CostsArrayLatBase() : weight_(1) {}
     public   : virtual size_t latFuncLayerIdx() = 0;
     public   : virtual size_t latKnotLayerIdx() = 0;
     private  : virtual CostFuncLatMap1WeightPtr<Lattice, MapData> allocateCostFunc() = 0;
 
     public   : const double& cost      ( const size_t& _i      ) const { return pieceWiseCosts[_i]->cost(); }
     public   : const size_t  costsSize ()                        const { return pieceWiseCosts.size(); }
-    public   : void setWeight          ( const double& _weight )       { for (auto& costI : pieceWiseCosts) { costI->setWeight(_weight); }  }
+    public   : void setWeight          ( const double& _weight )       { weight_ = _weight; for (auto& costI : pieceWiseCosts) { costI->setWeight(_weight); }  }
     public   : void calcCostsFull      ()                              { while ( !finish_ ) {  calcCosts1KnotStep(); } }
     public   : void calcCosts1KnotStep () { 
 	while(!finish_){
@@ -187,6 +187,7 @@ class CostsArrayLatBase {
 		pieceWiseCosts[i] = allocateCostFunc(); 
 		pieceWiseCosts[i]->initLatticeMap(lattFuncPtr_, mapDataPtr_); 
 		pieceWiseCosts[i]->resetFunction();
+		pieceWiseCosts[i]->setWeight(weight_);
 	    } 
 	}
 	return sizeOld - 1;
@@ -209,6 +210,7 @@ class CostsArrayLatBase {
     protected: std::shared_ptr<Lattice> lattKnotPtr_;
     protected: std::shared_ptr<MapData> mapDataPtr_;
     private  : size_t knotLatIdx_;
+    private  : double weight_;
 };
 
 

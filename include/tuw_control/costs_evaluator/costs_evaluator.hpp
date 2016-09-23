@@ -65,7 +65,7 @@ class CostsEvaluatorBase {
     public   : CostsEvaluatorBase           (CostsEvaluatorBase&&)      = default;
     public   : CostsEvaluatorBase& operator=(CostsEvaluatorBase&&)      = default;
     
-    public   : virtual void setCosts() = 0;
+    public   : virtual void loadCostFunctions() = 0;
     public   : virtual void init ( std::vector<std::shared_ptr<Lattice>>& _lattPtr ) = 0;
     public   : virtual void resetCostFunctions(const CostEvaluatorCostType& _arrayType) = 0;
     public   : virtual bool evalValidCostStep ( const CostEvaluatorCostType& _arrayType, double _arcNow, size_t& _violatingLatIdx, double& _arcMax ) = 0;
@@ -106,7 +106,8 @@ class CostsEvaluator : public CostsEvaluatorBase<Lattice> {
     public   : CostsEvaluator& operator=(CostsEvaluator&&)      = default;
     
     public   : void init ( std::vector<std::shared_ptr<Lattice>>& _lattPtr ) override {
-	this->setCosts();
+	for(auto& partialCostsArrayI : partialCostsArray_) { partialCostsArrayI.clear(); }
+	this->loadCostFunctions();
 	for( auto& funcI : partialCostsArray_ ) { for( auto& partFuncI : funcI ) { partFuncI->initLatticeMap(_lattPtr, mapDataPtr_); } }
     }
     protected: void computeScalarCost( double& _f  ) {

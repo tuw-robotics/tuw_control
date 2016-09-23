@@ -219,7 +219,7 @@ class Test1CostArray_Lin_TPos: public CostsArrayLat<TSLatVec,MapData,TestCost_Li
 
 class TestCostsEvaluatorT1 : public CostsEvaluator<TSLatVec, MapData> {
     public   : TestCostsEvaluatorT1(std::shared_ptr<MapData>& _mapDataPtr) : CostsEvaluator(_mapDataPtr) {}
-    public   : void setCosts() override {
+    public   : void loadCostFunctions() override {
 	partialCostsArray_[asInt(CostEvaluatorCostType::F)].resize(2);
 	partialCostsArray_[asInt(CostEvaluatorCostType::F)][0] = std::make_unique< Test1CostArray_LinSumW_V >();
 	partialCostsArray_[asInt(CostEvaluatorCostType::F)][1] = std::make_unique< Test1CostArray_LinSumW_W >();
