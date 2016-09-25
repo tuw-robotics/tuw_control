@@ -64,10 +64,12 @@ void TrajectorySimulatorPrecalc::simulateTrajectory( double _lastValidArc ) {
         static vector<double> dsLattice;
         stateSim_->paramFuncsDist()->computeS2TLattice( _lastValidArc, ds(), dsLattice ); 
         auto& partLatticeDs = partLattices_[lattTypeIdx(asInt(BSLT::LATTICE_ARC_EQ_DS))]; 
+	
         const double& firstDsLattice = dsLattice[0]; 
         size_t idxFirstInvalidDs = max(0, (int)partLatticeDs->size() - 2);
-        for ( size_t i = 1; i < partLatticeDs->size(); ++i ) { if ( partLatticeDs->at(i).arc > firstDsLattice ) { idxFirstInvalidDs = --i; break; } }
+        for ( size_t i = 1; i < partLatticeDs->size(); ++i ) { if ( partLatticeDs->at(i).arc > firstDsLattice + 1e-3 ) { idxFirstInvalidDs = --i; break; } }
         partLatticeDs->resize( idxFirstInvalidDs + dsLattice.size() ); for ( size_t i = 0; i < dsLattice.size(); ++i ) { partLatticeDs->at(i+idxFirstInvalidDs).arc = dsLattice[i]; }
+        
     } else {
 	partLattices_[lattTypeIdx(asInt(BSLT::LATTICE_ARC_EQ_DS))]->clear();
     }

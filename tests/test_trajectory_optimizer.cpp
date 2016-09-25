@@ -118,11 +118,11 @@ protected:
 	ParamFuncs* funcs  = stateSimPtr->paramFuncs();
 	double initT = 0;
 	funcIdx = 0;
-	funcs->ctrlPtVal(funcIdx, 0, PfCpD::ARC) = 0    +initT; 
-	funcs->ctrlPtVal(funcIdx, 1, PfCpD::ARC) = 0.25 +initT;
-	funcs->ctrlPtVal(funcIdx, 2, PfCpD::ARC) = 0.51 +initT;
-	funcs->ctrlPtVal(funcIdx, 3, PfCpD::ARC) = 0.75 +initT;
-	funcs->ctrlPtVal(funcIdx, 4, PfCpD::ARC) = 1    +initT;
+	funcs->ctrlPtVal(funcIdx, 0, PfCpD::ARC) = 0 +initT; 
+	funcs->ctrlPtVal(funcIdx, 1, PfCpD::ARC) = 1 +initT;
+	funcs->ctrlPtVal(funcIdx, 2, PfCpD::ARC) = 2 +initT;
+	funcs->ctrlPtVal(funcIdx, 3, PfCpD::ARC) = 3 +initT;
+	funcs->ctrlPtVal(funcIdx, 4, PfCpD::ARC) = 4 +initT;
 	
 	funcIdx = 0;
 	funcs->ctrlPtVal(funcIdx, 0, PfCpD::VAL) = 1.;
@@ -192,7 +192,7 @@ class TestCost_LinIntWNorm_W : public CFLatMap1Weight<TSLatVec, MapData> {
 ////////********************************************************************************************************************************
 class TestCost_Lin_TPos : public CFLatMap1Weight<TSLatVec, MapData> {
     public  : TestCost_Lin_TPos() { 
-	stAcc   = [this](const size_t& _i){ return latticePtr_->at(_i).statePtr->value( asInt(SNF::T) )/*latticePtr_->at(_i).arc - latticePtr_->at(_i-1).arc*/; }; 
+	stAcc   = [this](const size_t& _i){ return latticePtr_->at(_i).statePtr->value( asInt(SNF::X) )/*latticePtr_->at(_i).arc - latticePtr_->at(_i-1).arc*/; }; 
 	funcPredef_FL1::lin   (this); 
 	funcPredef_FL2::sum   (this); 
 	funcPredef_FL3::weight(this);
@@ -223,8 +223,10 @@ class TestCostsEvaluatorT1 : public CostsEvaluator<TSLatVec, MapData> {
 	partialCostsArray_[asInt(CostEvaluatorCostType::F)].resize(2);
 	partialCostsArray_[asInt(CostEvaluatorCostType::F)][0] = std::make_unique< Test1CostArray_LinSumW_V >();
 	partialCostsArray_[asInt(CostEvaluatorCostType::F)][1] = std::make_unique< Test1CostArray_LinSumW_W >();
-	partialCostsArray_[asInt(CostEvaluatorCostType::H)].resize(1);
+	partialCostsArray_[asInt(CostEvaluatorCostType::H)].resize(3);
 	partialCostsArray_[asInt(CostEvaluatorCostType::H)][0] = std::make_unique< Test1CostArray_Lin_TPos >();
+	partialCostsArray_[asInt(CostEvaluatorCostType::H)][1] = std::make_unique< Test1CostArray_Lin_TPos >();
+	partialCostsArray_[asInt(CostEvaluatorCostType::H)][2] = std::make_unique< Test1CostArray_LinSumW_V >();
     }
 };
 
@@ -236,12 +238,12 @@ class OptimizationStateDiffDrive : public OptimizationState {
 	auto* paramFuncs = _trajSim.stateSim()->paramFuncs();
 	for ( size_t i = 0; i < paramFuncs->funcsSize(); ++i ) {
 	    for ( size_t j = 1; j < paramFuncs->funcCtrlPtSize(i); ++j ) {
-		variables.emplace_back(  &paramFuncs->ctrlPtVal ( i, j, ParamFuncs::CtrlPtDim::VAL ), &paramFuncs->ctrlPtVal( i, max(0, (int)j-2), ParamFuncs::CtrlPtDim::ARC ) );
+		variables.emplace_back(  &paramFuncs->ctrlPtVal ( i, j, ParamFuncs::CtrlPtDim::VAL ), &paramFuncs->ctrlPtVal( i, max(0, (int)j-1), ParamFuncs::CtrlPtDim::ARC ) );
 	    }
 	}
 	
 	for ( size_t j = 1; j < paramFuncs->funcsArcSize(0); ++j ) {
-	    variables.emplace_back(  &paramFuncs->funcsArc ( 0, j ), &paramFuncs->funcsArc( 0,  max(0, (int)j-2) ) );
+	    variables.emplace_back(  &paramFuncs->funcsArc ( 0, j ), &paramFuncs->funcsArc( 0,  max(0, (int)j-1) ) );
 	}
     }
 };
@@ -264,18 +266,19 @@ TEST_F ( TrajOptTest, GenericTest ) {
     trajOpt->stepSize() = 1e-5;
     
     trajOpt->computeJacobian(false);
-//     coutCostEvalCosts(trajOpt);
     
     auto& costsEvaluator = trajOpt->trajSim()->costsEvaluator_;
     auto f     = costsEvaluator->f;
     auto h     = costsEvaluator->h;
     auto g     = costsEvaluator->g;
-    auto gradF = costsEvaluator->gradF;
-    auto gradH = costsEvaluator->gradH;
-    auto gradG = costsEvaluator->gradG;
+    auto gradF(costsEvaluator->gradF);
+    auto gradH(costsEvaluator->gradH);
+    auto gradG(costsEvaluator->gradG);
     
-    trajOpt->computeJacobian();
+    trajOpt->computeJacobian(true);
 //     coutCostEvalCosts(trajOpt);
+    
+    
     
     EXPECT_DOUBLE_EQ( f, costsEvaluator->f );
     
@@ -290,6 +293,22 @@ TEST_F ( TrajOptTest, GenericTest ) {
     ASSERT_EQ( gradG.rows(), costsEvaluator->gradG.rows() );
     ASSERT_EQ( gradG.cols(), costsEvaluator->gradG.cols() );
     for ( int i = 0; i < gradG.rows(); ++i ) { for ( int j = 0; j < gradG.cols(); ++j ) { EXPECT_DOUBLE_EQ( gradG(i,j), costsEvaluator->gradG(i,j) ); } }
+    
+    
+    
+    
+    cout<<"gradH Precalc="<<endl<<gradH<<endl<<endl;
+    cout<<"gradH Effici="<<endl<<costsEvaluator->gradH<<endl<<endl;
+    
+    trajOpt->trajSim()->stateSim()->paramFuncs()->ctrlPtVal(0,1) = 10;
+    
+    trajOpt->computeJacobian(false);
+    
+    cout<<"gradH Precalc2="<<endl<<costsEvaluator->gradH<<endl<<endl;
+    
+    trajOpt->computeJacobian(true);
+    
+    cout<<"gradH Effici2="<<endl<<costsEvaluator->gradH<<endl<<endl;
 }
 
 ////////////////////////////////////////////--------------------------------------------------////////////////////////////////////////////

@@ -101,10 +101,12 @@ class TrajectoryOptimizer : public TrajectorySimGrade {
     public   : void computeJacobian1Entry ( size_t _idx, bool _efficient = true);
     public   : double& stepSize();
     
-    protected: OptimizationStateSPtr optState_;
-    private  : double fCache;
-    private  : std::vector<double> hCache;
-    private  : std::vector<double> gCache;
+    public   : OptimizationStateSPtr optState_;
+    public   : double fCache;
+    public   : std::vector<double> hCache;
+    public   : std::vector<double> gCache;
+    private  : std::vector< TrajectorySimulator::LatticePointType > simulationLattice;
+    private  : TrajectorySimulator::LatticeVecSPtrVec               partLattices;
     private  : double stepSize_;
 };
 

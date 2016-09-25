@@ -208,6 +208,12 @@ public:
 	ASSERT_EQ( exp->size(), ans->size() );
 	for(size_t i = 0; i < ans->size(); ++i) { EXPECT_DOUBLE_EQ( exp->at(i), ans->at(i) ); }
 	
+	trajSimGrade->evaluateTrajectory(0.2);
+	ans->resize(trajSimGrade->trajSim()->costsEvaluator_->h.size()); for(size_t i = 0; i < ans->size(); ++i) { ans->at(i) = trajSimGrade->trajSim()->costsEvaluator_->h[i]; }
+	exp = costExpFunc(_dt,_ds);
+	ASSERT_EQ( exp->size(), ans->size() );
+	for(size_t i = 0; i < ans->size(); ++i) { EXPECT_DOUBLE_EQ( exp->at(i), ans->at(i) ); }
+	
 	trajSimGrade->setSimMode(TrajectorySimulator::SimMode::ONLINE);
 	trajSimGrade->trajSim()->dt() = _dt; 
 	trajSimGrade->evaluateTrajectory();

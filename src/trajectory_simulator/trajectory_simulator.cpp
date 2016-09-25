@@ -70,7 +70,7 @@ void TrajectorySimulator::setUserDefLattice ( const vector< vector< double* > >&
 }
 
 void TrajectorySimulator::updateUserDefLattice() {
-    
+    partLatIdxCache_.resize(partLattices_.size());
     for ( size_t i = 0; i < userDefPartLattices_.size(); ++i ) {
 	for ( size_t j = 0; j < userDefPartLattices_[i].size(); ++j ) { partLattices_[lattTypeIdx(i)]->at(j).arc = *userDefPartLattices_[i][j]; }
     }
@@ -122,7 +122,11 @@ bool TrajectorySimulator::initSimLatticeState0 ( const double& _lastValidArc, si
     }
     simulationLattice_.erase( simulationLattice_.begin() + _firstLaticeInvalidIdx, simulationLattice_.end() );
     if      ( _firstLaticeInvalidIdx == 0 )                         { stateSim_->toState0(); }
-    else if ( _firstLaticeInvalidIdx <= simulationLattice_.size() ) { StateSPtr st = simulationLattice_[_firstLaticeInvalidIdx-1].statePtr->cloneState() ; stateSim_->setState(st); }
+    else if ( _firstLaticeInvalidIdx <= simulationLattice_.size() ) { 
+	StateSPtr st = simulationLattice_[_firstLaticeInvalidIdx-1].statePtr->cloneState() ; 
+	stateSim_->setState(st);  
+	stateSim_->setStateCf( simulationLattice_.back().arc, ParamFuncs::EvalArcGuarantee::NONE );
+    }
     return true;
 }
 
@@ -151,7 +155,11 @@ void TrajectorySimulator::populateTrajSimPartLattice( const size_t& _firstLatice
     if ( ( _firstLaticeInvalidIdx == 0   ) || ( simulationLattice_.size() == 0 ) ) { setBeginStateToLattices(minArcLatticeVal);        } 
     else                                                                           { minArcLatticeVal = simulationLattice_.back().arc; }
     
-    if ( costsEvaluator_ ) { costsEvaluator_->resetCostFunctions(CostEvaluatorCostType::H); }
+    if ( costsEvaluator_ ) { 
+	costsEvaluator_->resetCostFunctions(CostEvaluatorCostType::F);
+	costsEvaluator_->resetCostFunctions(CostEvaluatorCostType::G);
+	costsEvaluator_->resetCostFunctions(CostEvaluatorCostType::H);
+    }
     
     if (isEmptyAllExtLattices()&&(dt()>0)&&(ds()<=0) ) { populatePartSimLatticesDtOnly  ( _firstLaticeInvalidIdx, arcParamMax );                   } // case when only a dt lattice is available
     else                                               { populatePartSimLatticesGeneral ( _firstLaticeInvalidIdx, arcParamMax, minArcLatticeVal ); } // general case
