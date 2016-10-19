@@ -47,8 +47,10 @@ TrajectorySimulator::TrajectorySimulator (StateSimPtr _stateSim) :
     partLattices_          ( asInt(BaseSimLatticeType::LATTICE_ENUM_SIZE) ),
     partLatIdxCache_       ( asInt(BaseSimLatticeType::LATTICE_ENUM_SIZE) ),
     canComputeDistLattice_ ( stateSim_->paramFuncsDist() != nullptr ),
-    dt_                    (-1), 
-    ds_                    (-1)  {
+    dtBase_                (-1), 
+    dsBase_                (-1),
+    scaleDt_               (false),
+    scaleDs_               (false) {
 	for ( size_t i = 0; i < partLattices_.size(); ++i ) { partLattices_[i] = make_shared<LatticeVec>(); }
 	*(partLattices_[lattTypeIdx( asInt(BaseSimLatticeType::ARC_BG_BK) )]) = {LatticePoint(), LatticePoint()};
 }
@@ -187,14 +189,36 @@ bool TrajectorySimulator::isEmptyAllExtLattices() const {
     return emptyExtArcLat;
 }
 
-double& TrajectorySimulator::dt() {
-    return dt_;
+void TrajectorySimulator::computeScaleDtDs() {
+    dt_ = dtBase_; 
+    if( scaleDt_ ) { 
+	dt_ *= stateSim_->paramFuncs()->funcsArcEnd(); 
+    }
+    ds_ = dsBase_; 
+    if( scaleDs_ ) { 
+	stateSim_->paramFuncs()->setEvalArc( stateSim_->paramFuncs()->funcsArcEnd()   );
+	ds_ *= stateSim_->paramFuncsDist()->computeS(); 
+	stateSim_->paramFuncs()->setEvalArc( stateSim_->paramFuncs()->funcsArcBegin() );
+    }
+}
+
+void TrajectorySimulator::setBoolDtScale ( const bool& _doScale ) {
+    scaleDt_ = _doScale;
+}
+void TrajectorySimulator::setBoolDsScale ( const bool& _doScale ) {
+    scaleDs_ = _doScale;
+}
+
+
+
+double& TrajectorySimulator::dtBase() {
+    return dtBase_;
 }
 const double& TrajectorySimulator::dt() const {
     return dt_;
 }
-double& TrajectorySimulator::ds() {
-    return ds_;
+double& TrajectorySimulator::dsBase() {
+    return dsBase_;
 }
 const double& TrajectorySimulator::ds() const {
     return ds_;

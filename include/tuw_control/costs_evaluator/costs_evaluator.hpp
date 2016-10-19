@@ -80,7 +80,7 @@ class CostsEvaluatorBase {
 	computeArrayCost (h, CostEvaluatorCostType::H);
 	computeArrayCost (g, CostEvaluatorCostType::G);
     }
-    public   : bool hIsValid(){ for( auto& hI : h ) { if(hI < 0) { return false; } } return true; }
+    public   : bool hIsValid(){ if ( f > FLT_MAX ) { return false; } for( auto& hI : h ) { if(hI <= 0) { return false; } } return true; }
     public   : double f;
     public   : std::vector<double> h;
     public   : std::vector<double> g;
@@ -165,6 +165,7 @@ class CostsEvaluator : public CostsEvaluatorBase<Lattice> {
 	return minCost >= 0;
     }
     public   : std::vector< std::vector< std::unique_ptr< cost_functions::CostsArrayLatBase<Lattice, MapData> > > > partialCostsArray_;
+    public   : std::shared_ptr<MapData>& mapDataPtr() { return mapDataPtr_; }
     
     private  : std::shared_ptr<MapData> mapDataPtr_;
     private  : bool firstAfterReset_;

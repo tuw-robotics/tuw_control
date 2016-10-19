@@ -70,6 +70,32 @@ void ParamFuncs::init ( vector<ParamFuncsStructure>& _paramFuncsStructure ) {
     initImpl();
 }
 
+void ParamFuncs::shiftStartCtrlPt ( const double& _dt ) {
+    std::vector<std::vector<size_t> > ctrlPtModif(funcsSize(), std::vector<size_t>(0,0));
+    ctrlPtModif.reserve(10);///@todo not nice
+    const double evalArc = funcsArcBegin_ + _dt;
+    setEvalArc ( evalArc );
+    for ( size_t i = 0; i < funcsSize(); ++i ) { 
+	for( size_t j = 0; j < funcCtrlPtSize(i); ++j ) {
+	    if( ctrlPtVal(i,j,CtrlPtDim::ARC) < evalArc ) { ctrlPtModif[i].emplace_back ( j ); }
+	}
+    }
+    for ( size_t i = 0; i < ctrlPtModif.size(); ++i ) { 
+	const double newVal = computeFuncVal(i);
+	for( size_t j = 0; j < ctrlPtModif[i].size(); ++j ) {
+	    ctrlPtVal(i,j,CtrlPtDim::VAL) = newVal;
+	}
+    }
+    for ( size_t k = 0; k < funcsArcSize(); ++k ) {
+	for ( size_t j = 0; j < funcCtrlPtArc_[k].size(); ++j ) {
+	    funcCtrlPtArc_[k][j] -= _dt;
+	}
+    }
+    funcsArcEnd_ -= _dt;
+    precompute();
+    setEvalArc(funcsArcBegin_);
+}
+
 size_t ParamFuncs::funcsSize() const {
     return funcCtrlPt_.size();
 }

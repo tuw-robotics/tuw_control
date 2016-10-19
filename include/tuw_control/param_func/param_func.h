@@ -154,6 +154,8 @@ class ParamFuncs {
     ///@brief Const of a parametric function control point dimension.
     public   : const double&     ctrlPtVal       ( const std::size_t& _funcIdx, const std::size_t& _funcCtrlPtIdx, const CtrlPtDim& _ctrlPtDim = CtrlPtDim::VAL ) const;
     
+    public   : void              shiftStartCtrlPt( const double& _dt );
+    
     ///@brief Flags for required function computation modes.
     protected: std::vector<FuncEvalModesFlags      > funcEvalReq_;          
     ///@brief Stores the control points for all the parametrized functions.

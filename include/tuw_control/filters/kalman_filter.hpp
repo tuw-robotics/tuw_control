@@ -110,6 +110,8 @@ class KalmanFilter {
     
     protected: Eigen::Matrix<NumType, XDim, XDim> Sigma_;///< %State covariance matrix
 };
+template<typename NumType, int XDim>
+constexpr const int  KalmanFilter<NumType, XDim>::xDim;
 
 /*!@class KalmanFilterPredictInterface
  * @brief Interface for simplified manipulation of specialized (Extended) Kalman Filter prediction part.
@@ -206,6 +208,7 @@ class KalmanFilterPredictInterface : public KalmanFilter<NumType, XDim> {
     protected: virtual void computeQ        () = 0;
 };
 
+
 /*!@class KalmanFilterUpdateInterface
  * @brief Interface for simplified manipulation of specialized (Extended) Kalman Filter updates. To be used with @ref KalmanFilterPredictInterface.
  * @tparam KFPredType Kalman prediction class (extended from @ref KalmanFilterPredictInterface)
@@ -242,6 +245,8 @@ class KalmanFilterUpdateInterface {
     
     template<typename KFPredTypeI, typename...  KFUpdateType > friend class KalmanFilterInterface;
 };
+template<typename KFPredType, int HDim>
+constexpr const int  KalmanFilterUpdateInterface<KFPredType, HDim>::hDim;
 
 /*!@class KalmanFilterInterface
  * @brief Interface for simplified manipulation of specialized (Extended) Kalman Filter implementations. 

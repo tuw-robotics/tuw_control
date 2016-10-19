@@ -382,6 +382,93 @@ TEST_F ( ParamFuncManipSplineDistTest, distTimeV ) {
     
 }
 
+TEST_F ( ParamFuncManipSplineDistTest, timeShift ) {
+    
+    ParamFuncsSpline0DistPtr funcss = dynamic_pointer_cast<ParamFuncsSpline0Dist>(funcs);
+    
+    using PFS = ParamFuncs::ParamFuncsStructure; using PfCpD = ParamFuncs::CtrlPtDim; using FeM = ParamFuncs::FuncEvalMode; using EaG = ParamFuncs::EvalArcGuarantee;
+    size_t funcIdx = 0; vector<PFS> pf( 4 , PFS() );
+    pf[0].ctrlPtsSize = 4; pf[0].ctrlPtsArcRefIdx = 0; 
+    pf[1].ctrlPtsSize = 4; pf[1].ctrlPtsArcRefIdx = 0;
+    pf[2].ctrlPtsSize = 3; pf[2].ctrlPtsArcRefIdx = 1;
+    pf[3].ctrlPtsSize = 3; pf[3].ctrlPtsArcRefIdx = 2;
+    
+    pf[0].evalReq[(size_t)FeM::INT1] = true; pf[0].evalReq[(size_t)FeM::INT2] = true;
+    funcss->init( pf );
+    vector<size_t> idxCfV(1,0);
+    funcss->setDistCfMode(ParamFuncsDist::TraveledDistCfMode::V, idxCfV);
+    
+    double initT = 0;
+    funcIdx = 0;
+    funcss->ctrlPtVal(funcIdx, 0, PfCpD::VAL) = -1; funcss->ctrlPtVal(funcIdx, 0, PfCpD::ARC) = 0+initT;
+    funcss->ctrlPtVal(funcIdx, 1, PfCpD::VAL) =  1; funcss->ctrlPtVal(funcIdx, 1, PfCpD::ARC) = 2+initT;
+    funcss->ctrlPtVal(funcIdx, 2, PfCpD::VAL) =  0; funcss->ctrlPtVal(funcIdx, 2, PfCpD::ARC) = 3+initT;
+    funcss->ctrlPtVal(funcIdx, 3, PfCpD::VAL) = -5; funcss->ctrlPtVal(funcIdx, 3, PfCpD::ARC) = 4+initT;
+    funcIdx = 1;
+    funcss->ctrlPtVal(funcIdx, 0, PfCpD::VAL) =  0; funcss->ctrlPtVal(funcIdx, 0, PfCpD::ARC) = 0+initT;
+    funcss->ctrlPtVal(funcIdx, 1, PfCpD::VAL) =  1; funcss->ctrlPtVal(funcIdx, 1, PfCpD::ARC) = 2+initT;
+    funcss->ctrlPtVal(funcIdx, 2, PfCpD::VAL) = -1; funcss->ctrlPtVal(funcIdx, 2, PfCpD::ARC) = 3+initT;
+    funcss->ctrlPtVal(funcIdx, 3, PfCpD::VAL) = -5; funcss->ctrlPtVal(funcIdx, 3, PfCpD::ARC) = 4+initT;
+    funcIdx = 2;
+    funcss->ctrlPtVal(funcIdx, 0, PfCpD::VAL) = -10; funcss->ctrlPtVal(funcIdx, 0, PfCpD::ARC) = 0+initT;
+    funcss->ctrlPtVal(funcIdx, 1, PfCpD::VAL) =   6; funcss->ctrlPtVal(funcIdx, 1, PfCpD::ARC) = 2+initT;
+    funcss->ctrlPtVal(funcIdx, 2, PfCpD::VAL) =   0; funcss->ctrlPtVal(funcIdx, 2, PfCpD::ARC) = 4+initT;
+    funcIdx = 3;
+    funcss->ctrlPtVal(funcIdx, 0, PfCpD::VAL) = -1; funcss->ctrlPtVal(funcIdx, 0, PfCpD::ARC) = 0+initT;
+    funcss->ctrlPtVal(funcIdx, 1, PfCpD::VAL) =  1; funcss->ctrlPtVal(funcIdx, 1, PfCpD::ARC) = 2+initT;
+    funcss->ctrlPtVal(funcIdx, 2, PfCpD::VAL) = -1; funcss->ctrlPtVal(funcIdx, 2, PfCpD::ARC) = 4+initT;
+    funcss->precompute();
+    
+    double shift;
+    shift = 1;
+    funcss->shiftStartCtrlPt(shift);
+    funcIdx = 0;
+    EXPECT_DOUBLE_EQ(   0, funcss->ctrlPtVal(funcIdx, 0, PfCpD::VAL) ); EXPECT_DOUBLE_EQ(                     initT, funcss->ctrlPtVal(funcIdx, 0, PfCpD::ARC) );
+    EXPECT_DOUBLE_EQ(   1, funcss->ctrlPtVal(funcIdx, 1, PfCpD::VAL) ); EXPECT_DOUBLE_EQ( fmax(2+initT-shift,initT), funcss->ctrlPtVal(funcIdx, 1, PfCpD::ARC) );
+    EXPECT_DOUBLE_EQ(   0, funcss->ctrlPtVal(funcIdx, 2, PfCpD::VAL) ); EXPECT_DOUBLE_EQ( fmax(3+initT-shift,initT), funcss->ctrlPtVal(funcIdx, 2, PfCpD::ARC) );
+    EXPECT_DOUBLE_EQ(  -5, funcss->ctrlPtVal(funcIdx, 3, PfCpD::VAL) ); EXPECT_DOUBLE_EQ( fmax(4+initT-shift,initT), funcss->ctrlPtVal(funcIdx, 3, PfCpD::ARC) );
+    
+    funcIdx = 1;
+    EXPECT_DOUBLE_EQ( 0.5, funcss->ctrlPtVal(funcIdx, 0, PfCpD::VAL) ); EXPECT_DOUBLE_EQ(                     initT, funcss->ctrlPtVal(funcIdx, 0, PfCpD::ARC) );
+    EXPECT_DOUBLE_EQ(   1, funcss->ctrlPtVal(funcIdx, 1, PfCpD::VAL) ); EXPECT_DOUBLE_EQ( fmax(2+initT-shift,initT), funcss->ctrlPtVal(funcIdx, 1, PfCpD::ARC) );
+    EXPECT_DOUBLE_EQ(  -1, funcss->ctrlPtVal(funcIdx, 2, PfCpD::VAL) ); EXPECT_DOUBLE_EQ( fmax(3+initT-shift,initT), funcss->ctrlPtVal(funcIdx, 2, PfCpD::ARC) );
+    EXPECT_DOUBLE_EQ(  -5, funcss->ctrlPtVal(funcIdx, 3, PfCpD::VAL) ); EXPECT_DOUBLE_EQ( fmax(4+initT-shift,initT), funcss->ctrlPtVal(funcIdx, 3, PfCpD::ARC) );
+    
+    funcIdx = 2;
+    EXPECT_DOUBLE_EQ(  -2, funcss->ctrlPtVal(funcIdx, 0, PfCpD::VAL) ); EXPECT_DOUBLE_EQ(                     initT, funcss->ctrlPtVal(funcIdx, 0, PfCpD::ARC) );
+    EXPECT_DOUBLE_EQ(   6, funcss->ctrlPtVal(funcIdx, 1, PfCpD::VAL) ); EXPECT_DOUBLE_EQ( fmax(2+initT-shift,initT), funcss->ctrlPtVal(funcIdx, 1, PfCpD::ARC) );
+    EXPECT_DOUBLE_EQ(   0, funcss->ctrlPtVal(funcIdx, 2, PfCpD::VAL) ); EXPECT_DOUBLE_EQ( fmax(4+initT-shift,initT), funcss->ctrlPtVal(funcIdx, 2, PfCpD::ARC) );
+    
+    funcIdx = 3;
+    EXPECT_DOUBLE_EQ(   0, funcss->ctrlPtVal(funcIdx, 0, PfCpD::VAL) ); EXPECT_DOUBLE_EQ(                     initT, funcss->ctrlPtVal(funcIdx, 0, PfCpD::ARC) );
+    EXPECT_DOUBLE_EQ(   1, funcss->ctrlPtVal(funcIdx, 1, PfCpD::VAL) ); EXPECT_DOUBLE_EQ( fmax(2+initT-shift,initT), funcss->ctrlPtVal(funcIdx, 1, PfCpD::ARC) );
+    EXPECT_DOUBLE_EQ(  -1, funcss->ctrlPtVal(funcIdx, 2, PfCpD::VAL) ); EXPECT_DOUBLE_EQ( fmax(4+initT-shift,initT), funcss->ctrlPtVal(funcIdx, 2, PfCpD::ARC) );
+    
+    shift = 1.5;
+    funcss->shiftStartCtrlPt(shift);
+    funcIdx = 0;
+    EXPECT_DOUBLE_EQ( 0.5, funcss->ctrlPtVal(funcIdx, 0, PfCpD::VAL) ); EXPECT_DOUBLE_EQ(                       initT, funcss->ctrlPtVal(funcIdx, 0, PfCpD::ARC) );
+    EXPECT_DOUBLE_EQ( 0.5, funcss->ctrlPtVal(funcIdx, 1, PfCpD::VAL) ); EXPECT_DOUBLE_EQ( fmax(2+initT-shift-1,initT), funcss->ctrlPtVal(funcIdx, 1, PfCpD::ARC) );
+    EXPECT_DOUBLE_EQ(   0, funcss->ctrlPtVal(funcIdx, 2, PfCpD::VAL) ); EXPECT_DOUBLE_EQ( fmax(3+initT-shift-1,initT), funcss->ctrlPtVal(funcIdx, 2, PfCpD::ARC) );
+    EXPECT_DOUBLE_EQ(  -5, funcss->ctrlPtVal(funcIdx, 3, PfCpD::VAL) ); EXPECT_DOUBLE_EQ( fmax(4+initT-shift-1,initT), funcss->ctrlPtVal(funcIdx, 3, PfCpD::ARC) );
+    
+    funcIdx = 1;
+    EXPECT_DOUBLE_EQ(   0, funcss->ctrlPtVal(funcIdx, 0, PfCpD::VAL) ); EXPECT_DOUBLE_EQ(                       initT, funcss->ctrlPtVal(funcIdx, 0, PfCpD::ARC) );
+    EXPECT_DOUBLE_EQ(   0, funcss->ctrlPtVal(funcIdx, 1, PfCpD::VAL) ); EXPECT_DOUBLE_EQ( fmax(2+initT-shift-1,initT), funcss->ctrlPtVal(funcIdx, 1, PfCpD::ARC) );
+    EXPECT_DOUBLE_EQ(  -1, funcss->ctrlPtVal(funcIdx, 2, PfCpD::VAL) ); EXPECT_DOUBLE_EQ( fmax(3+initT-shift-1,initT), funcss->ctrlPtVal(funcIdx, 2, PfCpD::ARC) );
+    EXPECT_DOUBLE_EQ(  -5, funcss->ctrlPtVal(funcIdx, 3, PfCpD::VAL) ); EXPECT_DOUBLE_EQ( fmax(4+initT-shift-1,initT), funcss->ctrlPtVal(funcIdx, 3, PfCpD::ARC) );
+    
+    funcIdx = 2;
+    EXPECT_DOUBLE_EQ(4.5, funcss->ctrlPtVal(funcIdx, 0, PfCpD::VAL) ); EXPECT_DOUBLE_EQ(                      initT, funcss->ctrlPtVal(funcIdx, 0, PfCpD::ARC) );
+    EXPECT_DOUBLE_EQ(4.5, funcss->ctrlPtVal(funcIdx, 1, PfCpD::VAL) ); EXPECT_DOUBLE_EQ( fmax(2+initT-shift-1,initT), funcss->ctrlPtVal(funcIdx, 1, PfCpD::ARC) );
+    EXPECT_DOUBLE_EQ(  0, funcss->ctrlPtVal(funcIdx, 2, PfCpD::VAL) ); EXPECT_DOUBLE_EQ( fmax(4+initT-shift-1,initT), funcss->ctrlPtVal(funcIdx, 2, PfCpD::ARC) );
+    
+    funcIdx = 3;
+    EXPECT_DOUBLE_EQ( 0.5, funcss->ctrlPtVal(funcIdx, 0, PfCpD::VAL) ); EXPECT_DOUBLE_EQ(                       initT, funcss->ctrlPtVal(funcIdx, 0, PfCpD::ARC) );
+    EXPECT_DOUBLE_EQ( 0.5, funcss->ctrlPtVal(funcIdx, 1, PfCpD::VAL) ); EXPECT_DOUBLE_EQ( fmax(2+initT-shift-1,initT), funcss->ctrlPtVal(funcIdx, 1, PfCpD::ARC) );
+    EXPECT_DOUBLE_EQ(  -1, funcss->ctrlPtVal(funcIdx, 2, PfCpD::VAL) ); EXPECT_DOUBLE_EQ( fmax(4+initT-shift-1,initT), funcss->ctrlPtVal(funcIdx, 2, PfCpD::ARC) );
+}
+
 // TEST_F ( ParamFuncManipSplineDistTest, evalArcFuncValFuncValInconsistentArc ) {
 //     
 //     using PFS = ParamFuncs::ParamFuncsStructure; using PfCpD = ParamFuncs::CtrlPtDim; using EaG = ParamFuncs::EvalArcGuarantee;

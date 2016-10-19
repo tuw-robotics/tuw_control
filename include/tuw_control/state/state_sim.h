@@ -85,6 +85,15 @@ class StateSim : public State {
     ///@brief Value of the current traveled distance of the state.
     public   : virtual double          stateDist      () const = 0;
     
+    public   : virtual void            advanceSet0    (const double& _tEnd, const double& _dt) {
+	toState0();
+	double tSim = 0;
+	while(tSim + _dt <= _tEnd){ tSim += _dt; advance(tSim); }
+	advance(_tEnd);
+	for(size_t i = 0; i < valueSize(); ++i) {  state0().value(i) = value(i); }
+// 	toState0();
+    }
+    
     ///@brief Returns (if applicable) reference of the parametric functions structure. Otherwise returns nullptr.
     public   : virtual ParamFuncs*     paramFuncs     () = 0;
     ///@brief Returns (if applicable) reference of the parametric functions distance-extended structure. Otherwise returns nullptr.
@@ -94,6 +103,10 @@ class StateSim : public State {
     public   : virtual void     setState         ( StateSPtr& _otherState ) = 0;
     ///@brief Sets closed-form state at arc @ref _arc.
     public   : virtual void     setStateCf       ( const double& _arc, const ParamFuncs::EvalArcGuarantee& _evalArcGuarantee = ParamFuncs::EvalArcGuarantee::AFTER_LAST  ) = 0;
+    
+    public   : virtual void     setStateCfNmStep ( const double& _arc, const ParamFuncs::EvalArcGuarantee& _evalArcGuarantee = ParamFuncs::EvalArcGuarantee::AFTER_LAST  ) {
+	setStateCf(_arc, _evalArcGuarantee);
+    }
     ///@brief Computes numerical continuous arc state transition (@ref return) based on internal closed-form state (@ref stateCf ).
     private  : virtual State&   stateNmDot       () = 0;
     ///@brief Computes numerical discrete state transition (@ref return) based on internal closed-form state (@ref stateCf ) and discretization interval @ref _dArc.

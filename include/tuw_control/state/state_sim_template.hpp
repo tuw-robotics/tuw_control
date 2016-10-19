@@ -73,10 +73,10 @@ class StateSimTemplate : public StateSim {
 	return retState;
     }
     public   : void toState0 () override { 
-	setStateCf (0, ParamFuncs::EvalArcGuarantee::AT_BEGIN);
 	const std::size_t sNmS = stateNm_.valueSize();
 	for( std::size_t i = 0; i < sNmS                ; i++ ){ stateNm_.value(i) = state0_.value(i     ); } 
-	for( std::size_t i = 0; i < stateCf_.valueSize(); i++ ){ stateCf_.value(i) = state0_.value(i+sNmS); } 
+// 	for( std::size_t i = 0; i < stateCf_.valueSize(); i++ ){ stateCf_.value(i) = state0_.value(i+sNmS); } 
+	setStateCf (0, ParamFuncs::EvalArcGuarantee::AT_BEGIN);
     }
     public   : void setDiscrType ( const RungeKutta::DiscretizationType& _discrType ) override { 
 	discrFunc_ = RungeKutta::getDiscrFunc<StateNmSize>(_discrType); 

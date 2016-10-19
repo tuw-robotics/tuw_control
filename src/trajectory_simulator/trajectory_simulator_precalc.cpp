@@ -51,7 +51,7 @@ TrajectorySimulatorPrecalc::TrajectorySimulatorPrecalc ( StateSimPtr _stateSim, 
 
 
 void TrajectorySimulatorPrecalc::simulateTrajectory( double _lastValidArc ) {  
-    
+    computeScaleDtDs();
     updateUserDefLattice();
     
     //resize equal dt lattice
@@ -62,14 +62,17 @@ void TrajectorySimulatorPrecalc::simulateTrajectory( double _lastValidArc ) {
     //set the dist-extended sim lattice points on the last lattice entries
     if ( canComputeDistLattice_ && ( ds() > 0 ) ) {
         static vector<double> dsLattice;
-        stateSim_->paramFuncsDist()->computeS2TLattice( _lastValidArc, ds(), dsLattice ); 
-        auto& partLatticeDs = partLattices_[lattTypeIdx(asInt(BSLT::LATTICE_ARC_EQ_DS))]; 
-	
-        const double& firstDsLattice = dsLattice[0]; 
-        size_t idxFirstInvalidDs = max(0, (int)partLatticeDs->size() - 2);
-        for ( size_t i = 1; i < partLatticeDs->size(); ++i ) { if ( partLatticeDs->at(i).arc > firstDsLattice + 1e-3 ) { idxFirstInvalidDs = --i; break; } }
-        partLatticeDs->resize( idxFirstInvalidDs + dsLattice.size() ); for ( size_t i = 0; i < dsLattice.size(); ++i ) { partLatticeDs->at(i+idxFirstInvalidDs).arc = dsLattice[i]; }
-        
+	auto& partLatticeDs = partLattices_[lattTypeIdx(asInt(BSLT::LATTICE_ARC_EQ_DS))]; 
+	if(scaleDs_ || scaleDt_) {
+	    stateSim_->paramFuncsDist()->computeS2TLattice( 0, ds(), dsLattice ); 
+	    partLatticeDs->resize( dsLattice.size() ); for ( size_t i = 0; i < dsLattice.size(); ++i ) { partLatticeDs->at(i).arc = dsLattice[i]; }
+	} else {
+	    stateSim_->paramFuncsDist()->computeS2TLattice( _lastValidArc, ds(), dsLattice ); 
+	    const double& firstDsLattice = dsLattice[0]; 
+	    size_t idxFirstInvalidDs = max(0, (int)partLatticeDs->size() - 2);
+	    for ( size_t i = 1; i < partLatticeDs->size(); ++i ) { if ( partLatticeDs->at(i).arc > firstDsLattice + 1e-3 ) { idxFirstInvalidDs = --i; break; } }
+	    partLatticeDs->resize( idxFirstInvalidDs + dsLattice.size() ); for ( size_t i = 0; i < dsLattice.size(); ++i ) { partLatticeDs->at(i+idxFirstInvalidDs).arc = dsLattice[i]; }
+	}
     } else {
 	partLattices_[lattTypeIdx(asInt(BSLT::LATTICE_ARC_EQ_DS))]->clear();
     }

@@ -80,7 +80,7 @@ namespace RungeKutta {
 	    for(std::size_t j=0;j<=i;++j) { const double& aij = coeff[aijIdx<RKOrder>(i,j)]; for( std::size_t si = 0; si < StateNmSize; ++si ) { deltaXi.value(si) += aij * dX[j].value(si); } }//computes deltaX for step i
 	    
 	    for( std::size_t si = 0; si <  StateNmSize; ++si ) { _stateSim.stateNm().value(si) = x0.value(si) + _dArc * deltaXi.value(si); }
-	    _stateSim.setStateCf ( _arc0 + _dArc * coeff[ciIdx<RKOrder>(i)], ParamFuncs::EvalArcGuarantee::AFTER_LAST );//set the closed form state at new evaluation arc
+	    _stateSim.setStateCfNmStep ( _arc0 + _dArc * coeff[ciIdx<RKOrder>(i)], ParamFuncs::EvalArcGuarantee::AFTER_LAST );//set the closed form state at new evaluation arc
 	    _stateSim.stateNmDot();//compute continuous time state transition
 	    
 	    const double& bipp = coeff[bjIdx<RKOrder>(i+1)];

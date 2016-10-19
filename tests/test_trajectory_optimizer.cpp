@@ -260,8 +260,8 @@ TEST_F ( TrajOptTest, GenericTest ) {
     double dt = 0.01;
     double ds = 0.1;
     
-    trajOpt->trajSim()->dt() = dt; 
-    trajOpt->trajSim()->ds() = ds;
+    trajOpt->trajSim()->dtBase() = dt; 
+    trajOpt->trajSim()->dsBase() = ds;
     
     trajOpt->stepSize() = 1e-5;
     

@@ -155,7 +155,7 @@ public:
 	trajSimGrade->trajSim()->stateSim()->setDiscrType( RungeKutta::DiscretizationType::HEUN );
 	trajSimGrade->setSimMode(TrajectorySimulator::SimMode::PRECALC);
 
-	trajSimGrade->trajSim()->dt() = _dt; 
+	trajSimGrade->trajSim()->dtBase() = _dt; 
 	trajSimGrade->evaluateTrajectory();
 	
 	double sumEndAns, sumEndExp;
@@ -164,7 +164,7 @@ public:
 	EXPECT_DOUBLE_EQ(sumEndExp, sumEndAns);
 	
 	trajSimGrade->setSimMode(TrajectorySimulator::SimMode::ONLINE);
-	trajSimGrade->trajSim()->dt() = _dt; 
+	trajSimGrade->trajSim()->dtBase() = _dt; 
 	trajSimGrade->evaluateTrajectory();
 	
 	sumEndAns = trajSimGrade->trajSim()->costsEvaluator_->f;
@@ -172,8 +172,8 @@ public:
 	EXPECT_DOUBLE_EQ(sumEndExp, sumEndAns);
 	
 	
-	trajSimGrade->trajSim()->dt() = _dt; 
-	trajSimGrade->trajSim()->ds() = _ds;
+	trajSimGrade->trajSim()->dtBase() = _dt; 
+	trajSimGrade->trajSim()->dsBase() = _ds;
 	trajSimGrade->evaluateTrajectory();
 	
 	sumEndAns = trajSimGrade->trajSim()->costsEvaluator_->f;
@@ -182,8 +182,8 @@ public:
 	
 	
 	trajSimGrade->setSimMode(TrajectorySimulator::SimMode::PRECALC);
-	trajSimGrade->trajSim()->dt() = _dt; 
-	trajSimGrade->trajSim()->ds() = _ds;
+	trajSimGrade->trajSim()->dtBase() = _dt; 
+	trajSimGrade->trajSim()->dsBase() = _ds;
 	trajSimGrade->evaluateTrajectory();
 	
 	sumEndAns = trajSimGrade->trajSim()->costsEvaluator_->f;
@@ -198,7 +198,7 @@ public:
 	trajSimGrade->trajSim()->stateSim()->setDiscrType( RungeKutta::DiscretizationType::HEUN );
 	trajSimGrade->setSimMode(TrajectorySimulator::SimMode::PRECALC);
 
-	trajSimGrade->trajSim()->dt() = _dt; 
+	trajSimGrade->trajSim()->dtBase() = _dt; 
 	trajSimGrade->evaluateTrajectory();
 	
 	shared_ptr< vector<double> > ans = make_shared< vector<double> >();
@@ -215,7 +215,7 @@ public:
 	for(size_t i = 0; i < ans->size(); ++i) { EXPECT_DOUBLE_EQ( exp->at(i), ans->at(i) ); }
 	
 	trajSimGrade->setSimMode(TrajectorySimulator::SimMode::ONLINE);
-	trajSimGrade->trajSim()->dt() = _dt; 
+	trajSimGrade->trajSim()->dtBase() = _dt; 
 	trajSimGrade->evaluateTrajectory();
 	
 	ans->resize(trajSimGrade->trajSim()->costsEvaluator_->h.size()); for(size_t i = 0; i < ans->size(); ++i) { ans->at(i) = trajSimGrade->trajSim()->costsEvaluator_->h[i]; }
@@ -224,8 +224,8 @@ public:
 	for(size_t i = 0; i < ans->size(); ++i) { EXPECT_DOUBLE_EQ( exp->at(i), ans->at(i) ); }
 	
 	
-	trajSimGrade->trajSim()->dt() = _dt; 
-	trajSimGrade->trajSim()->ds() = _ds;
+	trajSimGrade->trajSim()->dtBase() = _dt; 
+	trajSimGrade->trajSim()->dsBase() = _ds;
 	trajSimGrade->evaluateTrajectory();
 	
 	ans->resize(trajSimGrade->trajSim()->costsEvaluator_->h.size()); for(size_t i = 0; i < ans->size(); ++i) { ans->at(i) = trajSimGrade->trajSim()->costsEvaluator_->h[i]; }
@@ -235,8 +235,8 @@ public:
 	
 	
 	trajSimGrade->setSimMode(TrajectorySimulator::SimMode::PRECALC);
-	trajSimGrade->trajSim()->dt() = _dt; 
-	trajSimGrade->trajSim()->ds() = _ds;
+	trajSimGrade->trajSim()->dtBase() = _dt; 
+	trajSimGrade->trajSim()->dsBase() = _ds;
 	trajSimGrade->evaluateTrajectory();
 	
 	ans->resize(trajSimGrade->trajSim()->costsEvaluator_->h.size()); for(size_t i = 0; i < ans->size(); ++i) { ans->at(i) = trajSimGrade->trajSim()->costsEvaluator_->h[i]; }
@@ -259,22 +259,22 @@ public:
 	
 	trajSimGrade->setSimMode(TrajectorySimulator::SimMode::PRECALC);
 
-	trajSimGrade->trajSim()->dt() = _dt; 
+	trajSimGrade->trajSim()->dtBase() = _dt; 
 	trajSimGrade->evaluateTrajectory();
-	trajSimGrade->trajSim()->ds() = -1;
+	trajSimGrade->trajSim()->dsBase() = -1;
 	shared_ptr< vector<double> > expPreEq = make_shared< vector<double> >();
 	expPreEq->resize(trajSimGrade->trajSim()->costsEvaluator_->h.size()); for(size_t i=0;i<expPreEq->size();++i) { expPreEq->at(i) = trajSimGrade->trajSim()->costsEvaluator_->h[i]; }
 // 	coutCostEvalCosts(trajSimGrade);
 	
-	trajSimGrade->trajSim()->dt() = _dt / 10.; 
-	trajSimGrade->trajSim()->ds() = _ds;
+	trajSimGrade->trajSim()->dtBase() = _dt / 10.; 
+	trajSimGrade->trajSim()->dsBase() = _ds;
 	trajSimGrade->evaluateTrajectory();
 	shared_ptr< vector<double> > expPreSm = make_shared< vector<double> >();
 	expPreSm->resize(trajSimGrade->trajSim()->costsEvaluator_->h.size()); for(size_t i=0;i<expPreSm->size();++i) { expPreSm->at(i) = trajSimGrade->trajSim()->costsEvaluator_->h[i]; }
 // 	coutCostEvalCosts(trajSimGrade);
 	
-	trajSimGrade->trajSim()->dt() = _dt * 10.; 
-	trajSimGrade->trajSim()->ds() = -1;
+	trajSimGrade->trajSim()->dtBase() = _dt * 10.; 
+	trajSimGrade->trajSim()->dsBase() = -1;
 	trajSimGrade->evaluateTrajectory();
 	shared_ptr< vector<double> > expPreGr = make_shared< vector<double> >();
 	expPreGr->resize(trajSimGrade->trajSim()->costsEvaluator_->h.size()); for(size_t i=0;i<expPreGr->size();++i) { expPreGr->at(i) = trajSimGrade->trajSim()->costsEvaluator_->h[i]; }
@@ -285,8 +285,8 @@ public:
 	shared_ptr< vector<double> > ansOnline  = make_shared< vector<double> >();
 	
 	for(size_t i = 0; i < funcKnotsLattice[0].size();++i){ funcKnotsLattice[0][i] = &funcs->funcsArc(0,i); } trajSimGrade->trajSim()->setUserDefLattice(funcKnotsLattice);  
-	trajSimGrade->trajSim()->dt() = _dt; 
-	trajSimGrade->trajSim()->ds() = -1;
+	trajSimGrade->trajSim()->dtBase() = _dt; 
+	trajSimGrade->trajSim()->dsBase() = -1;
 	trajSimGrade->evaluateTrajectory();
 // 	coutCostEvalCosts(trajSimGrade);
 	ansOnline->resize(trajSimGrade->trajSim()->costsEvaluator_->h.size()); for(size_t i=0;i<ansOnline->size();++i) { ansOnline->at(i) = trajSimGrade->trajSim()->costsEvaluator_->h[i]; }
@@ -295,8 +295,8 @@ public:
 	
 	
 	for(size_t i = 0; i < funcKnotsLattice[0].size();++i){ funcKnotsLattice[0][i] = &funcs->funcsArc(0,i); } trajSimGrade->trajSim()->setUserDefLattice(funcKnotsLattice);  
-	trajSimGrade->trajSim()->dt() = _dt / 10.; 
-	trajSimGrade->trajSim()->ds() = _ds;
+	trajSimGrade->trajSim()->dtBase() = _dt / 10.; 
+	trajSimGrade->trajSim()->dsBase() = _ds;
 	trajSimGrade->evaluateTrajectory();
 // 	coutCostEvalCosts(trajSimGrade);
 	ansOnline->resize(trajSimGrade->trajSim()->costsEvaluator_->h.size()); for(size_t i=0;i<ansOnline->size();++i) { ansOnline->at(i) = trajSimGrade->trajSim()->costsEvaluator_->h[i]; }
@@ -305,8 +305,8 @@ public:
 	
 	
 	for(size_t i = 0; i < funcKnotsLattice[0].size();++i){ funcKnotsLattice[0][i] = &funcs->funcsArc(0,i); } trajSimGrade->trajSim()->setUserDefLattice(funcKnotsLattice);  
-	trajSimGrade->trajSim()->dt() = _dt * 10; 
-	trajSimGrade->trajSim()->ds() = -1;
+	trajSimGrade->trajSim()->dtBase() = _dt * 10; 
+	trajSimGrade->trajSim()->dsBase() = -1;
 	trajSimGrade->evaluateTrajectory();
 // 	coutCostEvalCosts(trajSimGrade);
 	ansOnline->resize(trajSimGrade->trajSim()->costsEvaluator_->h.size()); for(size_t i=0;i<ansOnline->size();++i) { ansOnline->at(i) = trajSimGrade->trajSim()->costsEvaluator_->h[i]; }
@@ -315,8 +315,8 @@ public:
 	
 	
 	for(size_t i = 0; i < funcKnotsLattice[0].size();++i){ funcKnotsLattice[0][i] = &funcs->funcsArc(0,i); } trajSimGrade->trajSim()->setUserDefLattice(funcKnotsLattice);  
-	trajSimGrade->trajSim()->dt() = _dt / 10.; 
-	trajSimGrade->trajSim()->ds() = _ds;
+	trajSimGrade->trajSim()->dtBase() = _dt / 10.; 
+	trajSimGrade->trajSim()->dsBase() = _ds;
 	trajSimGrade->evaluateTrajectory();
 // 	coutCostEvalCosts(trajSimGrade);
 	ansOnline->resize(trajSimGrade->trajSim()->costsEvaluator_->h.size()); for(size_t i=0;i<ansOnline->size();++i) { ansOnline->at(i) = trajSimGrade->trajSim()->costsEvaluator_->h[i]; }
@@ -330,19 +330,19 @@ public:
 	trajSimGrade->trajSim()->stateSim()->setDiscrType( RungeKutta::DiscretizationType::HEUN );
 	trajSimGrade->setSimMode(TrajectorySimulator::SimMode::PRECALC);
 
-	trajSimGrade->trajSim()->dt() = _dt; 
+	trajSimGrade->trajSim()->dtBase() = _dt; 
 	trajSimGrade->evaluateTrajectory();
 	shared_ptr< vector<double> > expPreEq = make_shared< vector<double> >();
 	expPreEq->resize(trajSimGrade->trajSim()->costsEvaluator_->h.size()); for(size_t i=0;i<expPreEq->size();++i) { expPreEq->at(i) = trajSimGrade->trajSim()->costsEvaluator_->h[i]; }
 // 	coutCostEvalCosts(trajSimGrade);
 	
-	trajSimGrade->trajSim()->dt() = _dt / 10.; 
+	trajSimGrade->trajSim()->dtBase() = _dt / 10.; 
 	trajSimGrade->evaluateTrajectory();
 	shared_ptr< vector<double> > expPreSm = make_shared< vector<double> >();
 	expPreSm->resize(trajSimGrade->trajSim()->costsEvaluator_->h.size()); for(size_t i=0;i<expPreSm->size();++i) { expPreSm->at(i) = trajSimGrade->trajSim()->costsEvaluator_->h[i]; }
 // 	coutCostEvalCosts(trajSimGrade);
 	
-	trajSimGrade->trajSim()->dt() = _dt * 10.;
+	trajSimGrade->trajSim()->dtBase() = _dt * 10.;
 	trajSimGrade->evaluateTrajectory();
 	shared_ptr< vector<double> > expPreGr = make_shared< vector<double> >();
 	expPreGr->resize(trajSimGrade->trajSim()->costsEvaluator_->h.size()); for(size_t i=0;i<expPreGr->size();++i) { expPreGr->at(i) = trajSimGrade->trajSim()->costsEvaluator_->h[i]; }
@@ -352,27 +352,27 @@ public:
 	trajSimGrade->setSimMode(TrajectorySimulator::SimMode::ONLINE);
 	shared_ptr< vector<double> > ansOnline  = make_shared< vector<double> >();
 	
-	trajSimGrade->trajSim()->dt() = _dt; 
+	trajSimGrade->trajSim()->dtBase() = _dt; 
 	trajSimGrade->evaluateTrajectory();
 // 	coutCostEvalCosts(trajSimGrade);
 	ansOnline->resize(trajSimGrade->trajSim()->costsEvaluator_->h.size()); for(size_t i=0;i<ansOnline->size();++i) { ansOnline->at(i) = trajSimGrade->trajSim()->costsEvaluator_->h[i]; }
 	for(size_t i = 0; i < ansOnline->size(); ++i) { EXPECT_TRUE( ansOnline->at(i) >= 0 ); EXPECT_DOUBLE_EQ( expPreEq->at(i), ansOnline->at(i) ); }
 	
 	
-	trajSimGrade->trajSim()->dt() = _dt / 10.; 
+	trajSimGrade->trajSim()->dtBase() = _dt / 10.; 
 	trajSimGrade->evaluateTrajectory();
 // 	coutCostEvalCosts(trajSimGrade);
 	ansOnline->resize(trajSimGrade->trajSim()->costsEvaluator_->h.size()); for(size_t i=0;i<ansOnline->size();++i) { ansOnline->at(i) = trajSimGrade->trajSim()->costsEvaluator_->h[i]; }
 	for(size_t i = 0; i < ansOnline->size(); ++i) { EXPECT_TRUE( ansOnline->at(i) >= 0 ); EXPECT_DOUBLE_EQ( expPreSm->at(i), ansOnline->at(i) ); }
 	
-	trajSimGrade->trajSim()->dt() = _dt * 10; 
+	trajSimGrade->trajSim()->dtBase() = _dt * 10; 
 	trajSimGrade->evaluateTrajectory();
 // 	coutCostEvalCosts(trajSimGrade);
 	ansOnline->resize(trajSimGrade->trajSim()->costsEvaluator_->h.size()); for(size_t i=0;i<ansOnline->size();++i) { ansOnline->at(i) = trajSimGrade->trajSim()->costsEvaluator_->h[i]; }
 	for(size_t i = 0; i < ansOnline->size(); ++i) { EXPECT_TRUE( ansOnline->at(i) >= 0 ); EXPECT_DOUBLE_EQ( expPreGr->at(i), ansOnline->at(i) ); }
 	
 	
-	trajSimGrade->trajSim()->dt() = _dt / 10.; 
+	trajSimGrade->trajSim()->dtBase() = _dt / 10.; 
 	trajSimGrade->evaluateTrajectory();
 // 	coutCostEvalCosts(trajSimGrade);
 	ansOnline->resize(trajSimGrade->trajSim()->costsEvaluator_->h.size()); for(size_t i=0;i<ansOnline->size();++i) { ansOnline->at(i) = trajSimGrade->trajSim()->costsEvaluator_->h[i]; }
@@ -790,7 +790,7 @@ TEST_F ( TrajSimGradeTest, CostFuncsArrayOnTOnBELatPrecalc ) {
     trajSimGrade->trajSim()->stateSim()->setDiscrType( RungeKutta::DiscretizationType::HEUN );
     trajSimGrade->setSimMode(TrajectorySimulator::SimMode::PRECALC);
 
-    trajSimGrade->trajSim()->dt() = 0.1; 
+    trajSimGrade->trajSim()->dtBase() = 0.1; 
     trajSimGrade->evaluateTrajectory();
     shared_ptr< vector<double> > expPreEq = make_shared< vector<double> >();
     expPreEq->resize(trajSimGrade->trajSim()->costsEvaluator_->h.size()); for(size_t i=0;i<expPreEq->size();++i) { expPreEq->at(i) = trajSimGrade->trajSim()->costsEvaluator_->h[i]; }

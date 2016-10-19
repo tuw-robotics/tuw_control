@@ -292,23 +292,23 @@ TEST_F ( TrajectorySimulatorsTest, SimPrecalcFrom0Dt ) {
     funcs->precompute();
     
     //set lattice types
-    trajSim->ds() = -1;//only dt lattice types
+    trajSim->dsBase() = -1;//only dt lattice types
     
     size_t statesBeginEnd  = 2, statesDt, statesDs, statesLattice0; double sumStates = 0; size_t statesSimExp;
     
-    trajSim->dt() = 0.1; trajSim->simulateTrajectory(0);     
+    trajSim->dtBase() = 0.1; trajSim->simulateTrajectory(0);     
     statesDt = expectedDtStates( funcs->funcsArcEnd(), trajSim->dt() ); statesDs = 0; statesLattice0 = 0; sumStates = statesBeginEnd + statesDt + statesDs + statesLattice0;
     EXPECT_EQ( sumStates, sumAllPartStates (trajSim) ); 
     statesSimExp = statesDt; EXPECT_EQ( statesSimExp, trajSim->simLattice().size() );
     checkSimLatticeConsistency(trajSim->simulationLattice_);
     
-    trajSim->dt() = 0.12; trajSim->simulateTrajectory(0);
+    trajSim->dtBase() = 0.12; trajSim->simulateTrajectory(0);
     statesDt = expectedDtStates( funcs->funcsArcEnd(), trajSim->dt() ); statesDs = 0; statesLattice0 = 0; sumStates = statesBeginEnd + statesDt + statesDs + statesLattice0;
     EXPECT_EQ( sumStates, sumAllPartStates (trajSim) ); 
     statesSimExp = statesDt; EXPECT_EQ( statesSimExp, trajSim->simLattice().size() );
     checkSimLatticeConsistency(trajSim->simulationLattice_);
     
-    trajSim->dt() = 0.25; trajSim->simulateTrajectory(0);
+    trajSim->dtBase() = 0.25; trajSim->simulateTrajectory(0);
     statesDt = expectedDtStates( funcs->funcsArcEnd(), trajSim->dt() ); statesDs = 0; statesLattice0 = 0; sumStates = statesBeginEnd + statesDt + statesDs + statesLattice0;
     EXPECT_EQ( sumStates, sumAllPartStates (trajSim) ); 
     statesSimExp = statesDt; EXPECT_EQ( statesSimExp, trajSim->simLattice().size() );
@@ -343,20 +343,20 @@ TEST_F ( TrajectorySimulatorsTest, SimPrecalcFrom0DtDsCtrlPt ) {
     size_t statesBeginEnd  = 2, statesDt, statesDs, statesLattice0;  size_t statesSimExp;
     double sumStates = 0;
     
-    trajSim->dt() = 0.1; trajSim->ds() = 0.1; trajSim->simulateTrajectory(0);     
+    trajSim->dtBase() = 0.1; trajSim->dsBase() = 0.1; trajSim->simulateTrajectory(0);     
     statesDt = expectedDtStates( funcs->funcsArcEnd(), trajSim->dt() ); statesDs = 10+1; statesLattice0 = funcs->funcCtrlPtSize(0); sumStates = statesBeginEnd + statesDt + statesDs + statesLattice0;
     EXPECT_EQ( sumStates, sumAllPartStates (trajSim) ); 
 //     for(size_t i = 0; i < trajSim->simLattice().size(); i++){ cout<<trajSim->simLattice()[i].arc<<", "; }cout<<endl;
     statesSimExp = statesDt + /*statesDs - 2 +*/ statesLattice0 - 2; EXPECT_EQ( statesSimExp, trajSim->simLattice().size() );//ds in same locations as dt
     checkSimLatticeConsistency(trajSim->simulationLattice_);
     
-    trajSim->dt() = 0.12; trajSim->ds() = 0.12; trajSim->simulateTrajectory(0);     
+    trajSim->dtBase() = 0.12; trajSim->dsBase() = 0.12; trajSim->simulateTrajectory(0);     
     statesDt = expectedDtStates( funcs->funcsArcEnd(), trajSim->dt() ); statesDs =  9+1; statesLattice0 = funcs->funcCtrlPtSize(0); sumStates = statesBeginEnd + statesDt + statesDs + statesLattice0;
     EXPECT_EQ( sumStates, sumAllPartStates (trajSim) ); 
     statesSimExp = statesDt + /*statesDs - 2 +*/ statesLattice0 - 2; EXPECT_EQ( statesSimExp, trajSim->simLattice().size() );//ds in same locations as dt
     checkSimLatticeConsistency(trajSim->simulationLattice_);
     
-    trajSim->dt() = 0.25; trajSim->ds() = 0.01; trajSim->simulateTrajectory(0);     
+    trajSim->dtBase() = 0.25; trajSim->dsBase() = 0.01; trajSim->simulateTrajectory(0);     
     statesDt = expectedDtStates( funcs->funcsArcEnd(), trajSim->dt() ); statesDs =100+1; statesLattice0 = funcs->funcCtrlPtSize(0); sumStates = statesBeginEnd + statesDt + statesDs + statesLattice0;
     EXPECT_EQ( sumStates, sumAllPartStates (trajSim) ); 
     statesSimExp = statesDt + statesDs - 2 - 3 + statesLattice0 - 2; EXPECT_EQ( statesSimExp, trajSim->simLattice().size() );//3 ds overlay in same locations with dt (.25, .5, .75)
@@ -390,7 +390,7 @@ TEST_F ( TrajectorySimulatorsTest, SimPrecalcFromNon0DtDsCtrlPt ) {
     for(size_t i = 0; i < funcKnotsLattice[0].size();++i){ funcKnotsLattice[0][i] = &funcs->funcsArc(0,i); }
     trajSim->setUserDefLattice(funcKnotsLattice);
     
-    trajSim->dt() = 0.13; trajSim->ds() = 0.0795; trajSim->simulateTrajectory(0);     
+    trajSim->dtBase() = 0.13; trajSim->dsBase() = 0.0795; trajSim->simulateTrajectory(0);     
     
     vector<TrajectorySimulator::LatticePointType > trajStatesRef; 
     for(size_t i = 0; i < trajSim->simulationLattice_.size(); ++i){ 
@@ -440,19 +440,19 @@ TEST_F ( TrajectorySimulatorsTest, SimOnlineFrom0Dt ) {
     funcs->precompute();
     
     //set lattice types
-    trajSim      ->ds() = -1;//only dt lattice types
-    trajSimOnline->ds() = -1;
+    trajSim      ->dsBase() = -1;//only dt lattice types
+    trajSimOnline->dsBase() = -1;
     
-    trajSim      ->dt() = 0.10; trajSim      ->simulateTrajectory(0);
-    trajSimOnline->dt() = 0.10; trajSimOnline->simulateTrajectory(0); 
+    trajSim      ->dtBase() = 0.10; trajSim      ->simulateTrajectory(0);
+    trajSimOnline->dtBase() = 0.10; trajSimOnline->simulateTrajectory(0); 
     checkSimLatticeStatesEqual( trajSim->simulationLattice_, trajSimOnline->simulationLattice_ ); checkPartLatticeStatesEqual( trajSim->partLattices_, trajSimOnline->partLattices_ );
     
-    trajSim      ->dt() = 0.12; trajSim      ->simulateTrajectory(0);
-    trajSimOnline->dt() = 0.12; trajSimOnline->simulateTrajectory(0); 
+    trajSim      ->dtBase() = 0.12; trajSim      ->simulateTrajectory(0);
+    trajSimOnline->dtBase() = 0.12; trajSimOnline->simulateTrajectory(0); 
     checkSimLatticeStatesEqual( trajSim->simulationLattice_, trajSimOnline->simulationLattice_ ); checkPartLatticeStatesEqual( trajSim->partLattices_, trajSimOnline->partLattices_ );
     
-    trajSim      ->dt() = 0.25; trajSim      ->simulateTrajectory(0);
-    trajSimOnline->dt() = 0.25; trajSimOnline->simulateTrajectory(0); 
+    trajSim      ->dtBase() = 0.25; trajSim      ->simulateTrajectory(0);
+    trajSimOnline->dtBase() = 0.25; trajSimOnline->simulateTrajectory(0); 
     checkSimLatticeStatesEqual( trajSim->simulationLattice_, trajSimOnline->simulationLattice_ ); checkPartLatticeStatesEqual( trajSim->partLattices_, trajSimOnline->partLattices_ );
 }
 
@@ -483,16 +483,16 @@ TEST_F ( TrajectorySimulatorsTest, SimOnlineFrom0DtDsCtrlPt ) {
     trajSimOnline->setUserDefLattice(funcKnotsLattice);
     
     
-    trajSim      ->dt() = 0.10; trajSim      ->ds() = 0.10; trajSim      ->simulateTrajectory(0);     
-    trajSimOnline->dt() = 0.10; trajSimOnline->ds() = 0.10; trajSimOnline->simulateTrajectory(0); 
+    trajSim      ->dtBase() = 0.10; trajSim      ->dsBase() = 0.10; trajSim      ->simulateTrajectory(0);     
+    trajSimOnline->dtBase() = 0.10; trajSimOnline->dsBase() = 0.10; trajSimOnline->simulateTrajectory(0); 
     checkSimLatticeStatesEqual( trajSim->simulationLattice_, trajSimOnline->simulationLattice_ ); checkPartLatticeStatesEqual( trajSim->partLattices_, trajSimOnline->partLattices_ );
         
-    trajSim      ->dt() = 0.12; trajSim      ->ds() = 0.12; trajSim      ->simulateTrajectory(0);     
-    trajSimOnline->dt() = 0.12; trajSimOnline->ds() = 0.12; trajSimOnline->simulateTrajectory(0); 
+    trajSim      ->dtBase() = 0.12; trajSim      ->dsBase() = 0.12; trajSim      ->simulateTrajectory(0);     
+    trajSimOnline->dtBase() = 0.12; trajSimOnline->dsBase() = 0.12; trajSimOnline->simulateTrajectory(0); 
     checkSimLatticeStatesEqual( trajSim->simulationLattice_, trajSimOnline->simulationLattice_ ); checkPartLatticeStatesEqual( trajSim->partLattices_, trajSimOnline->partLattices_ );
     
-    trajSim      ->dt() = 0.25; trajSim      ->ds() = 0.01; trajSim      ->simulateTrajectory(0);     
-    trajSimOnline->dt() = 0.25; trajSimOnline->ds() = 0.01; trajSimOnline->simulateTrajectory(0); 
+    trajSim      ->dtBase() = 0.25; trajSim      ->dsBase() = 0.01; trajSim      ->simulateTrajectory(0);     
+    trajSimOnline->dtBase() = 0.25; trajSimOnline->dsBase() = 0.01; trajSimOnline->simulateTrajectory(0); 
     checkSimLatticeStatesEqual( trajSim->simulationLattice_, trajSimOnline->simulationLattice_ ); checkPartLatticeStatesEqual( trajSim->partLattices_, trajSimOnline->partLattices_ );
 }
 
@@ -523,8 +523,8 @@ TEST_F ( TrajectorySimulatorsTest, SimOnlineFromNon0DtDsCtrlPt ) {
     trajSim      ->setUserDefLattice(funcKnotsLattice);
     trajSimOnline->setUserDefLattice(funcKnotsLattice);
     
-    trajSim      ->dt() = 0.13; trajSim      ->ds() = 0.0795; trajSim      ->simulateTrajectory(0);  
-    trajSimOnline->dt() = 0.13; trajSimOnline->ds() = 0.0795; trajSimOnline->simulateTrajectory(0);  
+    trajSim      ->dtBase() = 0.13; trajSim      ->dsBase() = 0.0795; trajSim      ->simulateTrajectory(0);  
+    trajSimOnline->dtBase() = 0.13; trajSimOnline->dsBase() = 0.0795; trajSimOnline->simulateTrajectory(0);  
     
     trajSim      ->simulateTrajectory(0.10);
     trajSimOnline->simulateTrajectory(0.10); 

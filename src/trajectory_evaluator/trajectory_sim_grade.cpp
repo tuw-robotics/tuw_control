@@ -60,8 +60,8 @@ void TrajectorySimGrade::modifyTrajSimMode() {
     bool copy = false;
     if( trajSim_ != nullptr ) {
 	copy = true;
-	dt = trajSim_->dt();
-	ds = trajSim_->ds();
+	dt = trajSim_->dtBase();
+	ds = trajSim_->dsBase();
 	simulationLattice     = trajSim_->simLattice();
 	partLattices          = trajSim_->partLattices_;
 	userPartLattices_     = trajSim_->userDefPartLattices_;
@@ -69,8 +69,8 @@ void TrajectorySimGrade::modifyTrajSimMode() {
     if      ( simMode_ == TrajectorySimulator::SimMode::ONLINE  ) { trajSim_ = make_shared<TrajectorySimulatorOnline >(trajSim_->stateSim(), std::move(trajSim_->costsEvaluator_) ); }
     else if ( simMode_ == TrajectorySimulator::SimMode::PRECALC ) { trajSim_ = make_shared<TrajectorySimulatorPrecalc>(trajSim_->stateSim(), std::move(trajSim_->costsEvaluator_) ); }
     if ( copy ) {
-	trajSim_->dt() = dt;
-	trajSim_->ds() = ds;
+	trajSim_->dtBase() = dt;
+	trajSim_->dsBase() = ds;
 	trajSim_->simLattice()   = simulationLattice;
 	trajSim_->partLattices_  = partLattices;
 	trajSim_->userDefPartLattices_ = userPartLattices_;

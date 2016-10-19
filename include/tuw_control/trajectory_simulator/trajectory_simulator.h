@@ -99,14 +99,17 @@ class TrajectorySimulator {
     public   : TrajectorySimulator& operator=(TrajectorySimulator&&)      = default;
     
     
+    public   : void setBoolDtScale ( const bool& _doScale );
+    public   : void setBoolDsScale ( const bool& _doScale );
+    
     ///@brief Reference to arc parametrization interval used for the equal arc-length lattice.
-    public   :       double& dt ();
+    public   :       double& dtBase ();
     ///@brief Const reference to arc parametrization interval used for the equal arc-length lattice.
-    public   : const double& dt () const;
+    public   : const double& dt     () const;
     ///@brief Reference to arc parametrization interval used for the equal distance lattice.
-    public   :       double& ds ();
+    public   :       double& dsBase ();
     ///@brief Const reference to arc parametrization interval used for the equal distance lattice.
-    public   : const double& ds () const;
+    public   : const double& ds     () const;
     ///@brief Reference of the state simulator object.
     public   :       StateSimPtr stateSim ();
     ///@brief Const reference of the state simulator object.
@@ -155,6 +158,8 @@ class TrajectorySimulator {
     ///@brief Converts shifted (int) lattice index to container (size_t) index. @see @param BaseSimLatticeType.
     public   : static size_t lattTypeIdx             ( int _enumIdx );
     
+    protected: void computeScaleDtDs();
+    
     ///@brief State simulator object.
     protected: StateSimPtr   stateSim_;
     ///@brief Lattice requesting each simulated trajectory state.
@@ -169,6 +174,11 @@ class TrajectorySimulator {
     private  : double dt_;
     ///@brief Arc parametrization interval used for the equal distance lattice.
     private  : double ds_;
+    
+    private  : double dtBase_;
+    private  : double dsBase_;
+    protected: bool   scaleDt_;
+    protected: bool   scaleDs_;
     
     private  : std::vector<std::vector<double*> > userDefPartLattices_;
     
