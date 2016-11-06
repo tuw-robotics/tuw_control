@@ -83,21 +83,18 @@ class KalmanFilter {
     }
     
     /** @brief Preforms Kalman update step.
-     *  @param _hObs  Measurements 
-     *  @param _hPred Expected measurements
-     *  @param _C     %State-to-measurement matrix
-     *  @param _R     Measurement noise matrix (mapped in measurement-space)
+     *  @param _deltah  Measurement error vector
+     *  @param _C       %State-to-measurement matrix
+     *  @param _R       Measurement noise matrix (mapped in measurement-space)
      */
-    public   : template<int UpdateDim> void update ( const Eigen::Matrix<NumType, UpdateDim, 1        >& _hObs, 
-						     const Eigen::Matrix<NumType, UpdateDim, 1        >& _hPred, 
+    public   : template<int UpdateDim> void update ( const Eigen::Matrix<NumType, UpdateDim, 1        >& _deltah, 
 						     const Eigen::Matrix<NumType, UpdateDim, XDim     >& _C, 
 						     const Eigen::Matrix<NumType, UpdateDim, UpdateDim>& _R ) {
 	
 	Eigen::Matrix<NumType, UpdateDim, UpdateDim> S = _C * Sigma_ * _C.transpose() + _R;
 	Eigen::Matrix<NumType, XDim     , UpdateDim> K = Sigma_ * _C.transpose() * S.inverse();
-	Eigen::Matrix<NumType, UpdateDim, 1> deltaH = _hObs - _hPred;
-	for(int i = 0; i < deltaH.rows(); ++i) { if( deltaH(i) != deltaH(i) ){ deltaH(i) = 0; } }
-	x_     += K * ( deltaH/*_hObs - _hPred*/ );
+// 	for(int i = 0; i < deltaH.rows(); ++i) { if( deltaH(i) != deltaH(i) ){ deltaH(i) = 0; } }
+	x_     += K * _deltah;
 	Sigma_  = ( Eigen::Matrix<NumType, XDim, XDim>::Identity( Sigma_.rows(), Sigma_.cols() ) - K * _C ) * Sigma_;
     }
     
@@ -226,22 +223,22 @@ class KalmanFilterUpdateInterface {
     
     public   : static constexpr const int hDim = HDim;///< Measurement vector size
     
-    public   : const Eigen::Matrix<typename KFPredType::NumericalType, HDim, 1                >& h () const  { return h_    ; }///< Const access of predicted measurement function vector @ref h_
-    public   : const Eigen::Matrix<typename KFPredType::NumericalType, HDim, KFPredType::xDim >& H () const  { return H_    ; }///< Const access of predicted measurement matrix @ref H_
-    public   : const Eigen::Matrix<typename KFPredType::NumericalType, HDim, HDim             >& R () const  { return R_    ; }///< Const access of measurement noise matrix @ref R_
+    public   : const Eigen::Matrix<typename KFPredType::NumericalType, HDim, 1                >& deltah () const  { return deltah_; }///< Const access of measurement function error vector @ref h_
+    public   : const Eigen::Matrix<typename KFPredType::NumericalType, HDim, KFPredType::xDim >& H      () const  { return H_     ; }///< Const access of predicted measurement matrix @ref H_
+    public   : const Eigen::Matrix<typename KFPredType::NumericalType, HDim, HDim             >& R      () const  { return R_     ; }///< Const access of measurement noise matrix @ref R_
     
-    protected: Eigen::Matrix<typename KFPredType::NumericalType, HDim, 1                > h_; ///< Predicted measurement function vector
+    protected: Eigen::Matrix<typename KFPredType::NumericalType, HDim, 1                > deltah_; ///< Measurement function error vector
     protected: Eigen::Matrix<typename KFPredType::NumericalType, HDim, KFPredType::xDim > H_; ///< Predicted measurement partial derivative (Jacobian) with respect to the state vector
     protected: Eigen::Matrix<typename KFPredType::NumericalType, HDim, HDim             > R_; ///< Measurement noise matrix (mapped in measurement-space)
     
     /// @brief Interface for precomputation function called at the beginning of the update step.
-    protected: virtual void precompute(const KFPredType* _kf) = 0;
+    protected: virtual void precompute     (const KFPredType* _kf) = 0;
     /// @brief Interface for computation of the predicted measurement matrix @ref H_.
-    protected: virtual void computeH  (const KFPredType* _kf) = 0;
-    /// @brief Interface for computation of the predicted measurement function vector @ref h_.
-    protected: virtual void computeh  (const KFPredType* _kf) = 0;
+    protected: virtual void computeH       (const KFPredType* _kf) = 0;
+    /// @brief Interface for computation of the measurement function error vector @ref deltah_.
+    protected: virtual void computeDeltah  (const KFPredType* _kf, const Eigen::Matrix<typename KFPredType::NumericalType, hDim, 1>& _zObs) = 0;
     /// @brief Interface for computation of the measurement noise matrix @ref R_.
-    protected: virtual void computeR  (const KFPredType* _kf) = 0;
+    protected: virtual void computeR       (const KFPredType* _kf) = 0;
     
     template<typename KFPredTypeI, typename...  KFUpdateType > friend class KalmanFilterInterface;
 };
@@ -280,10 +277,10 @@ class KalmanFilterInterface : public KFPredType {
 	       void update  ( const Eigen::Matrix<typename KFPredType::NumericalType, KFUpdateTypeI::hDim, 1>& _zObs ) { 
 	auto& updI = std::get<KFUpdateTypeI>(updaters_); 
 	updI.precompute(this);
-	updI.computeH (this); 
-	updI.computeh (this);  
-	updI.computeR (this); 
-	KFPredType::update( _zObs, updI.h(), updI.H(),  updI.R() );
+	updI.computeH      (this); 
+	updI.computeDeltah (this, _zObs);  
+	updI.computeR      (this); 
+	KFPredType::update( updI.deltah(), updI.H(),  updI.R() );
     }
     
     /** @brief Performs the update step  by the template argument @ref KFUpdateTypeI (defaults to first updater class) with resizing.
@@ -297,9 +294,9 @@ class KalmanFilterInterface : public KFPredType {
     public   : template<typename KFUpdateTypeI = typename std::tuple_element<0, std::tuple< KFUpdateType... >>::type, int i = KFUpdateTypeI::hDim, typename std::enable_if< (i == -1) >::type* = nullptr> 
 	       void update  ( const Eigen::Matrix<typename KFPredType::NumericalType, KFUpdateTypeI::hDim, 1>& _zObs ) { 
 	auto& updI = std::get<KFUpdateTypeI>(updaters_); 
-	updI.h_.resize(_zObs.rows(), 1               ); 
-	updI.H_.resize(_zObs.rows(), this->x_.rows() ); 
-	updI.R_.resize(_zObs.rows(),    _zObs.rows() ); 
+	updI.deltah_.resize(_zObs.rows(), 1               ); 
+	updI.H_     .resize(_zObs.rows(), this->x_.rows() ); 
+	updI.R_     .resize(_zObs.rows(),    _zObs.rows() ); 
 	update<KFUpdateTypeI, 0>(_zObs);
     }
     private  : std::tuple< KFUpdateType... > updaters_;///< Container
