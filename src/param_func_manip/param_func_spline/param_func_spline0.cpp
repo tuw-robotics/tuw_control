@@ -130,8 +130,9 @@ void ParamFuncsSpline0Dist::setEvalArc ( const double& _funcsArcEval, const Eval
 	    for ( size_t i = 0; i < funcsArcSz; ++i ) { 
 		const size_t arcISize = funcCtrlPt_[i].size();
 		size_t&             j = funcEvalArcCacheIdxUnder_[i];
-		while( funcsArc( i, j ) <= funcsArcEval_ ){ if( ++j >= arcISize) { break; } } 
-		--j;
+		while( funcsArc( i, j ) <  funcsArcEval_ ){ if( ++j >= arcISize) { break; } } 
+// 		--j;
+		j = std::max(0, (int)j - 1);
 	    }
 	    break;
 	case eag::AT_BEGIN   :
@@ -145,12 +146,12 @@ void ParamFuncsSpline0Dist::setEvalArc ( const double& _funcsArcEval, const Eval
 		auto& aFuncAtArc = funcCtrlPt_[arc2func_[i][0]];
 		static double referenceArc; static FuncCtrlPt dummy(0, referenceArc);
 		referenceArc = funcsArcEval_;
-		funcEvalArcCacheIdxUnder_[i] = distance( aFuncAtArc.begin(), 
-							 upper_bound( aFuncAtArc.begin(), 
-								      aFuncAtArc.end(), 
-								      dummy,
-								      [](const FuncCtrlPt& a, const FuncCtrlPt& b){ return a.arc < b.arc; } ) 
-							) - 1;
+		funcEvalArcCacheIdxUnder_[i] = std::max( (int)distance( aFuncAtArc.begin(), 
+							                upper_bound( aFuncAtArc.begin(), 
+								                     aFuncAtArc.end(), 
+									     	     dummy,
+										     [](const FuncCtrlPt& a, const FuncCtrlPt& b){ return a.arc <= b.arc; } ) 
+								       ) - 1, 0);
 	    }
 	    break;
 	case eag::BEFORE_LAST: 

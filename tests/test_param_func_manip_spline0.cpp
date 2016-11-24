@@ -172,6 +172,9 @@ TEST_F ( ParamFuncManipSplineDistTest, funcValInt1funcValInt2 ) {
     funcs->setEvalArc(     2.5+initT, EaG::NONE); EXPECT_DOUBLE_EQ(  1.5625, funcs->computeFuncInt2( 0 ) );
     funcs->setEvalArc(     3.5+initT, EaG::NONE); EXPECT_DOUBLE_EQ(   2.375, funcs->computeFuncInt2( 0 ) );
     funcs->setEvalArc(     4.0+initT, EaG::NONE); EXPECT_DOUBLE_EQ(  10./3., funcs->computeFuncInt2( 0 ) );
+    
+    funcs->setEvalArc(     2+initT, EaG::NONE      ); EXPECT_DOUBLE_EQ( 1, funcs->computeFuncDiff1( 0 ) );
+    funcs->setEvalArc(     2+initT, EaG::AFTER_LAST); EXPECT_DOUBLE_EQ( 1, funcs->computeFuncDiff1( 0 ) );
 }
 
 
