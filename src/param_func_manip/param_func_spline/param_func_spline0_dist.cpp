@@ -45,6 +45,7 @@ using TDM = ParamFuncsSpline0Dist::TraveledDistCfMode;
 
 void ParamFuncsSpline0Dist::setDistCfMode ( TraveledDistCfMode _distCfMode, const vector< std::size_t >& _distRelFuncIdx ) {
     distCfMode_ = _distCfMode;
+    distRelFuncIdx_ = _distRelFuncIdx;
     switch (distCfMode_) {
 	case TDM::NONE: break;
 	case TDM::V   : 
@@ -62,6 +63,16 @@ void ParamFuncsSpline0Dist::setDistCfMode ( TraveledDistCfMode _distCfMode, cons
 	    distLinkedArcIdx_= func2Arc_[_distRelFuncIdx[0]];
 	    break;
     }
+}
+
+ParamFuncsSpline0Dist::ParamFuncsSpline0Dist ( const ParamFuncsSpline0Dist& _other ) : ParamFuncsDist(_other) {
+    initImpl();
+    setDistCfMode(_other.distCfMode_, _other.distRelFuncIdx_);
+}
+ParamFuncsSpline0Dist& ParamFuncsSpline0Dist::operator= ( const ParamFuncsSpline0Dist& _other ) {
+    ParamFuncsDist::operator=(_other);
+    setDistCfMode(_other.distCfMode_, _other.distRelFuncIdx_);
+    return *this;
 }
 
 void ParamFuncsSpline0Dist::precomputeDist() {

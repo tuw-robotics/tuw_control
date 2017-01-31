@@ -45,8 +45,8 @@ using namespace std;
 
 void ParamFuncsSpline0Dist::initImpl() {
     const size_t funcSize = funcsSize();
-    funcEvalCache_           .resize( funcSize       );
-    arc2func_                .resize( funcsArcSize() );
+    funcEvalCache_           .resize( funcSize       );  for( auto& funcEvalCacheI            : funcEvalCache_            ) { funcEvalCacheI           .clear(); }
+    arc2func_                .resize( funcsArcSize() );  for( auto& arc2funcI                 : arc2func_                 ) { arc2funcI                .clear(); }
     funcEvalArcCacheIdxUnder_.resize( funcsArcSize() );
     
     for( size_t funcIdx = 0; funcIdx < funcSize; ++funcIdx ) {

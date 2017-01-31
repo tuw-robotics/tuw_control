@@ -159,6 +159,9 @@ TEST_F ( ParamFuncManipSplineDistTest, funcValInt1funcValInt2 ) {
     funcs->ctrlPtVal(funcIdx, 1, PfCpD::VAL) = 2; funcs->ctrlPtVal(funcIdx, 1, PfCpD::ARC) = 2+initT;
     funcs->ctrlPtVal(funcIdx, 2, PfCpD::VAL) = 1; funcs->ctrlPtVal(funcIdx, 2, PfCpD::ARC) = 3+initT;
     funcs->ctrlPtVal(funcIdx, 3, PfCpD::VAL) = 5; funcs->ctrlPtVal(funcIdx, 3, PfCpD::ARC) = 4+initT;
+    
+    
+    
     funcs->precompute();
     
     funcs->setEvalArc(       0+initT, EaG::NONE); EXPECT_DOUBLE_EQ(     0  , funcs->computeFuncInt1( 0 ) ); 
@@ -175,6 +178,45 @@ TEST_F ( ParamFuncManipSplineDistTest, funcValInt1funcValInt2 ) {
     
     funcs->setEvalArc(     2+initT, EaG::NONE      ); EXPECT_DOUBLE_EQ( 1, funcs->computeFuncDiff1( 0 ) );
     funcs->setEvalArc(     2+initT, EaG::AFTER_LAST); EXPECT_DOUBLE_EQ( 1, funcs->computeFuncDiff1( 0 ) );
+    
+    ParamFuncsSpline0Dist funcs2( dynamic_cast<ParamFuncsSpline0Dist&>(*funcs) );
+    
+    funcs2.precompute();
+    
+    funcs2.setEvalArc(       0+initT, EaG::NONE); EXPECT_DOUBLE_EQ(     0  , funcs2.computeFuncInt1( 0 ) ); 
+    funcs2.setEvalArc(       1+initT, EaG::NONE); EXPECT_DOUBLE_EQ(     0.5, funcs2.computeFuncInt1( 0 ) ); 
+    funcs2.setEvalArc(     2.5+initT, EaG::NONE); EXPECT_DOUBLE_EQ(   2.875, funcs2.computeFuncInt1( 0 ) );
+    funcs2.setEvalArc(     3.5+initT, EaG::NONE); EXPECT_DOUBLE_EQ(     4.5, funcs2.computeFuncInt1( 0 ) );
+    funcs2.setEvalArc(     4.0+initT, EaG::NONE); EXPECT_DOUBLE_EQ(     6.5, funcs2.computeFuncInt1( 0 ) );
+
+    funcs2.setEvalArc(       0+initT, EaG::NONE); EXPECT_DOUBLE_EQ(       0, funcs2.computeFuncInt2( 0 ) ); 
+    funcs2.setEvalArc(       1+initT, EaG::NONE); EXPECT_DOUBLE_EQ(   1./6., funcs2.computeFuncInt2( 0 ) ); 
+    funcs2.setEvalArc(     2.5+initT, EaG::NONE); EXPECT_DOUBLE_EQ(  1.5625, funcs2.computeFuncInt2( 0 ) );
+    funcs2.setEvalArc(     3.5+initT, EaG::NONE); EXPECT_DOUBLE_EQ(   2.375, funcs2.computeFuncInt2( 0 ) );
+    funcs2.setEvalArc(     4.0+initT, EaG::NONE); EXPECT_DOUBLE_EQ(  10./3., funcs2.computeFuncInt2( 0 ) );
+    
+    funcs2.setEvalArc(     2+initT, EaG::NONE      ); EXPECT_DOUBLE_EQ( 1, funcs2.computeFuncDiff1( 0 ) );
+    funcs2.setEvalArc(     2+initT, EaG::AFTER_LAST); EXPECT_DOUBLE_EQ( 1, funcs2.computeFuncDiff1( 0 ) );
+    
+    ParamFuncsSpline0Dist funcs3;
+    funcs3 = dynamic_cast<ParamFuncsSpline0Dist&>(*funcs);
+    
+    funcs3.precompute();
+    
+    funcs3.setEvalArc(       0+initT, EaG::NONE); EXPECT_DOUBLE_EQ(     0  , funcs3.computeFuncInt1( 0 ) ); 
+    funcs3.setEvalArc(       1+initT, EaG::NONE); EXPECT_DOUBLE_EQ(     0.5, funcs3.computeFuncInt1( 0 ) ); 
+    funcs3.setEvalArc(     2.5+initT, EaG::NONE); EXPECT_DOUBLE_EQ(   2.875, funcs3.computeFuncInt1( 0 ) );
+    funcs3.setEvalArc(     3.5+initT, EaG::NONE); EXPECT_DOUBLE_EQ(     4.5, funcs3.computeFuncInt1( 0 ) );
+    funcs3.setEvalArc(     4.0+initT, EaG::NONE); EXPECT_DOUBLE_EQ(     6.5, funcs3.computeFuncInt1( 0 ) );
+
+    funcs3.setEvalArc(       0+initT, EaG::NONE); EXPECT_DOUBLE_EQ(       0, funcs3.computeFuncInt2( 0 ) ); 
+    funcs3.setEvalArc(       1+initT, EaG::NONE); EXPECT_DOUBLE_EQ(   1./6., funcs3.computeFuncInt2( 0 ) ); 
+    funcs3.setEvalArc(     2.5+initT, EaG::NONE); EXPECT_DOUBLE_EQ(  1.5625, funcs3.computeFuncInt2( 0 ) );
+    funcs3.setEvalArc(     3.5+initT, EaG::NONE); EXPECT_DOUBLE_EQ(   2.375, funcs3.computeFuncInt2( 0 ) );
+    funcs3.setEvalArc(     4.0+initT, EaG::NONE); EXPECT_DOUBLE_EQ(  10./3., funcs3.computeFuncInt2( 0 ) );
+    
+    funcs3.setEvalArc(     2+initT, EaG::NONE      ); EXPECT_DOUBLE_EQ( 1, funcs3.computeFuncDiff1( 0 ) );
+    funcs3.setEvalArc(     2+initT, EaG::AFTER_LAST); EXPECT_DOUBLE_EQ( 1, funcs3.computeFuncDiff1( 0 ) );
 }
 
 

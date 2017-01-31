@@ -62,10 +62,10 @@ class ParamFuncsDist : public ParamFuncs {
     //special class member functions
     public   : ParamFuncsDist           ()                      = default;
     public   : virtual ~ParamFuncsDist  ()                      = default;
-    public   : ParamFuncsDist           (const ParamFuncsDist&) = default;
-    public   : ParamFuncsDist& operator=(const ParamFuncsDist&) = default;
-    public   : ParamFuncsDist           (ParamFuncsDist&&)      = default;
-    public   : ParamFuncsDist& operator=(ParamFuncsDist&&)      = default;
+    public   : ParamFuncsDist           (const ParamFuncsDist& _other) = default;
+    public   : ParamFuncsDist& operator=(const ParamFuncsDist& _other) = default;
+    public   : ParamFuncsDist           (ParamFuncsDist&&)      = delete;
+    public   : ParamFuncsDist& operator=(ParamFuncsDist&&)      = delete;
     
     //pure virtual functions
     ///@brief Initializer of the Closed form distance computation mode

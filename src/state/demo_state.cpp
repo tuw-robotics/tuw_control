@@ -36,6 +36,9 @@
 #include <tuw_control/state/state_nested_vector.h>
 #include <tuw_control/state/state_nested_array.h>
 
+
+#include <tuw_control/leaf_access_tree/leaf_access_tree.hpp>
+
 #include <iostream>
 
 using namespace tuw;
@@ -106,5 +109,90 @@ int main ( int argc, char **argv ) {
     std::cout << "tuw      ( *tuw_i2ws_wheel_state ) [1].steer()     = " << ( *tuw_i2ws_wheel_state ) [1].steer() << std::endl;
     /// accessing varibles
     std::cout << "tuw      tuw_i2ws_wheel_state->wheel ( 1 ).steer() = " << tuw_i2ws_wheel_state->wheel ( 1 ).steer() << std::endl;
+    
+    
+    using LeafArr3 = LeafAccessTreeBase<double, double, 3>;
+    using LeafVec  = LeafAccessTreeBase<double, double, -1>;
+    
+    LeafAccessTreeBase<double, std::tuple<LeafArr3, LeafVec>> state0;
+    LeafAccessTreeBaseVirt& state0Virt = state0;
+//     LeafAccessTreeBaseVirt& subState0Virt = state0.sub(0);
+//     LeafAccessTreeBaseVirt& subState1Virt = state0.sub<0>();
+    Eigen::VectorXd xx;
+    xx.resize(5);
+    xx(0) = 0;
+    xx(1) = 1;
+    xx(2) = 2;
+    xx(3) = 3;
+    xx(4) = 4;
+    
+    std::cout<<std::endl;
+    std::cout<<xx.block(2,0,2,1)<<std::endl<<std::endl;
+    
+    Eigen::VectorXd yy(3);
+    yy(0) = 9;
+    yy(1) = 8;
+    yy(2) = 7;
+    
+    //xx.resize(6);
+    auto _blockRef = xx.block(2,0,2,1);
+    //_blockRef.resize(3);
+    //_blockRef = yy;
+     
+    //xx.block(2,0,2,1) = yy;
+    std::cout<<_blockRef<<std::endl<<std::endl;
+    std::cout<<xx<<std::endl<<std::endl;
+    
+    typedef Eigen::Map<Eigen::VectorXd> MapType;
+    
+    
+    MapType xMap0(&xx(0),xx.rows());
+    MapType xMap2(&xx(2),xx.rows() - 3);
+    MapType xMap4(&xx(4),xx.rows() - 4);
+    
+    std::cout<<"xx="<<std::endl<<xx<<std::endl<<std::endl;
+    std::cout<<"xMap0="<<std::endl<<xMap0<<std::endl<<std::endl;
+    std::cout<<"xMap2="<<std::endl<<xMap2<<std::endl<<std::endl;
+    std::cout<<"xMap4="<<std::endl<<xMap4<<std::endl<<std::endl;
+    
+    
+    xx.conservativeResize(8);
+    double *p;
+    
+    
+    new (&xMap2) MapType(&xx(2),xMap2.outerStride() + 3);
+    new (&xMap4) MapType(&xMap2(2),xMap4.outerStride());
+    double* p2;
+    //xMap2.cast_to_pointer_type(p2);
+    //xMap4.cast_to_pointer_type(p); p =&xx(2)+7;+xMap2.outerStride();
+    //xMap4.
+    
+    std::cout<<"xx="<<std::endl<<xx<<std::endl<<std::endl;
+    std::cout<<"xMap0="<<std::endl<<xMap0<<std::endl<<std::endl;
+    std::cout<<"xMap2="<<std::endl<<xMap2<<std::endl<<std::endl;
+    std::cout<<"xMap4="<<std::endl<<xMap4<<std::endl<<std::endl;
+//     x.resize(5);
+//     xMap.cast_to_pointer_type(p);
+//     p = &x(0);
+    
+//     std::cout<<x<<std::endl<<std::endl;
+    
+//     MatrixType m1(n_dims), m2(n_dims);
+//     m1.setRandom();
+//     m2.setRandom();
+//     float *p = &m2(0);  // get the address storing the data for m2
+//     MapType m2map(p,m2.size());   // m2map shares data with m2
+//     MapTypeConst m2mapconst(p,m2.size());  // a read-only accessor for m2
+//     cout << "m1: " << m1 << endl;
+//     cout << "m2: " << m2 << endl;
+//     cout << "Squared euclidean distance: " << (m1-m2).squaredNorm() << endl;
+//     cout << "Squared euclidean distance, using map: " <<
+//     (m1-m2map).squaredNorm() << endl;
+//     m2map(3) = 7;   // this will change m2, since they share the same array
+//     cout << "Updated m2: " << m2 << endl;
+//     cout << "m2 coefficient 2, constant accessor: " << m2mapconst(2) << endl;
+//     /* m2mapconst(2) = 5; */   // this yields a compile-time error
+    
+    
 
 }

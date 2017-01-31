@@ -62,8 +62,8 @@ class StateSim : public State {
     public   : virtual ~StateSim  ()                = default;
     public   : StateSim           (const StateSim&) = default;
     public   : StateSim& operator=(const StateSim&) = default;
-    public   : StateSim           (StateSim&&)      = default;
-    public   : StateSim& operator=(StateSim&&)      = default;
+    public   : StateSim           (StateSim&&)      = delete;
+    public   : StateSim& operator=(StateSim&&)      = delete;
     
     //pure virtual functions
     ///@brief Clone-to-base-class-ptr function.

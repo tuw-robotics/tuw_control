@@ -97,7 +97,7 @@ class TrajectoryOptimizer : public TrajectorySimGrade {
     public   : TrajectoryOptimizer& operator=(TrajectoryOptimizer&&)      = default;
     
     public   : virtual void optimize();
-    public   : virtual void initState0ParamFuncsHValid ();
+    public   : virtual void initState0ParamFuncsHValid (const size_t& _optFailCount);
     public   : void computeJacobian ( bool _efficient = true);
     public   : void computeJacobian1Entry ( size_t _idx, bool _efficient = true);
     public   : double& stepSize();

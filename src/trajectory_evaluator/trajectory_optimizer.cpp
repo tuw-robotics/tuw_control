@@ -115,6 +115,6 @@ void TrajectoryOptimizer::computeJacobian1Entry ( std::size_t _idx, bool _effici
     optState_->value(_idx) = optStateIFix;
 }
 
-void TrajectoryOptimizer::initState0ParamFuncsHValid() {
+void TrajectoryOptimizer::initState0ParamFuncsHValid( const std::size_t& _optFailCount ) {
     return;
 }

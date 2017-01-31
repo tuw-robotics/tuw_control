@@ -59,10 +59,16 @@ class StateSimTemplate : public StateSim {
     //special class member functions
     public   : StateSimTemplate ()                                      = default;
     public   : virtual ~StateSimTemplate ()                             = default;
-    public   : StateSimTemplate           (const StateSimTemplate& _o)  = default;
-    public   : StateSimTemplate& operator=(const StateSimTemplate& _o)  = default;
-    public   : StateSimTemplate           (StateSimTemplate&&)          = default;
-    public   : StateSimTemplate& operator=(StateSimTemplate&&)          = default;
+    public   : StateSimTemplate           (const StateSimTemplate& _o) : discrFunc_(_o.discrFunc_) {
+	for ( size_t i = 0; i < valueSize(); ++i ) { value(i) = _o.value(i); state0_.value(i) = _o.state0_.value(i); }
+    }//= default;
+    public   : StateSimTemplate& operator=(const StateSimTemplate& _o) {
+	discrFunc_ = _o.discrFunc_;
+	for ( size_t i = 0; i < valueSize(); ++i ) { value(i) = _o.value(i); state0_.value(i) = _o.state0_.value(i); }
+	return *this;
+    }//= default;
+    public   : StateSimTemplate           (StateSimTemplate&&)          = delete;//default;
+    public   : StateSimTemplate& operator=(StateSimTemplate&&)          = delete;//default;
     
     //implemented virtual functions
     public   : virtual StateSPtr cloneState () const override {

@@ -101,11 +101,28 @@ class ParamFuncs {
     //special class member functions
     public   : ParamFuncs           ()                  = default;
     public   : virtual ~ParamFuncs  ()                  = default;
-    public   : ParamFuncs           (const ParamFuncs&) = default;
-    public   : ParamFuncs& operator=(const ParamFuncs&) = default;
-    public   : ParamFuncs           (ParamFuncs&&)      = default;
-    public   : ParamFuncs& operator=(ParamFuncs&&)      = default;
+    public   : ParamFuncs           (const ParamFuncs&);// = default;
+    public   : ParamFuncs& operator=(const ParamFuncs&);// = default;
+    public   : ParamFuncs           (ParamFuncs&&)      = delete;
+    public   : ParamFuncs& operator=(ParamFuncs&&)      = delete;
     
+    /** 
+     * @brief Initializes the control structure for the base class.
+     * @param _paramFuncsStructure parametric functions structure
+     * 
+     * Note: @ref _paramFuncsStructure[].ctrlPtsArcRefIdx has to be consistent (first function has to have value 0. Next functions can only reference previous referenced indexes 
+     * or increse maximum reference index by 1). Some examples:
+     * 
+     * _paramFuncsStructure[].ctrlPtsArcRefIdx = [0,0,0] ok! means one arc parameter set for all 3 functions; 
+     * 
+     * _paramFuncsStructure[].ctrlPtsArcRefIdx = [0,1,0] ok! means one arc parameter set for function 0 and 2 and another arc parameter set for function 1; 
+     * 
+     * _paramFuncsStructure[].ctrlPtsArcRefIdx = [0,1,2] ok! means separate arc parameter set for each function; 
+     * 
+     * _paramFuncsStructure[].ctrlPtsArcRefIdx = [0,2,1] inconsistent! indexes not consistent step-increasing; 
+     * 
+     **/
+    private  : void initBase ( const std::vector< tuw::ParamFuncs::ParamFuncsStructure >& _paramFuncsStructure );
     /** 
      * @brief Initializes the control structure.
      * @param _paramFuncsStructure parametric functions structure
@@ -122,7 +139,7 @@ class ParamFuncs {
      * _paramFuncsStructure[].ctrlPtsArcRefIdx = [0,2,1] inconsistent! indexes not consistent step-increasing; 
      * 
      **/
-    public   : void init ( std::vector<ParamFuncsStructure>& _paramFuncsStructure );
+    public   : void init ( const std::vector< tuw::ParamFuncs::ParamFuncsStructure >& _paramFuncsStructure );
     ///@brief Number of parametric functions.
     public   : std::size_t        funcsSize      () const;
     ///@brief Number of arc parametrizations.
@@ -170,6 +187,8 @@ class ParamFuncs {
     protected: double funcsArcEnd_;
     ///@brief Arc parametrization at the evaluation point (set by @ref setEvalArc)/
     protected: double funcsArcEval_;
+    ///@brief Initialization structure "store" variable
+    protected: std::vector<ParamFuncsStructure> paramFuncsStructure_;
     
     //pure virtual functions
     ///@brief Called at end of @ref init. To be used by extended classes.

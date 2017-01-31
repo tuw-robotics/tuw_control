@@ -38,7 +38,8 @@
 using namespace tuw;
 using namespace std;
 
-void ParamFuncs::init ( vector<ParamFuncsStructure>& _paramFuncsStructure ) {
+void ParamFuncs::initBase ( const vector< ParamFuncs::ParamFuncsStructure >& _paramFuncsStructure ) {
+    paramFuncsStructure_ = _paramFuncsStructure;
     const size_t funcsSize = _paramFuncsStructure.size();
     if ( funcsSize < 1 ) { throw "Error in ParamFuncs::checkParamFuncsStructure: initialization with 0 number of functions!"; }
     funcCtrlPt_   .resize ( funcsSize ); for( auto& funcCtrlPtrI : funcCtrlPt_ ) { funcCtrlPtrI.clear(); }
@@ -67,8 +68,47 @@ void ParamFuncs::init ( vector<ParamFuncsStructure>& _paramFuncsStructure ) {
 	
 	funcEvalReq_[i] = _paramFuncsStructure[i].evalReq;
     }
+}
+
+
+void ParamFuncs::init ( const vector<ParamFuncsStructure>& _paramFuncsStructure ) {
+    initBase(_paramFuncsStructure);
     initImpl();
 }
+
+ParamFuncs::ParamFuncs ( const ParamFuncs& _other ) {
+    using PfCpD = ParamFuncs::CtrlPtDim;
+    initBase(_other.paramFuncsStructure_);
+    for ( size_t i = 0; i < funcsArcSize(); ++i ) {
+	for( size_t j = 0; j < funcsArcSize(i); ++j ) {
+	    funcsArc(i, j) = _other.funcsArc(i, j);
+	}
+    }
+    for ( size_t i = 0; i < funcsSize(); ++i ) {
+	for( size_t j = 0; j < funcCtrlPtSize(i); ++j ) {
+	    ctrlPtVal(i, j, PfCpD::VAL) = _other.ctrlPtVal(i, j, PfCpD::VAL);
+	}
+    }
+}
+
+ParamFuncs& ParamFuncs::operator= ( const ParamFuncs& _other ) {
+    if(this == &_other) { return *this; }
+    
+    using PfCpD = ParamFuncs::CtrlPtDim;
+    init(_other.paramFuncsStructure_);
+    for ( size_t i = 0; i < funcsArcSize(); ++i ) {
+	for( size_t j = 0; j < funcsArcSize(i); ++j ) {
+	    funcsArc(i, j) = _other.funcsArc(i, j);
+	}
+    }
+    for ( size_t i = 0; i < funcsSize(); ++i ) {
+	for( size_t j = 0; j < funcCtrlPtSize(i); ++j ) {
+	    ctrlPtVal(i, j, PfCpD::VAL) = _other.ctrlPtVal(i, j, PfCpD::VAL);
+	}
+    }
+    return *this;
+}
+
 
 void ParamFuncs::shiftStartCtrlPt ( const double& _dt ) {
     std::vector<std::vector<size_t> > ctrlPtModif(funcsSize(), std::vector<size_t>(0,0));

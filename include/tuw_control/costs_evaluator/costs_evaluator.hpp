@@ -80,7 +80,15 @@ class CostsEvaluatorBase {
 	computeArrayCost (h, CostEvaluatorCostType::H);
 	computeArrayCost (g, CostEvaluatorCostType::G);
     }
-    public   : bool hIsValid(){ if ( f > FLT_MAX ) { return false; } for( auto& hI : h ) { if(hI <= 0) { return false; } } return true; }
+    public   : bool hIsValid() const { 
+	if ( ( f > FLT_MAX ) || ( std::isnan(f) ) ) { return false; } 
+	for( const auto& hI : h ) { if( hI  <= 0 ) { return false; } } 
+	return true; 
+    }
+    public   : bool gIsValid(const double& _boxBound = 1e-2) const {
+	for( const auto& gI : g ) { if(fabs(gI) >= _boxBound) { return false; } }
+	return true;
+    }
     public   : double f;
     public   : std::vector<double> h;
     public   : std::vector<double> g;

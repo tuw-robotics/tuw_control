@@ -98,6 +98,19 @@ inline typename std::enable_if<II < sizeof...(Tp), void>::type
     f(std::get<II>(t));
     for_each_tuple<II + 1, FuncT, Tp...>(t, f);
   }
+  
+  
+template<std::size_t II = 0, typename ArrayType, typename... Tp>
+inline typename std::enable_if<II == sizeof...(Tp), void>::type
+  store_tuple_ptr_to_array(std::tuple<Tp...>&, ArrayType&) { }
+  
+
+template<std::size_t II = 0, typename ArrayType, typename... Tp>
+inline typename std::enable_if<II < sizeof...(Tp), void>::type
+  store_tuple_ptr_to_array(std::tuple<Tp...>& t, ArrayType& _array) {
+    _array[II] = &std::get<II>(t);
+    for_each_tuple<II + 1, ArrayType, Tp...>(t, _array);
+  }
 
 template <class T, class    Tuple>          struct Get_Tuple_Index;
 template <class T,          class... Types> struct Get_Tuple_Index<T, std::tuple<T, Types...>> { static const std::size_t value = 0; };

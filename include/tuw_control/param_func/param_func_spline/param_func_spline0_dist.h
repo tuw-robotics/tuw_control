@@ -66,10 +66,10 @@ class ParamFuncsSpline0Dist : public ParamFuncsDist {
     //special class member functions
     public   : ParamFuncsSpline0Dist           ()                             = default;
     public   : virtual ~ParamFuncsSpline0Dist  ()                             = default;
-    public   : ParamFuncsSpline0Dist           (const ParamFuncsSpline0Dist&) = default;
-    public   : ParamFuncsSpline0Dist& operator=(const ParamFuncsSpline0Dist&) = default;
-    public   : ParamFuncsSpline0Dist           (ParamFuncsSpline0Dist&&)      = default;
-    public   : ParamFuncsSpline0Dist& operator=(ParamFuncsSpline0Dist&&)      = default;
+    public   : ParamFuncsSpline0Dist           (const ParamFuncsSpline0Dist&);// = default;
+    public   : ParamFuncsSpline0Dist& operator=(const ParamFuncsSpline0Dist&);// = default;
+    public   : ParamFuncsSpline0Dist           (ParamFuncsSpline0Dist&&)      = delete;
+    public   : ParamFuncsSpline0Dist& operator=(ParamFuncsSpline0Dist&&)      = delete;
     
     //(re-)implemented virtual functions
     protected: virtual void   initImpl         () override;
@@ -129,6 +129,8 @@ class ParamFuncsSpline0Dist : public ParamFuncsDist {
     private  : std::vector<double     > distEvalCache_;
     ///@brief Closed form distance computation mode.
     private  : TraveledDistCfMode distCfMode_;
+    ///@todo
+    private  : std::vector< std::size_t > distRelFuncIdx_;
     ///@brief Index of the parametrized function that relates to distance computation.
     private  : std::size_t distLinkedArcIdx_;
     
@@ -136,6 +138,7 @@ class ParamFuncsSpline0Dist : public ParamFuncsDist {
     private  : using ComputeDs2DtPtr = double (ParamFuncsSpline0Dist::*)( const double& ) const;
     private  : ComputeSFuncPtr computeSFuncPtr_;
     private  : ComputeDs2DtPtr computeDs2DtPtr_;
+    
 };
 
 }

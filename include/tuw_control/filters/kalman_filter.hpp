@@ -93,7 +93,6 @@ class KalmanFilter {
 	
 	Eigen::Matrix<NumType, UpdateDim, UpdateDim> S = _C * Sigma_ * _C.transpose() + _R;
 	Eigen::Matrix<NumType, XDim     , UpdateDim> K = Sigma_ * _C.transpose() * S.inverse();
-// 	for(int i = 0; i < deltaH.rows(); ++i) { if( deltaH(i) != deltaH(i) ){ deltaH(i) = 0; } }
 	x_     += K * _deltah;
 	Sigma_  = ( Eigen::Matrix<NumType, XDim, XDim>::Identity( Sigma_.rows(), Sigma_.cols() ) - K * _C ) * Sigma_;
     }
