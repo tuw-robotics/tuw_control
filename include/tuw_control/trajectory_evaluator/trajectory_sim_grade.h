@@ -61,6 +61,7 @@ class TrajectorySimGrade {
     public   : TrajectorySimGrade           (TrajectorySimGrade&&)      = default;
     public   : TrajectorySimGrade& operator=(TrajectorySimGrade&&)      = default;
     
+    public   : void initCostsEvaluator();
     public   : void evaluateTrajectory( const double& _arcBegin = 0 );
     public   : void setSimMode( const TrajectorySimulator::SimMode& _simMode );
     public   : const TrajectorySimulator::SimMode& simMode() const;

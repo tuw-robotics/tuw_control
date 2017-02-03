@@ -89,6 +89,10 @@ class CostsEvaluatorBase {
 	for( const auto& gI : g ) { if(fabs(gI) >= _boxBound) { return false; } }
 	return true;
     }
+    public   : bool gIsValid(const size_t _Idx, const double& _boxBound = 1e-2) const {
+	if(fabs(g[_Idx]) >= _boxBound) { return false; }
+	return true;
+    }
     public   : double f;
     public   : std::vector<double> h;
     public   : std::vector<double> g;

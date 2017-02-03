@@ -74,8 +74,12 @@ void TrajectorySimGrade::modifyTrajSimMode() {
 	trajSim_->simLattice()   = simulationLattice;
 	trajSim_->partLattices_  = partLattices;
 	trajSim_->userDefPartLattices_ = userPartLattices_;
-	if( trajSim_->costsEvaluator_ ) { trajSim_->updateUserDefLattice(); trajSim_->costsEvaluator_->init(trajSim_->partLattices_); }
+	if( trajSim_->costsEvaluator_ ) { trajSim_->updateUserDefLattice(); initCostsEvaluator(); }
     }
+}
+
+void TrajectorySimGrade::initCostsEvaluator() {
+    trajSim_->costsEvaluator_->init(trajSim_->partLattices_);
 }
 
 void TrajectorySimGrade::setSimMode( const TrajectorySimulator::SimMode& _simMode ) {
