@@ -48,13 +48,6 @@ using OptimizationStateConstUPtr = std::unique_ptr<OptimizationState const>;
     
 class OptimizationState : public State {
     
-    public   : struct OptStateData {
-	OptStateData ( double* _val, const double* _arcBegin = 0 ) : val(_val), arcBegin(_arcBegin){}
-	virtual ~OptStateData() = default;
-	double* val;
-	const double* arcBegin;
-    };
-    
     public   : OptimizationState           ()                         = default;
     public   : ~OptimizationState          ()                         = default;
     public   : OptimizationState           (const OptimizationState&) = default;
@@ -62,14 +55,13 @@ class OptimizationState : public State {
     public   : OptimizationState           (OptimizationState&&)      = default;
     public   : OptimizationState& operator=(OptimizationState&&)      = default;
     
-    public   : virtual void bindVariables(TrajectorySimulator& _trajOpt) = 0;
-    public   : double&       value      ( const std::size_t& _i )       override { return *variables[_i].val; }
-    public   : const double& value      ( const std::size_t& _i ) const override { return *variables[_i].val; }
-    public   : size_t        valueSize  () const override { return variables.size(); }
+    public   : virtual void toTrajState   (      TrajectorySimulator& _trajSim) = 0;
+    public   : virtual void fromTrajState (const TrajectorySimulator& _trajSim) = 0;
+    public   : double&       value      ( const std::size_t& _i )       override { return vars[_i]; }
+    public   : const double& value      ( const std::size_t& _i ) const override { return vars[_i]; }
+    public   : size_t        valueSize  ()                        const override { return vars.size(); }
     
-    public   : const double& arcBegin   ( const std::size_t& _i ) const { return *variables[_i].arcBegin; }
-    
-    protected: std::vector<OptStateData>     variables;
+    protected: std::vector<double>        vars;
     protected: static constexpr const double valueZero = 0;
 };
     
@@ -98,8 +90,8 @@ class TrajectoryOptimizer : public TrajectorySimGrade {
     
     public   : virtual void optimize();
     public   : virtual void initState0ParamFuncsHValid (const size_t& _optFailCount);
-    public   : void computeJacobian ( bool _efficient = true);
-    public   : void computeJacobian1Entry ( size_t _idx, bool _efficient = true);
+    public   : void computeJacobian ();
+    public   : void computeJacobian1Entry ( size_t _idx );
     public   : double& stepSize();
     
     public   : OptimizationStateSPtr optState_;

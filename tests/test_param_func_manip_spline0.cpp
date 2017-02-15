@@ -431,7 +431,7 @@ TEST_F ( ParamFuncManipSplineDistTest, timeShift ) {
     
     ParamFuncsSpline0DistPtr funcss = dynamic_pointer_cast<ParamFuncsSpline0Dist>(funcs);
     
-    using PFS = ParamFuncs::ParamFuncsStructure; using PfCpD = ParamFuncs::CtrlPtDim; using FeM = ParamFuncs::FuncEvalMode; using EaG = ParamFuncs::EvalArcGuarantee;
+    using PFS = ParamFuncs::ParamFuncsStructure; using PfCpD = ParamFuncs::CtrlPtDim; using FeM = ParamFuncs::FuncEvalMode; //using EaG = ParamFuncs::EvalArcGuarantee;
     size_t funcIdx = 0; vector<PFS> pf( 4 , PFS() );
     pf[0].ctrlPtsSize = 4; pf[0].ctrlPtsArcRefIdx = 0; 
     pf[1].ctrlPtsSize = 4; pf[1].ctrlPtsArcRefIdx = 0;

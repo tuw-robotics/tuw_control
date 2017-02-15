@@ -43,7 +43,6 @@ using namespace tuw;
 TrajectoryOptimizer::TrajectoryOptimizer ( StateSimPtr& _stateSim, unique_ptr< TrajectorySimulator::CostsEvaluatorClass > _costsEvaluator, OptimizationStateSPtr _optState ) :
       TrajectorySimGrade(_stateSim, std::move(_costsEvaluator) ), 
       optState_         (_optState) {
-	  optState_->bindVariables( *trajSim() );
 }
 
 void TrajectoryOptimizer::optimize() {
@@ -53,22 +52,9 @@ void TrajectoryOptimizer::optimize() {
 double& TrajectoryOptimizer::stepSize() {
     return stepSize_;
 }
-void TrajectoryOptimizer::computeJacobian( bool _efficient ) {
+void TrajectoryOptimizer::computeJacobian() {
     
     evaluateTrajectory(0);
-    if(_efficient){
-	simulationLattice.reserve(trajSim()->simLattice().size());
-	for(size_t i = 0; i < simulationLattice.size(); ++i){
-	    auto statePtr = trajSim()->simLattice().at(i).statePtr->cloneState();
-	    simulationLattice.emplace_back(TrajectorySimulator::LatticePointType( trajSim()->simLattice().at(i).arc, 
-										  trajSim()->simLattice().at(i).latticeType,
-										  statePtr ) );
-	}
-	partLattices.resize( trajSim()->partLattices_.size() );
-	for(size_t i = 0; i < partLattices.size(); ++i){
-	    partLattices[i] = std::make_shared< TrajectorySimulator::LatticeVec >(*trajSim()->partLattices_[i]);
-	}
-    }
     
     auto& costsEvaluator = trajSim()->costsEvaluator_;
     
@@ -81,31 +67,22 @@ void TrajectoryOptimizer::computeJacobian( bool _efficient ) {
     hCache = costsEvaluator->h;
     
     for ( size_t i = 0; i < optState_->valueSize(); ++i ) {
-	computeJacobian1Entry( i, _efficient );
+	computeJacobian1Entry( i );
     }
+    optState_->toTrajState( *trajSim() );
     
     costsEvaluator->f = fCache;
     costsEvaluator->g = gCache;
     costsEvaluator->h = hCache;
 }
 
-void TrajectoryOptimizer::computeJacobian1Entry ( std::size_t _idx, bool _efficient ) {
-    
-    if(_efficient) {
-	trajSim()->simLattice()  = simulationLattice;
-	for(size_t i = 0; i < partLattices.size(); ++i){
-	    trajSim()->partLattices_[i] = std::make_shared< TrajectorySimulator::LatticeVec >(*partLattices[i]);
-	}
-	trajSim()->costsEvaluator_->init(trajSim()->partLattices_);
-	
-	
-    }
+void TrajectoryOptimizer::computeJacobian1Entry ( std::size_t _idx ) {
     
     const double optStateIFix = optState_->value(_idx);
     optState_->value(_idx) += stepSize_;
+    optState_->toTrajState( *trajSim() );
     
-    
-    evaluateTrajectory( _efficient * optState_->arcBegin(_idx) );
+    evaluateTrajectory( 0 );
     
     auto& costsEvaluator = trajSim()->costsEvaluator_;
     costsEvaluator->gradF[_idx] = (costsEvaluator->f - fCache) / stepSize_;

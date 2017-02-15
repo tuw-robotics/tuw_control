@@ -232,18 +232,29 @@ class TestCostsEvaluatorT1 : public CostsEvaluator<TSLatVec, MapData> {
 
 class OptimizationStateDiffDrive : public OptimizationState {
     public   : StateSPtr cloneState () const override { return std::make_shared<OptimizationStateDiffDrive>(*this); }
-    public   : void bindVariables(TrajectorySimulator& _trajSim) override {
-	variables.clear();
-	//values.emplace_back( OptStateData( *_trajOpt.stateSim_->state0().value(0), valueZero ) );
+    public  : void toTrajState(TrajectorySimulator& _trajSim ) override {
 	auto* paramFuncs = _trajSim.stateSim()->paramFuncs();
+	size_t idxOptVec = 0;
 	for ( size_t i = 0; i < paramFuncs->funcsSize(); ++i ) {
 	    for ( size_t j = 1; j < paramFuncs->funcCtrlPtSize(i); ++j ) {
-		variables.emplace_back(  &paramFuncs->ctrlPtVal ( i, j, ParamFuncs::CtrlPtDim::VAL ), &paramFuncs->ctrlPtVal( i, max(0, (int)j-1), ParamFuncs::CtrlPtDim::ARC ) );
+		paramFuncs->ctrlPtVal ( i, j, ParamFuncs::CtrlPtDim::VAL ) = vars[idxOptVec++];
 	    }
 	}
-	
 	for ( size_t j = 1; j < paramFuncs->funcsArcSize(0); ++j ) {
-	    variables.emplace_back(  &paramFuncs->funcsArc ( 0, j ), &paramFuncs->funcsArc( 0,  max(0, (int)j-1) ) );
+	    paramFuncs->funcsArc ( 0, j ) = vars[idxOptVec++];
+	}
+    }
+    public  : void fromTrajState(const TrajectorySimulator& _trajSim) override {
+	auto* paramFuncs = _trajSim.stateSim()->paramFuncs();
+	vars.resize( paramFuncs->funcsSize() * (paramFuncs->funcCtrlPtSize(0)-1) + ( paramFuncs->funcsArcSize(0) - 1 ) );
+	size_t idxOptVec = 0;
+	for ( size_t i = 0; i < paramFuncs->funcsSize(); ++i ) {
+	    for ( size_t j = 1; j < paramFuncs->funcCtrlPtSize(i); ++j ) {
+		vars[idxOptVec++] = paramFuncs->ctrlPtVal ( i, j, ParamFuncs::CtrlPtDim::VAL );
+	    }
+	}
+	for ( size_t j = 1; j < paramFuncs->funcsArcSize(0); ++j ) {
+	    vars[idxOptVec++]  = paramFuncs->funcsArc ( 0, j );
 	}
     }
 };
@@ -265,7 +276,7 @@ TEST_F ( TrajOptTest, GenericTest ) {
     
     trajOpt->stepSize() = 1e-5;
     
-    trajOpt->computeJacobian(false);
+    trajOpt->computeJacobian();
     
     auto& costsEvaluator = trajOpt->trajSim()->costsEvaluator_;
     auto f     = costsEvaluator->f;
@@ -275,40 +286,8 @@ TEST_F ( TrajOptTest, GenericTest ) {
     auto gradH(costsEvaluator->gradH);
     auto gradG(costsEvaluator->gradG);
     
-    trajOpt->computeJacobian(true);
-//     coutCostEvalCosts(trajOpt);
-    
-    
-    
-    EXPECT_DOUBLE_EQ( f, costsEvaluator->f );
-    
-    ASSERT_EQ( gradF.size(), costsEvaluator->gradF.size() ); for ( size_t i = 0; i < gradF.size(); ++i ) { EXPECT_DOUBLE_EQ( gradF[i], costsEvaluator->gradF[i] ); }
-    ASSERT_EQ( h    .size(), costsEvaluator->h    .size() ); for ( size_t i = 0; i < h    .size(); ++i ) { EXPECT_DOUBLE_EQ( h    [i], costsEvaluator->h    [i] ); }
-    ASSERT_EQ( g    .size(), costsEvaluator->g    .size() ); for ( size_t i = 0; i < g    .size(); ++i ) { EXPECT_DOUBLE_EQ( g    [i], costsEvaluator->g    [i] ); }
-    
-    ASSERT_EQ( gradH.rows(), costsEvaluator->gradH.rows() );
-    ASSERT_EQ( gradH.cols(), costsEvaluator->gradH.cols() );
-    for ( int i = 0; i < gradH.rows(); ++i ) { for ( int j = 0; j < gradH.cols(); ++j ) { EXPECT_DOUBLE_EQ( gradH(i,j), costsEvaluator->gradH(i,j) ); } }
-    
-    ASSERT_EQ( gradG.rows(), costsEvaluator->gradG.rows() );
-    ASSERT_EQ( gradG.cols(), costsEvaluator->gradG.cols() );
-    for ( int i = 0; i < gradG.rows(); ++i ) { for ( int j = 0; j < gradG.cols(); ++j ) { EXPECT_DOUBLE_EQ( gradG(i,j), costsEvaluator->gradG(i,j) ); } }
-    
-    
-    
     
     cout<<"gradH Precalc="<<endl<<gradH<<endl<<endl;
-    cout<<"gradH Effici="<<endl<<costsEvaluator->gradH<<endl<<endl;
-    
-    trajOpt->trajSim()->stateSim()->paramFuncs()->ctrlPtVal(0,1) = 10;
-    
-    trajOpt->computeJacobian(false);
-    
-    cout<<"gradH Precalc2="<<endl<<costsEvaluator->gradH<<endl<<endl;
-    
-    trajOpt->computeJacobian(true);
-    
-    cout<<"gradH Effici2="<<endl<<costsEvaluator->gradH<<endl<<endl;
 }
 
 ////////////////////////////////////////////--------------------------------------------------////////////////////////////////////////////
