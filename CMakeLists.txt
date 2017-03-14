@@ -7,7 +7,7 @@ _installation_destinations() # must be befor add_subdirectory
 
 add_compile_options(-std=c++11 -march=native ) ## for c++ 2011
 
-SET(CMAKE_BUILD_TYPE Release)
+SET(CMAKE_BUILD_TYPE Debug)
 
 MESSAGE( STATUS "CMAKE_BUILD_TYPE:              " ${CMAKE_BUILD_TYPE} )
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -fno-strength-reduce -pipe -Og")# 

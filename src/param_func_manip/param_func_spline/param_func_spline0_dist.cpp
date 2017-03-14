@@ -37,6 +37,8 @@
 #include <math.h>
 #include <algorithm>
 
+#include <iostream>
+
 
 using namespace tuw;
 using namespace std;
@@ -107,19 +109,20 @@ const size_t& funcIdx          = distLinkedFuncIdx_[0];
 
 void ParamFuncsSpline0Dist::computeS2TLattice ( const double& _arc0, const double& _ds, vector< double >& _tLattice ) {
     setEvalArc ( _arc0, EvalArcGuarantee::NONE );
-    _tLattice.clear(); _tLattice.reserve( distEvalCache_.back() / _ds );
-    const size_t idxBeforeStart = static_cast<int>( computeS() / _ds ) - 1;
+    size_t iEnd = distEvalCache_.back() / _ds;
+    if(((double)iEnd < distEvalCache_.back() / _ds)) { iEnd++; }
+    _tLattice.clear(); _tLattice.reserve( iEnd + 2 );
+    const int idxBeforeStart = static_cast<int>( computeS() / _ds );
     
-    size_t i = 0;
-    setEvalDist ( _ds * ( ++i + idxBeforeStart ), EvalArcGuarantee::AFTER_LAST );
-    while( funcsArcEval_ < funcsArcEnd_ ){ 
-	_tLattice.emplace_back(funcsArcEval_);
-	setEvalDist ( _ds * ( ++i + idxBeforeStart ), EvalArcGuarantee::AFTER_LAST );
+    setEvalDist ( _ds * ( idxBeforeStart ), EvalArcGuarantee::AFTER_LAST );
+    _tLattice.emplace_back(fmin(funcsArcEval_, funcsArcEnd_));
+    for(size_t i = idxBeforeStart + 1; i < iEnd; ++i){
+	setEvalDist ( _ds * ( i ), EvalArcGuarantee::AFTER_LAST );
+	_tLattice.emplace_back(fmin(fmax(funcsArcEval_,nextafterf(_tLattice.back(), FLT_MAX)), nextafterf(funcsArcEnd_,-FLT_MAX)));
     }
-    _tLattice.emplace_back(funcsArcEnd_);
+    if(_tLattice.back() < funcsArcEnd_) { _tLattice.emplace_back(funcsArcEnd_); }
     setEvalArc(funcsArcBegin_, EvalArcGuarantee::AT_BEGIN);
 }
-
 
 void ParamFuncsSpline0Dist::computeS2TLattice ( const vector< double >& _sLattice, vector< double >& _tLattice ) {
     const size_t slSize = _sLattice.size();
@@ -160,15 +163,16 @@ double ParamFuncsSpline0Dist::computeTImpl ( const double& _s, const EvalArcGuar
     const size_t ctrlPtSize = funcCtrlPt_[distLinkedFuncIdx_[0]].size();
     
     switch (_evalArcGuarantee) {
-	case eag::AFTER_LAST : while( distEvalCache_[arcCacheIdx] <= _s ){ if( ++arcCacheIdx >= ctrlPtSize) { break; } } --arcCacheIdx; break;
+	case eag::AFTER_LAST : while( distEvalCache_[arcCacheIdx] <= _s){ if( ++arcCacheIdx >= ctrlPtSize) { break; } } --arcCacheIdx; break;
 	case eag::AT_BEGIN   : arcCacheIdx = 0; break;
 	case eag::AT_END     : arcCacheIdx = funcCtrlPt_[distLinkedFuncIdx_[0]].size()-1; break;
 	case eag::NONE       : arcCacheIdx = distance( distEvalCache_.begin(), upper_bound( distEvalCache_.begin(), distEvalCache_.end(), _s ) ) - 1; break;
-	case eag::BEFORE_LAST: while( distEvalCache_[arcCacheIdx] >= _s ){ if( arcCacheIdx   == 0         ) { break; } --arcCacheIdx; } break;
+	case eag::BEFORE_LAST: while( distEvalCache_[arcCacheIdx] > _s ){ if( arcCacheIdx   == 0         ) { break; } --arcCacheIdx; } break;
     }
     funcsArcEval_ = ctrlPtVal(distLinkedFuncIdx_[0], arcCacheIdx, CtrlPtDim::ARC );
-    
-    return funcsArcEval_ + (this->*computeDs2DtPtr_)( _s - distEvalCache_[arcCacheIdx] );
+    const double ds = _s - distEvalCache_[arcCacheIdx];
+    const double retVal = funcsArcEval_ + (this->*computeDs2DtPtr_)( ds );
+    return retVal;
 }
 double ParamFuncsSpline0Dist::computeT_V  ( const double& _ds ) const {
     const size_t& funcIdx  = distLinkedFuncIdx_[0];
@@ -180,8 +184,8 @@ double ParamFuncsSpline0Dist::computeT_AV ( const double& _ds ) const {
 }
 
 double ParamFuncsSpline0Dist::computeDeltaS_V_AV ( const double& _dt, const double& _v0, const double& _av ) {
-    const double dtAbs = fabs(_dt); if(      dtAbs < FLT_MIN ) { return 0; }
-    const double vAbs  = fabs(_v0); if(  fabs(_av) < FLT_MIN ) { return vAbs * _dt; }
+    const double dtAbs = fabs(_dt); if(      dtAbs < 10*FLT_MIN ) { return 0; }
+    const double vAbs  = fabs(_v0); if(  fabs(_av) < 10*FLT_MIN ) { return vAbs * _dt; }
     const double v1 = _v0 + _av * dtAbs;
     if ( signum(v1) == signum(_v0) ) { 
 	return fabs(_v0 + v1) * _dt / 2.;
@@ -194,7 +198,7 @@ double ParamFuncsSpline0Dist::computeDeltaS_V_AV ( const double& _dt, const doub
 double ParamFuncsSpline0Dist::computeDeltaT_V_AV ( const double& _ds, const double& _v0, const double& _av ) {
     double v0 = _v0, av = _av;
     if( v0 < 0 ) { av *= -1; v0 *= -1; }
-    if( fabs(av) < FLT_MIN ){ return _ds / v0; }
+    if( fabs(av) < 10*FLT_MIN ){ return _ds / v0; }
     
     int retSign = -1; if( _ds < 0 ) { retSign = +1; }
     const double v0v0  = v0 * v0;
