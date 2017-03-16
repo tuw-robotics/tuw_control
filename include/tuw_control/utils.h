@@ -87,13 +87,13 @@ struct RatioEval {
 }; 
 
 
-template<std::size_t II = 0, typename FuncT, typename... Tp>
-inline typename std::enable_if<II == sizeof...(Tp), void>::type
+template<std::size_t II = 0, class FuncT, typename... Tp>
+constexpr inline typename std::enable_if<II == sizeof...(Tp), void>::type
   for_each_tuple(std::tuple<Tp...> &, FuncT) { }
   
 
-template<std::size_t II = 0, typename FuncT, typename... Tp>
-inline typename std::enable_if<II < sizeof...(Tp), void>::type
+template<std::size_t II = 0, class FuncT, typename... Tp>
+constexpr inline typename std::enable_if<II < sizeof...(Tp), void>::type
   for_each_tuple(std::tuple<Tp...>& t, FuncT f) {
     f(std::get<II>(t));
     for_each_tuple<II + 1, FuncT, Tp...>(t, f);

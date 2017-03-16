@@ -1,6 +1,6 @@
 /***************************************************************************
  *   Software License Agreement (BSD License)                              *
- *   Copyright (C) 2016 by Markus Bader <markus.bader@tuwien.ac.at         *
+ *   Copyright (C) 2017 by George Todoran <george.todoran@tuwien.ac.at     *
  *                                                                         *
  *   Redistribution and use in source and binary forms, with or without    *
  *   modification, are permitted provided that the following conditions    *
@@ -30,84 +30,13 @@
  *   POSSIBILITY OF SUCH DAMAGE.                                           *
  ***************************************************************************/
 
-#ifndef STATE_MAP_BASE_TYPES_H
-#define STATE_MAP_BASE_TYPES_H
+#ifndef STATE_MAP_HPP
+#define STATE_MAP_HPP
+
+#include <tuw_control/state_map/state_map_base.hpp>
+#include <tuw_control/state_map/state_map_array.hpp>
+#include <tuw_control/state_map/state_map_vector.hpp>
+#include <tuw_control/state_map/state_map_tuple.hpp>
 
 
-#include <tuw_control/state_map/state_map.h>
-
-namespace tuw {
-
-// \brief Point structure consisting of x and y value
-struct Point : public AdditionalMethods<Point> {
-    double x;
-    double y;
-
-    Point() = default;
-
-    Point ( double x_, double y_ )
-        : x ( x_ ),
-          y ( y_ ) {
-
-    }
-
-    using AdditionalMethods::operator[];
-    double& operator[] ( size_t pos ) {
-        return at ( pos, x, y );
-    }
-
-    size_t size() const {
-        return tuw::size ( x, y );
-    }
-};
-
-// \brief Rectangle structure consisting of two points
-struct Rect : public AdditionalMethods<Rect> {
-    Point lowerLeftPoint;
-    Point upperRightPoint;
-
-    Rect() = default;
-
-    Rect ( Point lowerLeftPoint_, Point upperRightPoint_ )
-        : lowerLeftPoint ( lowerLeftPoint_ ),
-          upperRightPoint ( upperRightPoint_ ) {
-
-    }
-
-    using AdditionalMethods::operator[];
-    double& operator[] ( size_t pos ) {
-        return at ( pos, lowerLeftPoint, upperRightPoint );
-    }
-
-    size_t size() const {
-        return tuw::size ( lowerLeftPoint, upperRightPoint );
-    }
-};
-
-// \brief Rectangle structure with additional dynamic vector (just to show an example)
-struct RectWithVector : public AdditionalMethods<RectWithVector> {
-    Rect rectangle;
-    std::vector<double> doubleVector;
-
-    RectWithVector() = default;
-
-    RectWithVector ( Rect rectangle_, std::vector<double> doubleVector_ )
-        : rectangle ( rectangle_ ),
-          doubleVector ( doubleVector_ ) {
-
-    }
-
-    using AdditionalMethods::operator[];
-    double& operator[] ( size_t pos ) {
-        return at ( pos, rectangle, doubleVector );
-    }
-
-    size_t size() const {
-        return tuw::size ( rectangle, doubleVector );
-    }
-};
-
-
-}
-
-#endif // STATE_MAP_BASE_TYPES_H
+#endif // STATE_MAP_HPP
