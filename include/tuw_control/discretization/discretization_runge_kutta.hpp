@@ -39,6 +39,7 @@
 
 #include <tuw_control/state/state_array.hpp>
 #include <tuw_control/state/state_sim.h>
+#include <boost/array.hpp>
 
 #include <algorithm>
 
@@ -99,6 +100,7 @@ namespace RungeKutta {
 	for(std::size_t si=0;si<_stateSim.stateNm().valueSize();++si) { _stateSim.stateNm().value(si) += stateDelta.value(si); }//set final state to the container
     }
 }
+
 
 }
 

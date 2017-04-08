@@ -100,7 +100,7 @@ double ParamFuncsSpline0Dist::computeS_V() const {
 }
 
 double ParamFuncsSpline0Dist::computeS_AV() const {
-const size_t& funcIdx          = distLinkedFuncIdx_[0];
+    const size_t& funcIdx          = distLinkedFuncIdx_[0];
     const FuncCacheData& cacheData = funcEvalCache_[funcIdx][funcEvalArcCacheIdxUnder_[func2Arc_[funcIdx]]];//*funcEvalCacheIter_[funcIdx];
     return distEvalCache_[funcEvalArcCacheIdxUnder_[distLinkedArcIdx_]] + computeDeltaS_V_AV( funcsArcEval_ - cacheData.arc, computeFuncInt1(funcIdx), cacheData.val  );
 }

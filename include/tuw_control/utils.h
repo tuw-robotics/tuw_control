@@ -37,6 +37,7 @@
 #include <math.h>
 #include <tuple>
 #include <utility> 
+#include <functional>
 
 
 
@@ -100,6 +101,19 @@ constexpr inline typename std::enable_if<II < sizeof...(Tp), void>::type
   }
   
   
+template<std::size_t II = 0, class FuncT, typename... Tp>
+constexpr inline typename std::enable_if<II == sizeof...(Tp), void>::type
+  for_each_2_tuples(const std::tuple<Tp...> &, std::tuple<Tp...> &, FuncT) { }
+  
+
+template<std::size_t II = 0, class FuncT, typename... Tp>
+constexpr inline typename std::enable_if<II < sizeof...(Tp), void>::type
+  for_each_2_tuples(const std::tuple<Tp...>& t1, std::tuple<Tp...>& t2, FuncT f) {
+    f(std::get<II>(t1), std::get<II>(t2));
+    for_each_2_tuples<II + 1, FuncT, Tp...>(t1, t2, f);
+  }
+  
+  
 template<std::size_t II = 0, typename ArrayType, typename... Tp>
 inline typename std::enable_if<II == sizeof...(Tp), void>::type
   store_tuple_ptr_to_array(std::tuple<Tp...>&, ArrayType&) { }
@@ -116,7 +130,32 @@ template <class T, class    Tuple>          struct Get_Tuple_Index;
 template <class T,          class... Types> struct Get_Tuple_Index<T, std::tuple<T, Types...>> { static const std::size_t value = 0; };
 template <class T, class U, class... Types> struct Get_Tuple_Index<T, std::tuple<U, Types...>> { static const std::size_t value = 1 + Get_Tuple_Index<T, std::tuple<Types...>>::value; };
 
+
 };
+
+// namespace std {
+// 
+// // helper class
+// template<typename R, template<typename...> class Params, typename... Args, std::size_t... I>
+// R call_helper(std::function<R(Args...)> const&func, Params<Args...> const&params, std::index_sequence<I...>)
+// { return func(std::get<I>(params)...); }
+// 
+// // "return func(params...)"
+// template<typename R, template<typename...> class Params, typename... Args>
+// R call(std::function<R(Args...)> const&func, Params<Args...> const&params)
+// { return call_helper(func,params,std::index_sequence_for<Args...>{}); }
+// 
+// 
+// template <typename ...Args>
+// struct save_it_for_later
+// {
+//   std::tuple<Args...> params;
+//   std::function<void(Args...)> func;
+//   void delayed_dispatch() { std::call(func,params); }
+// };
+// 
+// 
+// }
 
 #if __cplusplus <= 201103L
 /// Helper function needed to upgrade c++ 2011 

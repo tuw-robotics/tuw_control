@@ -35,6 +35,7 @@
 
 #include <tuw_control/state/state_sim.h>
 #include <tuw_control/discretization/discretization_runge_kutta.hpp>
+#include <boost/numeric/odeint.hpp>
 
 namespace tuw {
 
@@ -83,6 +84,8 @@ class StateSimTemplate : public StateSim {
 	for( std::size_t i = 0; i < sNmS                ; i++ ){ stateNm_.value(i) = state0_.value(i     ); } 
 // 	for( std::size_t i = 0; i < stateCf_.valueSize(); i++ ){ stateCf_.value(i) = state0_.value(i+sNmS); } 
 	setStateCf (0, ParamFuncs::EvalArcGuarantee::AT_BEGIN);
+	rk = std::make_shared<boost::numeric::odeint::runge_kutta4< std::array<double, StateNmSize> >>();
+	arcOld = 0;
     }
     public   : void setDiscrType ( const RungeKutta::DiscretizationType& _discrType ) override { 
 	discrFunc_ = RungeKutta::getDiscrFunc<StateNmSize>(_discrType); 
@@ -101,6 +104,26 @@ class StateSimTemplate : public StateSim {
     public   : double&       value     ( const std::size_t& _i )       override { if ( _i < StateNmSize ) { return stateNm_.value(_i); } else { return stateCf_.value(_i-StateNmSize); } };
     public   : const double& value     ( const std::size_t& _i ) const override { if ( _i < StateNmSize ) { return stateNm_.value(_i); } else { return stateCf_.value(_i-StateNmSize); } };
     public   : void          advance   ( double _arc   )               override { discrFunc_( *this, _arc ); }
+    public   : void          advanceODEInt ( double _arc   )   { 
+// 	setStateCf (arcOld, ParamFuncs::EvalArcGuarantee::NONE);
+	rk->do_step( [this](const std::array<double, StateNmSize> & _x, std::array<double, StateNmSize> & _dxdt, const double _t){
+			    setStateCfNmStep ( _t, ParamFuncs::EvalArcGuarantee::AFTER_LAST );
+			    stateNm_.valuesArray() = _x;
+			    stateNmDot();
+			    _dxdt = stateNmDotCache_.valuesArray();
+			}, stateNm_.valuesArray () , arcOld, _arc-arcOld );
+	arcOld = _arc;
+	setStateCf ( _arc, ParamFuncs::EvalArcGuarantee::AFTER_LAST );
+    }
+    public: void sys1(const std::array<double, StateNmSize> & _x, std::array<double, StateNmSize> & _dxdt, const double _t) {
+	 setStateCfNmStep ( _t, ParamFuncs::EvalArcGuarantee::AFTER_LAST );
+	 stateNmDot();
+	 _dxdt = stateNm_.valuesArray();
+    }
+    
+    
+    double arcOld;
+    protected: std::shared_ptr<boost::numeric::odeint::runge_kutta4< std::array<double, StateNmSize> >> rk;
     
     ///@brief State array storing the initial value.
     protected: StateArray<StateSize              > state0_;

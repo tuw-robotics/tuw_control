@@ -21,6 +21,7 @@ using TestTuple2  = StateMapTuple<double, TestTuple, TestDepth0Arr, TestDepth1Ar
 int main() {
     
     TestTuple tup;
+//     tup.sub(0);
     cout<<"isAllStaticUnder="<<tup.MapSize<<endl;
     TestTuple2 tup2;
     cout<<"isAllStaticUnder="<<tup2.MapSize<<endl;
@@ -46,7 +47,7 @@ int main() {
     
     TestDepth0 DerivedObjectTestDerived, DerivedObjectTestCTRP, DerivedObjectVirtual;
     
-    TestDepth0                    testDerived     = DerivedObjectTestDerived;
+    TestDepth0&                   testDerived     = DerivedObjectTestDerived;
     StateMapBaseCRTP<TestDepth0>& testBaseCRTP    = DerivedObjectTestCTRP;
     StateMapBaseVirt<double>&     testBaseVirtual = DerivedObjectVirtual;
     

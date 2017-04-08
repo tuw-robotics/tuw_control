@@ -38,5 +38,25 @@
 #include <tuw_control/state_map/state_map_vector.hpp>
 #include <tuw_control/state_map/state_map_tuple.hpp>
 
+namespace tuw {
+
+
+using StateMapBaseVirtD = StateMapBaseVirt<double>;
+using StateMapBaseVirtF = StateMapBaseVirt<float >;
+using StateMapBaseVirtI = StateMapBaseVirt<int   >;
+
+template<class TLeafType> using StateMapVectorD  = StateMapVector<double, TLeafType>;
+template<class TLeafType> using StateMapVectorF  = StateMapVector<float , TLeafType>;
+template<class TLeafType> using StateMapVectorI  = StateMapVector<int   , TLeafType>;
+
+template<class TLeafType, size_t TN> using StateMapArrayD  = StateMapArray<double, TLeafType, TN>;
+template<class TLeafType, size_t TN> using StateMapArrayF  = StateMapArray<float , TLeafType, TN>;
+template<class TLeafType, size_t TN> using StateMapArrayI  = StateMapArray<int   , TLeafType, TN>;
+
+template<typename... TLeafTypes> using StateMapTupleD  = StateMapArray<double, TLeafTypes...>;
+template<typename... TLeafTypes> using StateMapTupleF  = StateMapArray<float , TLeafTypes...>;
+template<typename... TLeafTypes> using StateMapTupleI  = StateMapArray<int   , TLeafTypes...>;
+
+}
 
 #endif // STATE_MAP_HPP

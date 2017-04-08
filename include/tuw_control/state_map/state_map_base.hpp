@@ -1,6 +1,6 @@
 /***************************************************************************
  *   Software License Agreement (BSD License)                              *
- *   Copyright (C) 2016 by Markus Bader <markus.bader@tuwien.ac.at         *
+ *   Copyright (C) 2017 by George Todoran <george.todoran@tuwien.ac.at     *
  *                                                                         *
  *   Redistribution and use in source and binary forms, with or without    *
  *   modification, are permitted provided that the following conditions    *
@@ -91,77 +91,197 @@ typename std::enable_if<(!std::is_same<typename ThisStateTraits::NumericType,typ
       return get_tuple_map_size<typename ThisStateTraits::LeafsTupleType>();
 }
 
-}
+template<class TNumericType>
+struct LeafTypeContNum{
+    using LeafType = TNumericType;
+};
+template<class TLeafType>
+struct LeafTypeContClass{
+    using LeafType = typename TLeafType::ImplType;
+};
+
+} //namespace <anonymous>
+
+template<class TNumericType>
+class DataBufferVector {
+    public   : using ContainerType = std::vector<TNumericType>;
+    
+    //special class member functions
+    public   : DataBufferVector(std::shared_ptr< ContainerType > _dataBuffer): dataBuffer_(_dataBuffer) {}
+    public   : DataBufferVector()                                          = default;
+    public   : ~DataBufferVector          ()                               = default;
+    private  : DataBufferVector           (const DataBufferVector& _other) = default;
+    private  : DataBufferVector& operator=(const DataBufferVector& _other) = default;
+    public   : DataBufferVector           (DataBufferVector&&      _other) = default;
+    public   : DataBufferVector& operator=(DataBufferVector&&      _other) = default;
+    
+    private  : std::shared_ptr< ContainerType > dataBuffer_;
+    
+    //friends
+    template<class Derived2>                                    friend class  StateMapBaseCRTP;
+    template<class Derived2>                                    friend struct StateMapBaseCRTPTraits;
+    template<class TNumericType2>                               friend class  StateMapBaseVirt;
+    template<class TNumericType2, class... TLeafTypes2>         friend class  StateMapTuple;
+    template<class TNumericType2, class TLeafType2>             friend class  StateMapVector;
+    template<class TNumericType2, class TLeafType2, size_t TN2> friend class  StateMapArray;
+    template<class TLeafType2>                                  friend struct LeafTypeContClass;
+    template<class TNumericType2, int TMapSize2>                friend class  DataBuffer;
+};
+template<class TNumericType, int TMapSize>
+class DataBufferArray {
+    private  : using ContainerType = std::array<TNumericType, TMapSize>;
+    
+    //special class member functions
+    public   : DataBufferArray(std::shared_ptr< ContainerType > _dataBuffer): dataBuffer_(_dataBuffer) {}
+    public   : DataBufferArray()                                         = default;
+    public   : ~DataBufferArray          ()                              = default;
+    private  : DataBufferArray           (const DataBufferArray& _other) = default;
+    private  : DataBufferArray& operator=(const DataBufferArray& _other) = default;
+    public   : DataBufferArray           (DataBufferArray&&      _other) = default;
+    public   : DataBufferArray& operator=(DataBufferArray&&      _other) = default;
+    
+    private  : std::shared_ptr< ContainerType > dataBuffer_;
+    
+    
+    //friends
+    template<class Derived2>                                    friend class  StateMapBaseCRTP;
+    template<class Derived2>                                    friend struct StateMapBaseCRTPTraits;
+    template<class TNumericType2>                               friend class  StateMapBaseVirt;
+    template<class TNumericType2, class... TLeafTypes2>         friend class  StateMapTuple;
+    template<class TNumericType2, class TLeafType2>             friend class  StateMapVector;
+    template<class TNumericType2, class TLeafType2, size_t TN2> friend class  StateMapArray;
+    template<class TLeafType2>                                  friend struct LeafTypeContClass;
+    template<class TNumericType2, int TMapSize2>                friend class  DataBuffer;
+};
+
+template<class TNumericType, int TMapSize>
+class DataBuffer: public std::conditional<TMapSize == Eigen::Dynamic, DataBufferVector<TNumericType>, DataBufferArray<TNumericType,TMapSize> >::type {
+    private  : using DataBufferContainerClass = typename std::conditional<TMapSize == Eigen::Dynamic, DataBufferVector<TNumericType>, DataBufferArray<TNumericType,TMapSize> >::type;
+    private  : using DataBufferContainerType  = typename DataBufferContainerClass::ContainerType;
+    
+    //special class member functions
+    public   : DataBuffer           (std::shared_ptr<DataBufferContainerType> _dataBuffer) : DataBufferContainerClass( _dataBuffer ) {}
+    public   : DataBuffer           ()                         = default;
+    public   : ~DataBuffer          ()                         = default;
+    private  : DataBuffer           (const DataBuffer& _other) = default;
+    private  : DataBuffer& operator=(const DataBuffer& _other) = default;
+    public   : DataBuffer           (DataBuffer&&      _other) = default;
+    public   : DataBuffer& operator=(DataBuffer&&      _other) = default;
+    
+    //friends
+    template<class Derived2>                                    friend class  StateMapBaseCRTP;
+    template<class Derived2>                                    friend struct StateMapBaseCRTPTraits;
+    template<class TNumericType2>                               friend class  StateMapBaseVirt;
+    template<class TNumericType2, class... TLeafTypes2>         friend class  StateMapTuple;
+    template<class TNumericType2, class TLeafType2>             friend class  StateMapVector;
+    template<class TNumericType2, class TLeafType2, size_t TN2> friend class  StateMapArray;
+    template<class TLeafType2>                                  friend struct LeafTypeContClass;
+};
 
 template<class TDerived>
 class StateMapBaseCRTP {
-    public   : using NumericType = typename StateMapBaseCRTPTraits<TDerived>::NumericType;
-    public   : using LeafType    = typename StateMapBaseCRTPTraits<TDerived>::LeafType;
-    public   : using RootType    = typename StateMapBaseCRTPTraits<TDerived>::RootType;
-    public   : static constexpr const int  MapSize = getMapSize<StateMapBaseCRTPTraits<TDerived>>();
+    private  : using NumericType                     = typename StateMapBaseCRTPTraits<TDerived>::NumericType;
+    private  : using LeafType                        = typename StateMapBaseCRTPTraits<TDerived>::LeafTypeExt;
+    private  : using RootType                        = typename StateMapBaseCRTPTraits<TDerived>::RootType;
+    public   : static constexpr const int  MapSize   = getMapSize<StateMapBaseCRTPTraits<TDerived>>();
+    public   : using MatrixTypeCRTP                  = Eigen::Matrix<NumericType, MapSize, 1>;
+    public   : using MapTypeCRTP                     = Eigen::Map<MatrixTypeCRTP >;
     private  : static constexpr const bool IsDynamic = StateMapBaseCRTPTraits<TDerived>::isDynamic;
     
-    public   : using MapType     = Eigen::Map<Eigen::Matrix<NumericType, MapSize, 1> >;
     
-    public   :       MapType&  data        ()                                { return ((TDerived*)(this))->dataImplCRTP ();            }
-    public   : const MapType&  data        ()                          const { return ((TDerived*)(this))->dataImplCRTP ();            }
+    //special class member functions
+    public   : StateMapBaseCRTP           ()                        = default;
+    public   : ~StateMapBaseCRTP          ()                        = default;
+    private  : StateMapBaseCRTP           (const StateMapBaseCRTP&) = default;
+    private  : StateMapBaseCRTP& operator=(const StateMapBaseCRTP&) = default;
+    public   : StateMapBaseCRTP           (StateMapBaseCRTP&&)      = default;
+    public   : StateMapBaseCRTP& operator=(StateMapBaseCRTP&&)      = default;
+    
+    
+    public   :       MapTypeCRTP&  data        ()                                { return thisDerived().dataImplCRTP ();            }
+    public   : const MapTypeCRTP&  data        ()                          const { return thisDerived().dataImplCRTP ();            }
     public   : template<typename leafType = LeafType, typename std::enable_if< ( !std::is_same<EmptyLeafType,leafType>::value ) >::type* = nullptr> 
-	             LeafType& sub         ( const size_t& _i )              { return ((TDerived*)(this))->subImplCRTP  ( _i        ); }
+	             LeafType& sub         ( const size_t& _i )              { return thisDerived().subImplCRTP  ( _i        ); }
     public   : template<typename leafType = LeafType, typename std::enable_if< ( !std::is_same<EmptyLeafType,leafType>::value ) >::type* = nullptr> 
-               const LeafType& sub         ( const size_t& _i )        const { return ((TDerived*)(this))->subImplCRTP  ( _i        ); }
+               const LeafType& sub         ( const size_t& _i )        const { return thisDerived().subImplCRTP  ( _i        ); }
                
     public   : template<size_t _i, typename leafType = LeafType, typename std::enable_if< ( !std::is_same<EmptyLeafType,leafType>::value ) >::type* = nullptr>       
-	             LeafType& sub ()       { return ((TDerived*)(this))->template subImplCRTP<_i>( ); }
+	             LeafType& sub ()       { return thisDerived().template subImplCRTP<_i>( ); }
     public   : template<size_t _i, typename leafType = LeafType, typename std::enable_if< ( !std::is_same<EmptyLeafType,leafType>::value ) >::type* = nullptr>       
-	       const LeafType& sub () const { return ((TDerived*)(this))->template subImplCRTP<_i>( ); }
+	       const LeafType& sub () const { return thisDerived().template subImplCRTP<_i>( ); }
 	       
     public   : template<size_t _i, typename leafType = LeafType, typename std::enable_if< ( std::is_same<EmptyLeafType,leafType>::value ) >::type* = nullptr>       
-	             typename std::tuple_element<_i, typename StateMapBaseCRTPTraits<TDerived>::LeafsTupleType>::type& sub ()       { return ((TDerived*)(this))->template subImplCRTP<_i>(); }
+	             typename std::tuple_element<_i, typename StateMapBaseCRTPTraits<TDerived>::LeafsTupleTypeExt>::type& sub ()       { return thisDerived().template subImplCRTP<_i>(); }
     public   : template<size_t _i, typename leafType = LeafType, typename std::enable_if< ( std::is_same<EmptyLeafType,leafType>::value ) >::type* = nullptr>       
-	       const typename std::tuple_element<_i, typename StateMapBaseCRTPTraits<TDerived>::LeafsTupleType>::type& sub () const { return ((TDerived*)(this))->template subImplCRTP<_i>(); }
+	       const typename std::tuple_element<_i, typename StateMapBaseCRTPTraits<TDerived>::LeafsTupleTypeExt>::type& sub () const { return thisDerived().template subImplCRTP<_i>(); }
     
     public   : template<bool isDynamic = IsDynamic, typename std::enable_if< ( isDynamic ) >::type* = nullptr> 
-	             void      subResize   ( const size_t& _size     )       { ((TDerived*)(this))->subResizeImplCRTP   ( _size     ); }
+	             void      subResize   ( const size_t& _size     )       { thisDerived().subResizeImplCRTP   ( _size     ); }
 	             
-    private  :       void      bindToMemory( const size_t& _idxStart )       { ((TDerived*)(this))->bindToMemoryImplCRTP( _idxStart ); }
+    private  :       void      bindToMemory( NumericType* _memRef    )       { thisDerived().bindToMemoryImplCRTP( _memRef   ); }
+    public   : const size_t    subSize     ()                          const { return thisDerived().subSizeImplCRTP(); }
+    public   : NumericType* const memStartRef ()                          const { return thisDerived().memStartRefImplCRTP(); }
     
-    template<class Derived2>                                    friend class StateMapBaseCRTP;
-    template<class TNumericType2>                               friend class StateMapBaseVirt;
-    template<class TNumericType2, class... TLeafTypes2>         friend class StateMapTuple;
-    template<class TNumericType2, class TLeafType2>             friend class StateMapVector;
-    template<class TNumericType2, class TLeafType2, size_t TN2> friend class StateMapArray;
+    private  :       TDerived& thisDerived()       { return static_cast<      TDerived&>(*this); }
+    private  : const TDerived& thisDerived() const { return static_cast<const TDerived&>(*this); }
+    
+    //friends
+    template<class Derived2>                                    friend class  StateMapBaseCRTP;
+    template<class Derived2>                                    friend struct StateMapBaseCRTPTraits;
+    template<class TNumericType2>                               friend class  StateMapBaseVirt;
+    template<class TNumericType2, class... TLeafTypes2>         friend class  StateMapTuple;
+    template<class TNumericType2, class TLeafType2>             friend class  StateMapVector;
+    template<class TNumericType2, class TLeafType2, size_t TN2> friend class  StateMapArray;
+    template<class TLeafType2>                                  friend struct LeafTypeContClass;
 };
+
+template<class TDerived>
+constexpr const int  StateMapBaseCRTP<TDerived>::MapSize;
 
 template<class TNumericType>
 class StateMapBaseVirt {
-    public   : using MapType              = Eigen::Map<Eigen::Matrix<TNumericType, Eigen::Dynamic, 1> >;
-    public   : using StateBaseVirtualType = StateMapBaseVirt<TNumericType>;
-    public   : StateMapBaseVirt(const std::shared_ptr< std::vector<TNumericType> >& _dataBuffer): dataBuffer_(_dataBuffer) {}
+    private  : using MapTypeVirt          = Eigen::Map<Eigen::Matrix<TNumericType, Eigen::Dynamic, 1> >;
+    private  : using StateBaseVirtualType = StateMapBaseVirt<TNumericType>;
     
-    public   :       MapType               data        ()                                { return dataImplVirt();           }
-    public   : const MapType               data        ()                          const { return dataImplVirt();           }
+    //special class member functions
+    public   : StateMapBaseVirt           () : internalCopy_(false) {}
+    public   : virtual ~StateMapBaseVirt  ()                        = default;
+    private  : StateMapBaseVirt           (const StateMapBaseVirt&) = default;
+    private  : StateMapBaseVirt& operator=(const StateMapBaseVirt&) = default;
+    public   : StateMapBaseVirt           (StateMapBaseVirt&&)      = default;
+    public   : StateMapBaseVirt& operator=(StateMapBaseVirt&&)      = default;
+    
+    public   :       MapTypeVirt           data        ()                                { return dataImplVirt();           }
+    public   : const MapTypeVirt           data        ()                          const { return dataImplVirt();           }
     public   :       StateBaseVirtualType& sub         ( const size_t& _i        )       { return subImplVirt(_i);          }
     public   : const StateBaseVirtualType& sub         ( const size_t& _i        ) const { return subImplVirt(_i);          }
     public   : void                        subResize   ( const size_t& _size     )       { subResizeImplVirt   (_size    ); }
+    public   : const size_t&               subSize     ()                          const { return subSizeImplVirt(); }
+    public   : TNumericType* const         memStartRef ()                          const { return memStartRefImplVirt(); }
     
-    private  : void                        bindToMemory( const size_t& _idxStart )       { bindToMemoryImplVirt(_idxStart); }
+    private  : void                        bindToMemory( TNumericType* _memRef   )       { bindToMemoryImplVirt(_memRef);   }
     
-    private  : virtual       MapType               dataImplVirt        ()                                = 0;
-    private  : virtual const MapType               dataImplVirt        ()                          const = 0;
+    private  : virtual       MapTypeVirt           dataImplVirt        ()                                = 0;
+    private  : virtual const MapTypeVirt           dataImplVirt        ()                          const = 0;
     private  : virtual       StateBaseVirtualType& subImplVirt         ( const size_t& _i        )       = 0;
     private  : virtual const StateBaseVirtualType& subImplVirt         ( const size_t& _i        ) const = 0;
     private  : virtual void                        subResizeImplVirt   ( const size_t& _size     )       = 0;
-    private  : virtual void                        bindToMemoryImplVirt( const size_t& _idxStart )       = 0;
+    private  : virtual const size_t                subSizeImplVirt     ()                          const = 0;
+    private  : virtual TNumericType* const         memStartRefImplVirt ()                          const = 0;
+    private  : virtual void                        bindToMemoryImplVirt( TNumericType* _memRef   )       = 0;
     
-    private  : std::shared_ptr< std::vector<TNumericType> > dataBuffer_;
+    private  : bool internalCopy_;
     
-    template<class Derived2>                                    friend class StateMapBaseCRTP;
-    template<class TNumericType2>                               friend class StateMapBaseVirt;
-    template<class TNumericType2, class... TLeafTypes2>         friend class StateMapTuple;
-    template<class TNumericType2, class TLeafType2>             friend class StateMapVector;
-    template<class TNumericType2, class TLeafType2, size_t TN2> friend class StateMapArray;
+    //friends
+    template<class Derived2>                                    friend class  StateMapBaseCRTP;
+    template<class Derived2>                                    friend struct StateMapBaseCRTPTraits;
+    template<class TNumericType2>                               friend class  StateMapBaseVirt;
+    template<class TNumericType2, class... TLeafTypes2>         friend class  StateMapTuple;
+    template<class TNumericType2, class TLeafType2>             friend class  StateMapVector;
+    template<class TNumericType2, class TLeafType2, size_t TN2> friend class  StateMapArray;
+    template<class TLeafType2>                                  friend struct LeafTypeContClass;
 };
 
-}
+} // namespace tuw
 
 #endif // STATE_MAP_BASE_HPP

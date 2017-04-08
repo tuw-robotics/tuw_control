@@ -166,7 +166,6 @@ void ParamFuncsSpline0Dist::setEvalArc ( const double& _funcsArcEval, const Eval
 double ParamFuncsSpline0Dist::computeFuncVal   ( const size_t& _funcIdx ) const {
     const FuncCacheData& cacheData = funcEvalCache_[_funcIdx][funcEvalArcCacheIdxUnder_[func2Arc_[_funcIdx]]];
     return cacheData.val + cacheData.cache[ asInt(FuncEvalMode::DIFF1) ] * ( funcsArcEval_ - cacheData.arc );
-    
 }
 
 double ParamFuncsSpline0Dist::computeFuncDiff1 ( const size_t& _funcIdx ) const {

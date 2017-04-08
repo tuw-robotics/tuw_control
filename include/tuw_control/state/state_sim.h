@@ -72,6 +72,9 @@ class StateSim : public State {
     public   : virtual void            setDiscrType   ( const RungeKutta::DiscretizationType& _discrType ) = 0;
     ///@brief Performs one simulation step to parametrized arc length @ref _arc.
     public   : virtual void            advance        ( double _arc ) = 0;
+    
+//     public   : virtual void            advanceODEInt        ( double _arc ) = 0;
+    
     ///@brief Resets entire state to @ref state0. It also sets the control structure evaluation point at most at the new arc parametrization (if applicable).
     public   : virtual void            toState0       () = 0;
     ///@brief Reference to the initial state.
@@ -114,6 +117,7 @@ class StateSim : public State {
     
     template<std::size_t StateSize, std::size_t RKOrder, typename... RKCoeff>
     friend void RungeKutta::discretize( StateSim& _stateSim, const double& _arc );    
+    template<std::size_t StateSize, std::size_t StateNmSize> friend class StateSimTemplate;
 };
 
 }

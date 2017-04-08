@@ -2,13 +2,20 @@
 #include "gtest/gtest.h"
 #include <array>
 #include <boost/concept_check.hpp>
-#include <tuw_control/param_func/param_func_spline/param_func_spline0_dist.h>
+#include <tuw_control/param_func_new/param_func_spline/param_func_spline0_dist.hpp>
 
 using namespace tuw;
 using namespace std;
 
 namespace {
-    
+
+
+using ParamFuncsExtType     = ParamFuncsSpline0Dist<double,-1,-1>;
+using ParamFuncsType        = ParamFuncsBaseVirt<double>;
+using ParamFuncsSPtr        = std::shared_ptr<ParamFuncsBaseVirt<double>>;
+using ParamFuncsExtTypePtr  = std::shared_ptr<ParamFuncsExtType>;
+
+
 // The fixture for testing class Foo.
 class ParamFuncManipSplineDistTest : public ::testing::Test {
 protected:
@@ -16,7 +23,7 @@ protected:
     // is empty.
 
     ParamFuncManipSplineDistTest() {
-        funcs = std::make_shared<ParamFuncsSpline0Dist>();
+        funcs = std::make_shared<ParamFuncsExtType>();
     }
 
     virtual ~ParamFuncManipSplineDistTest() {
@@ -42,7 +49,73 @@ protected:
 ////////////////////////////////////////////--------------------------------------------------////////////////////////////////////////////
 
 TEST_F ( ParamFuncManipSplineDistTest, Initialization0 ) {
-    using PFS = ParamFuncs::ParamFuncsStructure; using PfCpD = ParamFuncs::CtrlPtDim; using FeM = ParamFuncs::FuncEvalMode; size_t funcIdx;
+    using PFS = ParamFuncsStructure; using PfCpD = CtrlPtDim; using FeM = FuncEvalMode; size_t funcIdx;
+    vector<PFS> pf(3,PFS());
+    pf[0].ctrlPtsSize = 5; pf[0].ctrlPtsArcRefIdx = 0; 
+    pf[1].ctrlPtsSize = 5; pf[1].ctrlPtsArcRefIdx = 0; 
+    pf[2].ctrlPtsSize = 8; pf[2].ctrlPtsArcRefIdx = 1; 
+    
+    pf[0].evalReq[(size_t)FeM::DIFF1] = false; pf[0].evalReq[(size_t)FeM::DIFF2] = false; pf[0].evalReq[(size_t)FeM::INT1] = false; pf[0].evalReq[(size_t)FeM::INT2] = false;
+    pf[1].evalReq[(size_t)FeM::DIFF1] = false; pf[1].evalReq[(size_t)FeM::DIFF2] = false; pf[1].evalReq[(size_t)FeM::INT1] = false; pf[1].evalReq[(size_t)FeM::INT2] = false;
+    pf[2].evalReq[(size_t)FeM::DIFF1] = false; pf[2].evalReq[(size_t)FeM::DIFF2] = false; pf[2].evalReq[(size_t)FeM::INT1] = false; pf[2].evalReq[(size_t)FeM::INT2] = false;
+    funcs->init( pf );
+    
+    funcIdx = 0; for ( size_t j = 0; j < funcs->funcCtrlPtSize(funcIdx); j++ ) { funcs->ctrlPtVal(funcIdx, j, PfCpD::VAL) = 10-2*j; funcs->ctrlPtVal(funcIdx, j, PfCpD::ARC) =      j; }
+    funcIdx = 1; for ( size_t j = 0; j < funcs->funcCtrlPtSize(funcIdx); j++ ) { funcs->ctrlPtVal(funcIdx, j, PfCpD::VAL) =      j; funcs->ctrlPtVal(funcIdx, j, PfCpD::ARC) =    2*j; }
+    funcIdx = 2; for ( size_t j = 1; j < funcs->funcCtrlPtSize(funcIdx); j++ ) { funcs->ctrlPtVal(funcIdx, j, PfCpD::VAL) = -2+7*j; funcs->ctrlPtVal(funcIdx, j, PfCpD::ARC) = 33+3*j; }
+    
+    funcIdx = 2; funcs->ctrlPtVal(funcIdx, 0, PfCpD::ARC) = 666; funcs->ctrlPtVal(funcIdx, funcs->funcCtrlPtSize(funcIdx)-1, PfCpD::ARC) = 555;
+    funcIdx = 1; funcs->ctrlPtVal(funcIdx, 0, PfCpD::ARC) = 123; 
+    
+    funcs->precompute();
+    
+    size_t jj;
+    funcIdx = 1; jj = 0; EXPECT_EQ(123, funcs->ctrlPtVal(funcIdx,jj,PfCpD::ARC) ); jj = funcs->funcCtrlPtSize(funcIdx)-1; EXPECT_EQ(555, funcs->ctrlPtVal(funcIdx,jj,PfCpD::ARC) );
+    funcIdx = 2; jj = 0; EXPECT_EQ(123, funcs->ctrlPtVal(funcIdx,jj,PfCpD::ARC) ); jj = funcs->funcCtrlPtSize(funcIdx)-1; EXPECT_EQ(555, funcs->ctrlPtVal(funcIdx,jj,PfCpD::ARC) );
+
+//     funcIdx = 0; for(size_t j = 1; j < funcs->funcCtrlPtSize(funcIdx)-1; j++){ EXPECT_EQ(10-2*j, funcs->ctrlPtVal(funcIdx,j,PfCpD::VAL) ); EXPECT_EQ(   2*j, funcs->ctrlPtVal(funcIdx,j,PfCpD::ARC) ); }
+//     funcIdx = 1; for(size_t j = 1; j < funcs->funcCtrlPtSize(funcIdx)-1; j++){ EXPECT_EQ(     j, funcs->ctrlPtVal(funcIdx,j,PfCpD::VAL) ); EXPECT_EQ(   2*j, funcs->ctrlPtVal(funcIdx,j,PfCpD::ARC) ); }
+//     funcIdx = 2; for(size_t j = 1; j < funcs->funcCtrlPtSize(funcIdx)-1; j++){ EXPECT_EQ(-2+7*j, funcs->ctrlPtVal(funcIdx,j,PfCpD::VAL) ); EXPECT_EQ(33+3*j, funcs->ctrlPtVal(funcIdx,j,PfCpD::ARC) ); }
+}
+
+TEST_F ( ParamFuncManipSplineDistTest, Initialization0FuncStatic ) {
+    
+    funcs = std::make_shared< ParamFuncsSpline0Dist<double,3,-1> >();
+    
+    using PFS = ParamFuncsStructure; using PfCpD = CtrlPtDim; using FeM = FuncEvalMode; size_t funcIdx;
+    vector<PFS> pf(3,PFS());
+    pf[0].ctrlPtsSize = 5; pf[0].ctrlPtsArcRefIdx = 0; 
+    pf[1].ctrlPtsSize = 5; pf[1].ctrlPtsArcRefIdx = 0; 
+    pf[2].ctrlPtsSize = 8; pf[2].ctrlPtsArcRefIdx = 1; 
+    
+    pf[0].evalReq[(size_t)FeM::DIFF1] = false; pf[0].evalReq[(size_t)FeM::DIFF2] = false; pf[0].evalReq[(size_t)FeM::INT1] = false; pf[0].evalReq[(size_t)FeM::INT2] = false;
+    pf[1].evalReq[(size_t)FeM::DIFF1] = false; pf[1].evalReq[(size_t)FeM::DIFF2] = false; pf[1].evalReq[(size_t)FeM::INT1] = false; pf[1].evalReq[(size_t)FeM::INT2] = false;
+    pf[2].evalReq[(size_t)FeM::DIFF1] = false; pf[2].evalReq[(size_t)FeM::DIFF2] = false; pf[2].evalReq[(size_t)FeM::INT1] = false; pf[2].evalReq[(size_t)FeM::INT2] = false;
+    funcs->init( pf );
+    
+    funcIdx = 0; for ( size_t j = 0; j < funcs->funcCtrlPtSize(funcIdx); j++ ) { funcs->ctrlPtVal(funcIdx, j, PfCpD::VAL) = 10-2*j; funcs->ctrlPtVal(funcIdx, j, PfCpD::ARC) =      j; }
+    funcIdx = 1; for ( size_t j = 0; j < funcs->funcCtrlPtSize(funcIdx); j++ ) { funcs->ctrlPtVal(funcIdx, j, PfCpD::VAL) =      j; funcs->ctrlPtVal(funcIdx, j, PfCpD::ARC) =    2*j; }
+    funcIdx = 2; for ( size_t j = 1; j < funcs->funcCtrlPtSize(funcIdx); j++ ) { funcs->ctrlPtVal(funcIdx, j, PfCpD::VAL) = -2+7*j; funcs->ctrlPtVal(funcIdx, j, PfCpD::ARC) = 33+3*j; }
+    
+    funcIdx = 2; funcs->ctrlPtVal(funcIdx, 0, PfCpD::ARC) = 666; funcs->ctrlPtVal(funcIdx, funcs->funcCtrlPtSize(funcIdx)-1, PfCpD::ARC) = 555;
+    funcIdx = 1; funcs->ctrlPtVal(funcIdx, 0, PfCpD::ARC) = 123; 
+    
+    funcs->precompute();
+    
+    size_t jj;
+    funcIdx = 1; jj = 0; EXPECT_EQ(123, funcs->ctrlPtVal(funcIdx,jj,PfCpD::ARC) ); jj = funcs->funcCtrlPtSize(funcIdx)-1; EXPECT_EQ(555, funcs->ctrlPtVal(funcIdx,jj,PfCpD::ARC) );
+    funcIdx = 2; jj = 0; EXPECT_EQ(123, funcs->ctrlPtVal(funcIdx,jj,PfCpD::ARC) ); jj = funcs->funcCtrlPtSize(funcIdx)-1; EXPECT_EQ(555, funcs->ctrlPtVal(funcIdx,jj,PfCpD::ARC) );
+
+//     funcIdx = 0; for(size_t j = 1; j < funcs->funcCtrlPtSize(funcIdx)-1; j++){ EXPECT_EQ(10-2*j, funcs->ctrlPtVal(funcIdx,j,PfCpD::VAL) ); EXPECT_EQ(   2*j, funcs->ctrlPtVal(funcIdx,j,PfCpD::ARC) ); }
+//     funcIdx = 1; for(size_t j = 1; j < funcs->funcCtrlPtSize(funcIdx)-1; j++){ EXPECT_EQ(     j, funcs->ctrlPtVal(funcIdx,j,PfCpD::VAL) ); EXPECT_EQ(   2*j, funcs->ctrlPtVal(funcIdx,j,PfCpD::ARC) ); }
+//     funcIdx = 2; for(size_t j = 1; j < funcs->funcCtrlPtSize(funcIdx)-1; j++){ EXPECT_EQ(-2+7*j, funcs->ctrlPtVal(funcIdx,j,PfCpD::VAL) ); EXPECT_EQ(33+3*j, funcs->ctrlPtVal(funcIdx,j,PfCpD::ARC) ); }
+}
+
+TEST_F ( ParamFuncManipSplineDistTest, Initialization0FuncAllStatic ) {
+    
+    funcs = std::make_shared< ParamFuncsSpline0Dist<double,3,2> >();
+    
+    using PFS = ParamFuncsStructure; using PfCpD = CtrlPtDim; using FeM = FuncEvalMode; size_t funcIdx;
     vector<PFS> pf(3,PFS());
     pf[0].ctrlPtsSize = 5; pf[0].ctrlPtsArcRefIdx = 0; 
     pf[1].ctrlPtsSize = 5; pf[1].ctrlPtsArcRefIdx = 0; 
@@ -72,7 +145,7 @@ TEST_F ( ParamFuncManipSplineDistTest, Initialization0 ) {
 }
 
 namespace EvalArcFuncValFuncValDiff1 {
-    using PFS = ParamFuncs::ParamFuncsStructure; using PfCpD = ParamFuncs::CtrlPtDim; using FeM = ParamFuncs::FuncEvalMode; using EaG = ParamFuncs::EvalArcGuarantee;
+    using PFS = ParamFuncsStructure; using PfCpD = CtrlPtDim; using FeM = FuncEvalMode; using EaG = EvalArcGuarantee;
     
     void initValDiff( ParamFuncsSPtr funcs, double initT ) {
 	size_t funcIdx = 0; vector<PFS> pf( 4 , PFS() );
@@ -144,7 +217,7 @@ TEST_F ( ParamFuncManipSplineDistTest, evalArcFuncValFuncValDiff1 ) {
 }
 
 TEST_F ( ParamFuncManipSplineDistTest, funcValInt1funcValInt2 ) {
-    using PFS = ParamFuncs::ParamFuncsStructure; using PfCpD = ParamFuncs::CtrlPtDim; using FeM = ParamFuncs::FuncEvalMode; using EaG = ParamFuncs::EvalArcGuarantee;
+    using PFS = ParamFuncsStructure; using PfCpD = CtrlPtDim; using FeM = FuncEvalMode; using EaG = EvalArcGuarantee;
     size_t funcIdx = 0; vector<PFS> pf( 4 , PFS() );
     pf[0].ctrlPtsSize = 4; pf[0].ctrlPtsArcRefIdx = 0; 
     pf[1].ctrlPtsSize = 4; pf[1].ctrlPtsArcRefIdx = 0;
@@ -179,7 +252,7 @@ TEST_F ( ParamFuncManipSplineDistTest, funcValInt1funcValInt2 ) {
     funcs->setEvalArc(     2+initT, EaG::NONE      ); EXPECT_DOUBLE_EQ( 1, funcs->computeFuncDiff1( 0 ) );
     funcs->setEvalArc(     2+initT, EaG::AFTER_LAST); EXPECT_DOUBLE_EQ( 1, funcs->computeFuncDiff1( 0 ) );
     
-    ParamFuncsSpline0Dist funcs2( dynamic_cast<ParamFuncsSpline0Dist&>(*funcs) );
+    ParamFuncsExtType funcs2( dynamic_cast<ParamFuncsExtType&>(*funcs) );
     
     funcs2.precompute();
     
@@ -198,8 +271,8 @@ TEST_F ( ParamFuncManipSplineDistTest, funcValInt1funcValInt2 ) {
     funcs2.setEvalArc(     2+initT, EaG::NONE      ); EXPECT_DOUBLE_EQ( 1, funcs2.computeFuncDiff1( 0 ) );
     funcs2.setEvalArc(     2+initT, EaG::AFTER_LAST); EXPECT_DOUBLE_EQ( 1, funcs2.computeFuncDiff1( 0 ) );
     
-    ParamFuncsSpline0Dist funcs3;
-    funcs3 = dynamic_cast<ParamFuncsSpline0Dist&>(*funcs);
+    ParamFuncsExtType funcs3;
+    funcs3 = dynamic_cast<ParamFuncsExtType&>(*funcs);
     
     funcs3.precompute();
     
@@ -223,7 +296,7 @@ TEST_F ( ParamFuncManipSplineDistTest, funcValInt1funcValInt2 ) {
 
 ////////////////////////////////////////////--------------------------------------------------////////////////////////////////////////////
 
-using pfsd = ParamFuncsSpline0Dist;
+using pfsd = ParamFuncsExtType;
 TEST ( Spline0computeDtDs_V_AV_Test, TPos_VPos_A0 ) {
     double dt = 1, v = 1, av = 0, dsAnsGiven = 1; double dsAns, dtAns;
     dsAns = pfsd::computeDeltaS_V_AV(   dt, v, av); EXPECT_DOUBLE_EQ ( dsAnsGiven, dsAns );
@@ -332,9 +405,9 @@ TEST ( Spline0computeDtDs_V_AV_Test, TNeg_VNeg_APos_Above0 ) {
 
 TEST_F ( ParamFuncManipSplineDistTest, distTimeV ) {
     
-    ParamFuncsSpline0DistPtr funcss = dynamic_pointer_cast<ParamFuncsSpline0Dist>(funcs);
+    ParamFuncsExtTypePtr funcss = dynamic_pointer_cast<ParamFuncsExtType>(funcs);
     
-    using PFS = ParamFuncs::ParamFuncsStructure; using PfCpD = ParamFuncs::CtrlPtDim; using FeM = ParamFuncs::FuncEvalMode; using EaG = ParamFuncs::EvalArcGuarantee;
+    using PFS = ParamFuncsStructure; using PfCpD = CtrlPtDim; using FeM = FuncEvalMode; using EaG = EvalArcGuarantee;
     size_t funcIdx = 0; vector<PFS> pf( 4 , PFS() );
     pf[0].ctrlPtsSize = 4; pf[0].ctrlPtsArcRefIdx = 0; 
     pf[1].ctrlPtsSize = 4; pf[1].ctrlPtsArcRefIdx = 0;
@@ -344,7 +417,7 @@ TEST_F ( ParamFuncManipSplineDistTest, distTimeV ) {
     pf[0].evalReq[(size_t)FeM::INT1] = true; pf[0].evalReq[(size_t)FeM::INT2] = true;
     funcss->init( pf );
     vector<size_t> idxCfV(1,0);
-    funcss->setDistCfMode(ParamFuncsDist::TraveledDistCfMode::V, idxCfV);
+    funcss->setDistCfMode(TraveledDistCfMode::V, idxCfV);
     
     double initT = 3;
     funcss->ctrlPtVal(funcIdx, 0, PfCpD::VAL) = -1; funcss->ctrlPtVal(funcIdx, 0, PfCpD::ARC) = 0+initT;
@@ -429,9 +502,9 @@ TEST_F ( ParamFuncManipSplineDistTest, distTimeV ) {
 
 TEST_F ( ParamFuncManipSplineDistTest, timeShift ) {
     
-    ParamFuncsSpline0DistPtr funcss = dynamic_pointer_cast<ParamFuncsSpline0Dist>(funcs);
+    ParamFuncsExtTypePtr funcss = dynamic_pointer_cast<ParamFuncsExtType>(funcs);
     
-    using PFS = ParamFuncs::ParamFuncsStructure; using PfCpD = ParamFuncs::CtrlPtDim; using FeM = ParamFuncs::FuncEvalMode; //using EaG = ParamFuncs::EvalArcGuarantee;
+    using PFS = ParamFuncsStructure; using PfCpD = CtrlPtDim; using FeM = FuncEvalMode; //using EaG = EvalArcGuarantee;
     size_t funcIdx = 0; vector<PFS> pf( 4 , PFS() );
     pf[0].ctrlPtsSize = 4; pf[0].ctrlPtsArcRefIdx = 0; 
     pf[1].ctrlPtsSize = 4; pf[1].ctrlPtsArcRefIdx = 0;
@@ -441,7 +514,7 @@ TEST_F ( ParamFuncManipSplineDistTest, timeShift ) {
     pf[0].evalReq[(size_t)FeM::INT1] = true; pf[0].evalReq[(size_t)FeM::INT2] = true;
     funcss->init( pf );
     vector<size_t> idxCfV(1,0);
-    funcss->setDistCfMode(ParamFuncsDist::TraveledDistCfMode::V, idxCfV);
+    funcss->setDistCfMode(TraveledDistCfMode::V, idxCfV);
     
     double initT = 0;
     funcIdx = 0;
@@ -516,7 +589,7 @@ TEST_F ( ParamFuncManipSplineDistTest, timeShift ) {
 
 // TEST_F ( ParamFuncManipSplineDistTest, evalArcFuncValFuncValInconsistentArc ) {
 //     
-//     using PFS = ParamFuncs::ParamFuncsStructure; using PfCpD = ParamFuncs::CtrlPtDim; using EaG = ParamFuncs::EvalArcGuarantee;
+//     using PFS = ParamFuncsStructure; using PfCpD = CtrlPtDim; using EaG = EvalArcGuarantee;
 //     size_t funcIdx = 0; vector<PFS> pf( 2 , PFS() );
 //     pf[0].ctrlPtsSize = 4; pf[0].ctrlPtsArcRefIdx = 0; 
 //     pf[1].ctrlPtsSize = 6; pf[1].ctrlPtsArcRefIdx = 1;
