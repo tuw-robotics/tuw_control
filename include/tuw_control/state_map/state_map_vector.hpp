@@ -44,11 +44,19 @@
 
 namespace tuw {
 
+template<class TLeafType>   
+class ContainerSubStateMapVector {
+    protected: ContainerSubStateMapVector() : subs_() {}
+    protected: ContainerSubStateMapVector(size_t _size, const TLeafType& _vals) : subs_(_size, _vals) {}
+    protected: std::vector<TLeafType> subs_;
+};
+class ContainerSubStateMapVectorEmpty {};
 
 template<class TNumericType, class TLeafType>
 class StateMapVector : public StateMapBaseCRTP<StateMapVector<TNumericType, TLeafType>>, 
                        public StateMapBaseVirt<TNumericType>, 
-		       public DataBuffer<TNumericType, StateMapBaseCRTP<StateMapVector<TNumericType, TLeafType>>::MapSize> {
+		       public DataBuffer<TNumericType, StateMapBaseCRTP<StateMapVector<TNumericType, TLeafType>>::MapSize>,
+		       public std::conditional<!std::is_same<TLeafType,TNumericType>::value, ContainerSubStateMapVector<TLeafType>, ContainerSubStateMapVectorEmpty>::type {
 
     private  : using ImplType                 = StateMapVector<TNumericType, TLeafType>;
     private  : using NumericType              = TNumericType;
@@ -64,7 +72,6 @@ class StateMapVector : public StateMapBaseCRTP<StateMapVector<TNumericType, TLea
     private  : MapTypeCRTP           map_;
     private  : TNumericType*         memStartRef_;
     private  : size_t                mapElementSize_;
-    private  : std::vector<LeafType> subs_;
     private  : StateBaseVirtualType* root_;
     
     //special class member functions
@@ -74,10 +81,10 @@ class StateMapVector : public StateMapBaseCRTP<StateMapVector<TNumericType, TLea
 		    StateBaseCRTPType(),
 		    StateMapBaseVirt<NumericType>(),
 		    DataBuffer<TNumericType, StateBaseCRTPType::MapSize>(std::make_shared< DataBufferContainterType >()),
+		    ContainerSubStateMapVector<TLeafType>(0, LeafType(this, this->dataBuffer_) ),
 		    map_(nullptr,0), 
 		    memStartRef_(nullptr),
-		    mapElementSize_(0), 
-		    subs_(0, LeafType(this, this->dataBuffer_) ), 
+		    mapElementSize_(0),
 		    root_( this ) {
 		    
 		}
@@ -90,7 +97,6 @@ class StateMapVector : public StateMapBaseCRTP<StateMapVector<TNumericType, TLea
 		    map_(nullptr,0), 
 		    memStartRef_(nullptr),
 		    mapElementSize_(0), 
-		    subs_(0), 
 		    root_( this ) {
 		    
 		}
@@ -101,7 +107,6 @@ class StateMapVector : public StateMapBaseCRTP<StateMapVector<TNumericType, TLea
 		    map_(nullptr,0), 
 		    memStartRef_(nullptr),
 		    mapElementSize_(0),
-		    subs_(0), 
 		    root_( _root ) {
 		    
 		}
@@ -113,18 +118,21 @@ class StateMapVector : public StateMapBaseCRTP<StateMapVector<TNumericType, TLea
 	mapElementSize_(_rhs.mapElementSize_),
 	root_(_rhs.root_) {
 	    if ( !_rhs.root_->internalCopy_ ) { throw std::runtime_error("Copy-constructor not allowed"); } 
-	    else if ( !std::is_same<LeafType,NumericType>::value ) {
-		for ( size_t i = 0; i < subs_.size(); ++i ) { subs_[i] = _rhs.subs_[i]; }
-	    }
+	    else  { copyRhsSubs(_rhs); }
     }
     
     private  : template<typename SubType = LeafType, typename std::enable_if<!std::is_same<SubType,NumericType>::value>::type* = nullptr > 
 	       void copyRhsData(const StateMapVector& _rhs) { 
 		   subResize(_rhs.subs_.size());
-		   for ( size_t i = 0; i < subs_.size(); ++i ) { subs_[i].copyRhsData(_rhs.subs_[i]); }
+		   for ( size_t i = 0; i < this->subs_.size(); ++i ) { this->subs_[i].copyRhsData(_rhs.subs_[i]); }
 	    }
     private  : template<typename SubType = LeafType, typename std::enable_if< std::is_same<SubType,NumericType>::value>::type* = nullptr > 
 	       void copyRhsData(const StateMapVector& _rhs) { subResize(_rhs.mapElementSize_); }
+    private  : template<typename SubType = LeafType, typename std::enable_if< !std::is_same<SubType,NumericType>::value>::type* = nullptr > 
+	       void copyRhsSubs(const StateMapVector& _rhs) { for ( size_t i = 0; i < this->subs_.size(); ++i ) { this->subs_[i] = _rhs.subs_[i]; } }
+    private  : template<typename SubType = LeafType, typename std::enable_if<  std::is_same<SubType,NumericType>::value>::type* = nullptr > 
+	       void copyRhsSubs(const StateMapVector& _rhs) {  }
+
     public   : StateMapVector& operator=(const StateMapVector& _rhs) {
 	if ( this != &_rhs ) {
 	    if(!root_->internalCopy_) {
@@ -132,9 +140,7 @@ class StateMapVector : public StateMapBaseCRTP<StateMapVector<TNumericType, TLea
 		this->data() = _rhs.data();
 	    } else {
 		mapElementSize_ = _rhs.mapElementSize_;
-		if ( !std::is_same<LeafType,NumericType>::value ) {
-		    for ( size_t i = 0; i < subs_.size(); ++i ) { subs_[i] = _rhs.subs_[i]; }
-		}
+		copyRhsSubs(_rhs);
 	    }
 	}
 	return *this;
@@ -147,7 +153,7 @@ class StateMapVector : public StateMapBaseCRTP<StateMapVector<TNumericType, TLea
     public   : using StateMapBaseCRTP<StateMapVector<TNumericType, TLeafType>>::subResize;
     public   : using StateMapBaseCRTP<StateMapVector<TNumericType, TLeafType>>::subSize;
     public   : using StateMapBaseCRTP<StateMapVector<TNumericType, TLeafType>>::memStartRef;
-    private  : using StateMapBaseCRTP<StateMapVector<TNumericType, TLeafType>>::bindToMemory;
+    public   : using StateMapBaseCRTP<StateMapVector<TNumericType, TLeafType>>::bindToMemory;
     
     private  :       MapTypeVirt           dataImplVirt        ()                               override final { return dataImplCRTP ();          }
     private  : const MapTypeVirt           dataImplVirt        ()                         const override final { return dataImplCRTP ();          }
@@ -174,14 +180,14 @@ class StateMapVector : public StateMapBaseCRTP<StateMapVector<TNumericType, TLea
     private   : template< bool numericLeaf = HasNumericLeaf, 
 	                  typename std::enable_if< ( !numericLeaf )  >::type* = nullptr > 
 		void subResizeImplCRTP(const size_t& _size) {
-		    if(_size != subs_.size()) {
+		    if(_size != this->subs_.size()) {
 			const size_t mapElementSizeOld = mapElementSize_;
 			const auto distFromStart = std::distance(this->dataBuffer_->data(), memStartRef_);
 			root_->internalCopy_ = true;
-			subs_.resize(_size, LeafType(root_, this->dataBuffer_) );
+			this->subs_.resize(_size, LeafType(root_, this->dataBuffer_) );
 			root_->internalCopy_ = false;
 			mapElementSize_ = 0;
-			for (const auto& subI : subs_) { mapElementSize_ += subI.mapElementSize_; }
+			for (const auto& subI : this->subs_) { mapElementSize_ += subI.mapElementSize_; }
 			const auto iteratorStart = this->dataBuffer_->begin() + distFromStart;
 			if(mapElementSize_ > mapElementSizeOld) {
 			    this->dataBuffer_->insert( iteratorStart+1*(mapElementSizeOld!=0), ( mapElementSize_ - mapElementSizeOld ), 0 );
@@ -212,7 +218,7 @@ class StateMapVector : public StateMapBaseCRTP<StateMapVector<TNumericType, TLea
 	                  typename std::enable_if< ( !numericLeaf )  >::type* = nullptr > 
 		void bindToMemoryImplCRTP( TNumericType* _memRef ) { 
 		    size_t mapMemBeginShift(0);
-		    for(auto& subI : subs_) { subI.bindToMemory(_memRef + mapMemBeginShift); mapMemBeginShift += subI.mapElementSize_; } 
+		    for(auto& subI : this->subs_) { subI.bindToMemory(_memRef + mapMemBeginShift); mapMemBeginShift += subI.mapElementSize_; } 
 		    memStartRef_ = _memRef;
 		    mapElementSize_     = mapMemBeginShift;
 		    bindMap();
@@ -232,17 +238,27 @@ class StateMapVector : public StateMapBaseCRTP<StateMapVector<TNumericType, TLea
 		
     private   :                           MapTypeCRTP& dataImplCRTP ()                         { return map_; }
     private   :                     const MapTypeCRTP& dataImplCRTP ()                   const { return map_; }
-    private   :                           LeafType&    subImplCRTP  ( const size_t& _i )       { return this->subs_[_i]; }
-    private   :                     const LeafType&    subImplCRTP  ( const size_t& _i ) const { return this->subs_[_i]; }
-    private   : template<size_t _i>       LeafType&    subImplCRTP  ()                         { return this->subs_[_i]; }
-    private   : template<size_t _i> const LeafType&    subImplCRTP  ()                   const { return this->subs_[_i]; }
-    private   :                     const size_t       subSizeImplCRTP()                 const { return subs_.size(); }
-    private   : template< bool numericLeaf = HasNumericLeaf, 
-	                  typename std::enable_if< ( !numericLeaf ) >::type* = nullptr > 
-		const size_t       subSizeImplCRTP()                 const { return subs_.size(); }
-    private   : template< bool numericLeaf = HasNumericLeaf, 
-	                  typename std::enable_if< (  numericLeaf ) >::type* = nullptr > 
-		const size_t       subSizeImplCRTP()                 const { return mapElementSize_; }
+    private   : template< bool numericLeaf = HasNumericLeaf, typename std::enable_if< ( !numericLeaf )  >::type* = nullptr > 
+		LeafType&     subImplCRTP  ( const size_t& _i )       { return this->subs_[_i]; }
+    private   : template< bool numericLeaf = HasNumericLeaf, typename std::enable_if< ( !numericLeaf )  >::type* = nullptr > 
+		const LeafType&     subImplCRTP  ( const size_t& _i ) const { return this->subs_[_i]; }
+    private   : template< size_t _i, bool numericLeaf = HasNumericLeaf, typename std::enable_if< ( !numericLeaf )  >::type* = nullptr > 
+		LeafType&     subImplCRTP  ()                         { return this->subs_[_i]; }
+    private   : template< size_t _i, bool numericLeaf = HasNumericLeaf, typename std::enable_if< ( !numericLeaf )  >::type* = nullptr > 
+		const LeafType&     subImplCRTP  ()                   const { return this->subs_[_i]; }
+    private   : template< bool numericLeaf = HasNumericLeaf, typename std::enable_if< ( !numericLeaf )  >::type* = nullptr > 
+		const size_t        subSizeImplCRTP()                 const { return this->subs_.size(); }
+		
+    private   : template< bool numericLeaf = HasNumericLeaf, typename std::enable_if< ( numericLeaf )  >::type* = nullptr > 
+		LeafType&     subImplCRTP  ( const size_t& _i )       { return this->data()(_i); }
+    private   : template< bool numericLeaf = HasNumericLeaf, typename std::enable_if< ( numericLeaf )  >::type* = nullptr > 
+		const LeafType&     subImplCRTP  ( const size_t& _i ) const { return this->data()(_i); }
+    private   : template< size_t _i, bool numericLeaf = HasNumericLeaf, typename std::enable_if< ( numericLeaf )  >::type* = nullptr > 
+		LeafType&     subImplCRTP  ()                         { return this->data()(_i); }
+    private   : template< size_t _i, bool numericLeaf = HasNumericLeaf, typename std::enable_if< ( numericLeaf )  >::type* = nullptr > 
+		const LeafType&     subImplCRTP  ()                   const { return this->data()(_i); }
+    private   : template< bool numericLeaf = HasNumericLeaf, typename std::enable_if< ( numericLeaf )  >::type* = nullptr > 
+		const size_t        subSizeImplCRTP()                 const { return mapElementSize_; }
     private   :                     NumericType* const memStartRefImplCRTP()             const { return memStartRef_; }
     
     //friends

@@ -58,8 +58,7 @@ enum class CtrlPtDim {
 ///@brief Flags if any guarantees about evaluation arc relative to last evaluation arc are present.
 enum class EvalArcGuarantee { 
     NONE,
-    AFTER_LAST,  ///<previous evaluation arc <= this evaluation arc
-    BEFORE_LAST, ///<previous evaluation arc >= this evaluation arc
+    NEAR_LAST,  ///<close to previous evaluation arc
     AT_BEGIN,    ///<this evaluation arc is at the arc parametrization begin
     AT_END       ///<this evaluation arc is at the arc parametrization end
 };
@@ -338,7 +337,7 @@ class ParamFuncsBase : public ParamFuncsBaseCRTP<ParamFuncsBase<TDerived, TNumTy
     protected: using FuncCtrlPtType = FuncCtrlPt<TNumType>;
 			   
     //special class member functions
-    public   : ParamFuncsBase           ()                      = default;
+    public   : ParamFuncsBase           () : funcsArcEval_(-1) {}
     public   : virtual~ParamFuncsBase   ()                      = default;
     public   : ParamFuncsBase           (const ParamFuncsBase& _other) {
 	using PfCpD = CtrlPtDim;

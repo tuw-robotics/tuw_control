@@ -17,6 +17,9 @@ target_link_libraries(test_trajectory_simulators gtest tuw_trajectory_simulator 
 add_executable(test_trajectory_simulator test_trajectory_simulator.cpp)
 target_link_libraries(test_trajectory_simulator gtest ${CMAKE_THREAD_LIBS_INIT})
 
+add_executable(test_trajectory_simulator_new test_trajectory_simulator_new.cpp)
+target_link_libraries(test_trajectory_simulator_new gtest ${CMAKE_THREAD_LIBS_INIT})
+
 add_executable(test_trajectory_sim_grade test_trajectory_sim_grade.cpp)
 target_link_libraries(test_trajectory_sim_grade gtest tuw_trajectory_simulator tuw_trajectory_evaluator ${CMAKE_THREAD_LIBS_INIT})
 
@@ -43,6 +46,11 @@ add_test(
 add_test(
     NAME test_trajectory_simulator
     COMMAND test_trajectory_simulator
+)
+
+add_test(
+    NAME test_trajectory_simulator_new
+    COMMAND test_trajectory_simulator_new
 )
 
 add_test(

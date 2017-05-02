@@ -39,301 +39,478 @@
 
 namespace tuw {
 
-using NumType = double;
+
+
+
 
 
 // Defining the system state
 
-//Part that cannot be solved in closed-form, but rather numerically (nm)
-class StateNmDiffDriveVW : public StateMapArray<NumType, NumType, 2> {
-    public   : using StateMapArray::StateMapArray;
-    public   : NumType&       x    ()       { return data()(0); }
-    public   : const NumType& x    () const { return data()(0); }
-    public   : NumType&       y    ()       { return data()(1); }
-    public   : const NumType& y    () const { return data()(1); }
-};
-//Part that can be solved in closed-form (cf)
-class StateCfDiffDriveVW : public StateMapArray<NumType, NumType, 5> {
-    public   : using StateMapArray::StateMapArray;
-    public   : NumType&       theta()       { return data()(0); }
-    public   : const NumType& theta() const { return data()(0); }
-    public   : NumType&       v    ()       { return data()(1); }
-    public   : const NumType& v    () const { return data()(1); }
-    public   : NumType&       w    ()       { return data()(2); }
-    public   : const NumType& w    () const { return data()(2); }
-    public   : NumType&       t    ()       { return data()(3); }
-    public   : const NumType& t    () const { return data()(3); }
-    public   : NumType&       s    ()       { return data()(4); }
-    public   : const NumType& s    () const { return data()(4); }
-};
-//Full system state
-using StateDiffDriveVW = StateMapSimBase<NumType, StateNmDiffDriveVW, StateCfDiffDriveVW>;
 
-
-template<class TDerivedType, class TDerivedStateType, template<class> class TDiscretizationType>
-class StateSimDiffDriveVWBase : public StateSimBase<TDerivedType, TDerivedStateType, TDiscretizationType> {
-
-    //implement functions that evaluate temporal and distance arc variables
-    public  : NumType  stateArcImpl  () { return this->state().stateCf().t(); }
-    public  : NumType  stateDistImpl () { return this->state().stateCf().s(); }
-    
-    //choose a parametric function structure and implement accessor functions
-    public   : enum class ParamFuncVars{ V, W };
-    protected: ParamFuncsSpline0Dist<NumType,2,1> paramFuncs_;
-
-    public  :       auto* paramFuncsImpl     ()       { return &paramFuncs_; }
-    public  : const auto* paramFuncsImpl     () const { return &paramFuncs_; }
-    public  :       auto* paramFuncsDistImpl ()       { return &paramFuncs_; }//if no dist implementation return nullptr
-    public  : const auto* paramFuncsDistImpl () const { return &paramFuncs_; }
-    
-    //implement evaluation of the closed-form state at a given arc and a given evaluation order guarantee
-    //first part is used when computing the numerical state derivative in the discretization function. Thus, only the variables of which the numerical state depends on have to be computed.
-    public  : void setStateCfNmStepImpl ( const NumType& _arc, const PfEaG& _eAG ) { 
-	paramFuncs_.setEvalArc (_arc, _eAG);
-	auto& stateCf = this->state().stateCf();
-	stateCf.t() = _arc;
-	const NumType thetaIndef = paramFuncs_.computeFuncInt1  ( asInt(ParamFuncVars::W) );
-	stateCf.theta() = thetaIndef + this->state0().stateCf().theta();
-	cosTheta_ = cos(stateCf.theta());
-	sinTheta_ = sin(stateCf.theta());
-	stateCf.v    () = paramFuncs_.computeFuncVal(asInt(ParamFuncVars::V));
-    }
-    //same as before, but all closed-form variables have to be computed
-    public  : void setStateCfImpl ( const NumType& _arc, const PfEaG& _eAG ) {
-	setStateCfNmStepImpl(_arc, _eAG);
-	auto& stateCf = this->state().stateCf();
-	stateCf.w    () = paramFuncs_.computeFuncVal(asInt(ParamFuncVars::W));
-	stateCf.s    () = paramFuncs_.computeS();
-    }
-    //implement evaluation of the numerical state variables derivatives at a given arc and a given evaluation order guarantee
-    public  : auto& stateNmDotImpl () {
-	auto& stateNmDot = this->stateNmDotCache_;
-	stateNmDot.x()     = this->state().stateCf().v() * cosTheta_;
-	stateNmDot.y()     = this->state().stateCf().v() * sinTheta_;
-	return stateNmDot;
-    }
-    
-    //internal helper variables
-    protected: NumType cosTheta_;
-    protected: NumType sinTheta_;
+/*!@class StateNmDiffDriveVW
+ * @brief Defining the system numerical state variables.
+ * 
+ * Has to allways be an extended class from @ref StateMapArray, @ref StateMapVector or @ref StateMapTuple
+ * 
+ * @tparam TNumType Numerical type used internally
+ * @tparam TLeafType The leaf type. This has to be templated as the numerical state jacobian class will use another (non-numerical) leaf type
+ */
+template<class TNumType, class TLeafType>
+class StateNmDiffDriveVW : public StateMapArray<TNumType, TLeafType, 2> {
+    public   : using StateMapArray<TNumType, TLeafType, 2>::StateMapArray;
+    public   : auto&       x    ()       { return this->template sub<0>(); }
+    public   : const auto& x    () const { return this->template sub<0>(); }
+    public   : auto&       y    ()       { return this->template sub<1>(); }
+    public   : const auto& y    () const { return this->template sub<1>(); }
 };
 
-//---------------------------------------------------------------------Optimization parameters
+/*!@class StateNmWithLDiffDriveVW
+ * @brief Defining the system numerical state variables, including a scalar objective function L.
+ * 
+ * Has to allways be an extended class from @ref StateMapArray, @ref StateMapVector or @ref StateMapTuple
+ * 
+ * @tparam TNumType Numerical type used internally
+ * @tparam TLeafType The leaf type. This has to be templated as the numerical state jacobian class will use another (non-numerical) leaf type
+ */
+template<class TNumType, class TLeafType>
+class StateNmWithLDiffDriveVW : public StateMapArray<TNumType, TLeafType, 3> {
+    public   : using StateMapArray<TNumType, TLeafType, 3>::StateMapArray;
+    public   : auto&       l    ()       { return this->template sub<0>(); }
+    public   : const auto& l    () const { return this->template sub<0>(); }
+    public   : auto&       x    ()       { return this->template sub<1>(); }
+    public   : const auto& x    () const { return this->template sub<1>(); }
+    public   : auto&       y    ()       { return this->template sub<2>(); }
+    public   : const auto& y    () const { return this->template sub<2>(); }
+};
+
+/*!@class StateNmWithLDiffDriveVW
+ * @brief Defining the system closed-form state variables.
+ * 
+ * Has to allways be an extended class from @ref StateMapArray, @ref StateMapVector or @ref StateMapTuple
+ * 
+ * @tparam TNumType Numerical type used internally
+ * @tparam TLeafType The leaf type. This has to be templated as the closed-form state jacobian class will use another (non-numerical) leaf type
+ */
+template<class TNumType, class TLeafType>
+class StateCfDiffDriveVW : public StateMapArray<TNumType, TLeafType, 7> {
+    public   : using StateMapArray<TNumType, TLeafType, 7>::StateMapArray;
+    public   : auto&       theta()       { return this->template sub<0>(); }
+    public   : const auto& theta() const { return this->template sub<0>(); }
+    public   : auto&       v    ()       { return this->template sub<1>(); }
+    public   : const auto& v    () const { return this->template sub<1>(); }
+    public   : auto&       w    ()       { return this->template sub<2>(); }
+    public   : const auto& w    () const { return this->template sub<2>(); }
+    public   : auto&       av   ()       { return this->template sub<3>(); }
+    public   : const auto& av   () const { return this->template sub<3>(); }
+    public   : auto&       aw   ()       { return this->template sub<4>(); }
+    public   : const auto& aw   () const { return this->template sub<4>(); }
+    public   : auto&       t    ()       { return this->template sub<5>(); }
+    public   : const auto& t    () const { return this->template sub<5>(); }
+    public   : auto&       s    ()       { return this->template sub<6>(); }
+    public   : const auto& s    () const { return this->template sub<6>(); }
+};
 
 static constexpr const size_t optParamBlockSize = 3;
 
-template<typename TLeafType>
-class OptVarStructDiffDriveVW : public StateMapArray<NumType, StateMapVector<NumType, TLeafType>, optParamBlockSize> {
-    public   : using StateMapArray<NumType, StateMapVector<NumType, TLeafType>, optParamBlockSize>::StateMapArray;
-    public   : auto&        optParamV()       { return this->sub(0); }//parameters influencing linear velocity
-    public   : const auto&  optParamV() const { return this->sub(0); }
-    public   : auto&        optParamW()       { return this->sub(1); }//parameters influencing angular velocity
-    public   : const auto&  optParamW() const { return this->sub(1); }
-    public   : auto&        optParamT()       { return this->sub(2); }//parameters influencing temporal location of previous parameters
-    public   : const auto&  optParamT() const { return this->sub(2); }
-    public   : void        setPBlockSize(const size_t& _i, const size_t& _n)       { this->sub(_i).subResize(_n); }
-    public   :       auto& dxdpBlockI   (const size_t& _i)                         { return this->sub(_i); }
-    public   : const auto& dxdpBlockI   (const size_t& _i)                   const { return this->sub(_i); }
+/*!@class OptVarStructDiffDriveVW
+ * @brief Defining the system optimization parameters structure
+ * 
+ * Has to allways be an extended class from @ref StateMapArray, @ref StateMapVector or @ref StateMapTuple
+ * 
+ * @tparam TNumType Numerical type used internally
+ * @tparam TLeafType The leaf type.
+ */
+template<class TNumType, typename TLeafType>
+class OptVarStructDiffDriveVW : public StateMapArray<TNumType, StateMapVector<TNumType, TLeafType>, optParamBlockSize> {
+    public   : using StateMapArray<TNumType, StateMapVector<TNumType, TLeafType>, optParamBlockSize>::StateMapArray;
+    public   : auto&        optParamV()       { return this->template sub<0>(); }//parameters influencing linear velocity
+    public   : const auto&  optParamV() const { return this->template sub<0>(); }
+    public   : auto&        optParamW()       { return this->template sub<1>(); }//parameters influencing angular velocity
+    public   : const auto&  optParamW() const { return this->template sub<1>(); }
+    public   : auto&        optParamT()       { return this->template sub<2>(); }//parameters influencing temporal location of previous parameters
+    public   : const auto&  optParamT() const { return this->template sub<2>(); }
 };
 
+///In the following, we will define various types of states, making use of the meta-class @ref StateMap.
+///@todo make it work with "Empty" numerical / closed-form types
 
-class StateWithGradDiffDriveVW : public StateWithGradMapSimBase< NumType, StateNmDiffDriveVW, StateCfDiffDriveVW, OptVarStructDiffDriveVW > {
-    public   : StateWithGradDiffDriveVW() : StateWithGradMapSimBase< NumType, StateNmDiffDriveVW, StateCfDiffDriveVW, OptVarStructDiffDriveVW > () {
-	for( size_t i = 0; i < optParamBlockSize; ++i ) {
-	    stateGradNm().setPBlockSize(i, 3);
-	    stateGradCf().setPBlockSize(i, 3);
-	}
-    }
-};
+///Simple full system state [xNm,xCf].
+template<class TNumType> using StateDiffDriveVW              = StateMap        < TNumType, StateNmDiffDriveVW     , StateCfDiffDriveVW>;
+///Full system state including scalar objective function [[xNm,L],xCf].
+template<class TNumType> using StateWithLDiffDriveVW         = StateMap        < TNumType, StateNmWithLDiffDriveVW, StateCfDiffDriveVW>;
+///Full system state, with derivatives [[xNm,L],xCf, d/dp([xNm,L]), d/dp(xCf)].
+template<class TNumType> using StateWithGradDiffDriveVW      = StateWithGradMap< TNumType, StateNmDiffDriveVW     , StateCfDiffDriveVW, OptVarStructDiffDriveVW>;
+///Full system state including scalar objective function, with derivatives [[xNm,L],xCf, d/dp([xNm,L]), d/dp(xCf)].
+template<class TNumType> using StateWithLWithGradDiffDriveVW = StateWithGradMap< TNumType, StateNmWithLDiffDriveVW, StateCfDiffDriveVW, OptVarStructDiffDriveVW>;
 
-template<template<class> class TDiscretizationType>
-class StateSimDiffDriveVW : public StateSimDiffDriveVWBase<StateSimDiffDriveVW<TDiscretizationType>, StateDiffDriveVW, TDiscretizationType>{};
-
-template<template<class> class TDiscretizationType>
-class StateWithGradSimDiffDriveVW : public StateSimDiffDriveVWBase<StateWithGradSimDiffDriveVW<TDiscretizationType>, StateWithGradDiffDriveVW, TDiscretizationType> {
+/*!@class MyParamType
+ * @brief Defining the system optimization parameters structure
+ * 
+ * It can have arbitrary structure. However, it has to posess the member variables @ref state0, @ref paramFuncs, @ref cfData.
+ * 
+ * @tparam TNumType     Numerical type used internally
+ * @tparam TCfDataType  The type of the map data object.
+ */
+template<class TNumType, class TCfDataType>
+struct MyParamType {
+    ParamFuncsSpline0Dist<TNumType,2,1> paramFuncs;
+    StateDiffDriveVW<TNumType>          state0;
+    TCfDataType                         cfData;
+    enum class ParamFuncVars{ V, W };
     
+};
+
+
+template<class TNumType, class MapDataType, class TStateType, template<class> class TDiscretizationType, class... TFuncsType>
+class StateSimDiffDriveVWBase : public StateSimBase< StateSimDiffDriveVWBase<TNumType, MapDataType, TStateType, TDiscretizationType, TFuncsType...>, 
+                                                     MyParamType<TNumType, MapDataType>, 
+						     TStateType, 
+						     TDiscretizationType, 
+						     TFuncsType...> {
+    using PFV = typename MyParamType<TNumType, MapDataType>::ParamFuncVars;
+    
+    public   : void adjustXSizeImpl(auto& _XNm, auto& _XCf) {
+	
+    }
+    public   : void setXNm0Impl(auto& _XNm0) {
+	for(int i = 0; i < _XNm0.data().size(); ++i) { _XNm0.data()(i) = 0; }
+	_XNm0.x() = this->paramStruct->state0.stateNm().x();
+	_XNm0.y() = this->paramStruct->state0.stateNm().y();
+    }
+    //same as before, but all closed-form variables have to be computed
+    public  : void setXCfImpl ( auto& _XCf, const TNumType& _arc, const PfEaG& _eAG ) {
+	setXCfNmStep(_XCf, _arc, _eAG);
+	auto& paramFuncs = this->paramStruct->paramFuncs;
+	_XCf.w () = paramFuncs.computeFuncVal  (asInt(PFV::W));
+	_XCf.av() = paramFuncs.computeFuncDiff1(asInt(PFV::V));///@warn not well defined on ctrl-pt lattice
+	_XCf.aw() = paramFuncs.computeFuncDiff1(asInt(PFV::W));
+	_XCf.t () = _arc;
+	_XCf.s () = paramFuncs.computeS();   
+    }
     //implement evaluation of the numerical state variables derivatives at a given arc and a given evaluation order guarantee
-    public  : void                  setStateCfWithGradNmStepImpl ( const NumType& _arc, const PfEaG& _eAG ) { 
-	this->setStateCfNmStepImpl(_arc, _eAG);
+    public  : void setXCfDotImpl ( auto& _XCfDot, const auto& _XCf, const TNumType& _arc, const PfEaG& _eAG ) const {
+	_XCfDot.theta() = _XCf.w ();
+	_XCfDot.v ()    = _XCf.av();///@warn not well defined on ctrl-pt lattice
+	_XCfDot.w ()    = _XCf.aw();
+	_XCfDot.av()    = 0;
+	_XCfDot.aw()    = 0;
+	_XCfDot.t ()    = 1.;
+	_XCfDot.s ()    = fabs( _XCf.v() );
+    }
+    //implement evaluation of the numerical state variables derivatives at a given arc and a given evaluation order guarantee
+    public  : void setXNmDotImpl ( auto& _XNmDot, auto& _stateCf, const auto& _stateNm, const TNumType& _arc, const PfEaG& _eAG ) {
+	setXCfNmStep(_stateCf, _arc, _eAG);
+	if( (arcNmDotCache_ == _arc) && (_eAG == PfEaG::NEAR_LAST) ) {  }
+	else {
+	    cosTheta_ = cos(_stateCf.theta());
+	    sinTheta_ = sin(_stateCf.theta());
+	    arcNmDotCache_ = _arc;
+	}
+	_XNmDot.x()     = _stateCf.v() * cosTheta_;
+	_XNmDot.y()     = _stateCf.v() * sinTheta_;
+    }
+    
+    private : void setXCfNmStep ( auto& _XCf, const TNumType& _arc, const PfEaG& _eAG ) { 
+	if( (arcCfNmStepCache_ == _arc) && (_eAG == PfEaG::NEAR_LAST) ) { return; } arcCfNmStepCache_ = _arc;
+	auto& paramFuncs   = this->paramStruct->paramFuncs;
+	const auto& state0 = this->paramStruct->state0;
+	paramFuncs.setEvalArc (_arc, _eAG);
 	
-	auto& stateGradCf       = this->state().stateGradCf();
-	
-	auto& stateGradCfParamV = stateGradCf.optParamV();
-	for(size_t i = 0; i < stateGradCfParamV.subSize(); ++i){
-	    auto& stateGradCfParamVI = stateGradCfParamV.sub(i).data();
-	    
-	    stateGradCfParamVI(1) = 0;
-	    stateGradCfParamVI(4) = 0;
-	    if(i+1 < stateGradCfParamV.subSize()) {
-		const NumType& evalArcAbove = this->paramFuncs_.ctrlPtVal(0,i+2,CtrlPtDim::ARC);
-		const NumType& evalArcBelow = this->paramFuncs_.ctrlPtVal(0,i+1,CtrlPtDim::ARC);
-		if(_arc > evalArcBelow) {
-		    const NumType arcIntEnd = fmin(_arc, evalArcAbove);
-		    const NumType deltaEvalArc = evalArcAbove-evalArcBelow;
-		    stateGradCfParamVI(4) = + (arcIntEnd - evalArcBelow) * (evalArcBelow - 2. * _arc + arcIntEnd) / (2.*deltaEvalArc);
-		    stateGradCfParamVI(1) = - (arcIntEnd - evalArcBelow) / deltaEvalArc;
+	const TNumType thetaIndef = paramFuncs.computeFuncInt1  ( asInt(PFV::W) );
+	_XCf.theta() = thetaIndef + state0.stateCf().theta();
+	_XCf.v    () = paramFuncs.computeFuncVal(asInt(PFV::V));
+    }
+    
+    ///-----------------------------------Gradient information-----------------------------------///
+    
+    public   : void setGradXNm0Impl(auto& _gradXNm0, const auto& _XNm0) {
+	for(int i = 0; i < _gradXNm0.data().size(); ++i) { _gradXNm0.data()(i) = 0; }
+    }
+    public   : void adjustGradXSizeImpl(auto& _gradXNm, auto& _gradXCf) {
+	auto& paramFuncs = this->paramStruct->paramFuncs;
+	int ctrlPtOptNr = paramFuncs.funcCtrlPtSize(0)-1;
+	if ( _gradXNm.sub(0).sub(0).data().size() != ctrlPtOptNr ) {
+	    for(size_t i = 0; i < _gradXNm.subSize(); ++i) {
+		for(size_t j = 0; j < _gradXNm.sub(i).subSize(); ++j) {
+		    _gradXNm.sub(i).sub(j).subResize(ctrlPtOptNr);
 		}
 	    }
-	    const NumType& evalArcAbove = this->paramFuncs_.ctrlPtVal(0,i+1,CtrlPtDim::ARC);
-	    const NumType& evalArcBelow = this->paramFuncs_.ctrlPtVal(0,i  ,CtrlPtDim::ARC);
-	    if(_arc > evalArcBelow) {
-		const NumType arcIntEnd = fmin(_arc, evalArcAbove);
-		const NumType deltaEvalArc = evalArcAbove-evalArcBelow;
-		stateGradCfParamVI(4) += - (arcIntEnd - evalArcBelow) * (evalArcBelow - 2. * _arc + arcIntEnd) / (2.*deltaEvalArc);
-		stateGradCfParamVI(1) += + (arcIntEnd - evalArcBelow) / deltaEvalArc;
-	    }
-	}
-	
-	auto& stateGradCfParamW = stateGradCf.optParamW();
-	for(size_t i = 0; i < stateGradCfParamW.subSize(); ++i){
-	    auto& stateGradCfParamWI = stateGradCfParamW.sub(i).data();
-	    
-	    stateGradCfParamWI(0) = 0;
-	    stateGradCfParamWI(2) = 0;
-	    if(i+1 < stateGradCfParamW.subSize()) {
-		const NumType& evalArcAbove = this->paramFuncs_.ctrlPtVal(1,i+2,CtrlPtDim::ARC);
-		const NumType& evalArcBelow = this->paramFuncs_.ctrlPtVal(1,i+1,CtrlPtDim::ARC);
-		if(_arc > evalArcBelow) {
-		    const NumType arcIntEnd = fmin(_arc, evalArcAbove);
-		    const NumType deltaEvalArc = evalArcAbove-evalArcBelow;
-		    stateGradCfParamWI(0) = + (arcIntEnd - evalArcBelow) * (evalArcBelow - 2. * _arc + arcIntEnd) / (2.*deltaEvalArc);
-		    stateGradCfParamWI(2) = - (arcIntEnd - evalArcBelow) / deltaEvalArc;
-		}
-	    }
-	    const NumType& evalArcAbove = this->paramFuncs_.ctrlPtVal(1,i+1,CtrlPtDim::ARC);
-	    const NumType& evalArcBelow = this->paramFuncs_.ctrlPtVal(1,i  ,CtrlPtDim::ARC);
-	    if(_arc > evalArcBelow) {
-		const NumType arcIntEnd = fmin(_arc, evalArcAbove);
-		const NumType deltaEvalArc = evalArcAbove-evalArcBelow;
-		stateGradCfParamWI(0) += - (arcIntEnd - evalArcBelow) * (evalArcBelow - 2. * _arc + arcIntEnd) / (2.*deltaEvalArc);
-		stateGradCfParamWI(2) += + (arcIntEnd - evalArcBelow) / deltaEvalArc;
-	    }
-	}
-	
-	auto& stateGradCfParamT = stateGradCf.optParamT();
-	for(size_t i = 0; i < stateGradCfParamT.subSize(); ++i) {
-	    auto& stateGradCfParamTI = stateGradCfParamT.sub(i).data();
-
-	    stateGradCfParamTI(0) = 0;
-	    stateGradCfParamTI(2) = 0;
-	    if ( i+1 < this->paramFuncs_.funcCtrlPtSize(0) ) {
-		const NumType& evalArcAbove  = this->paramFuncs_.ctrlPtVal(1,i+1,CtrlPtDim::ARC);
-		const NumType& evalArcBelow  = this->paramFuncs_.ctrlPtVal(1,i  ,CtrlPtDim::ARC);
-		if ( ( _arc <= evalArcAbove ) && ( _arc > evalArcBelow ) ) {
-		    const NumType& vP              = this->paramFuncs_.ctrlPtVal(0,i+1,CtrlPtDim::VAL);
-		    const NumType& vM              = this->paramFuncs_.ctrlPtVal(0,i+0,CtrlPtDim::VAL);
-		    const NumType& wP              = this->paramFuncs_.ctrlPtVal(1,i+1,CtrlPtDim::VAL);
-		    const NumType& wM              = this->paramFuncs_.ctrlPtVal(1,i+0,CtrlPtDim::VAL);
-		    const NumType arcIntEnd        = fmin(_arc, evalArcAbove);
-		    const NumType deltaEvalArc     = evalArcAbove-evalArcBelow;
-		    const NumType deltaEvalArcSqr  = deltaEvalArc*deltaEvalArc;
-		    const NumType deltaArcIntBound = arcIntEnd - evalArcBelow;
-		    stateGradCfParamTI(0)     = + deltaArcIntBound * (wP-wM) * (evalArcBelow - 2. * _arc + arcIntEnd) / (2.*deltaEvalArcSqr);
-		    stateGradCfParamTI(1)     = - deltaArcIntBound * (vP-vM) / deltaEvalArcSqr;
-		    stateGradCfParamTI(2)     = - deltaArcIntBound * (wP-wM) / deltaEvalArcSqr;
-		    stateGradCfParamTI(4)     = + deltaArcIntBound * (vP-vM) * (evalArcBelow - 2. * _arc + arcIntEnd) / (2.*deltaEvalArcSqr);
-		    
-		} else if ( ( _arc > evalArcBelow ) && ( i+1 < stateGradCfParamT.subSize() ) ) {
-		    const NumType& evalArcAbove2 = this->paramFuncs_.ctrlPtVal(1,i+2,CtrlPtDim::ARC);
-		    if(_arc < evalArcAbove2){
-			const NumType& vP              = this->paramFuncs_.ctrlPtVal(0,i+2,CtrlPtDim::VAL);
-			const NumType& vM              = this->paramFuncs_.ctrlPtVal(0,i+1,CtrlPtDim::VAL);
-			const NumType& vMM             = this->paramFuncs_.ctrlPtVal(0,i+0,CtrlPtDim::VAL);
-			const NumType& wP              = this->paramFuncs_.ctrlPtVal(1,i+2,CtrlPtDim::VAL);
-			const NumType& wM              = this->paramFuncs_.ctrlPtVal(1,i+1,CtrlPtDim::VAL);
-			const NumType& wMM             = this->paramFuncs_.ctrlPtVal(1,i+0,CtrlPtDim::VAL);
-			const NumType arcIntEnd        = fmin(_arc, evalArcAbove2);
-			const NumType deltaEvalArc     = evalArcAbove2-evalArcAbove;
-			const NumType deltaEvalArcSqr  = deltaEvalArc*deltaEvalArc;
-			const NumType deltaArcIntBound = evalArcAbove2 - arcIntEnd;
-			stateGradCfParamTI(0)     = - ( +(wM-wMM)* evalArcAbove2*evalArcAbove2
-							+(wP-wMM)*(evalArcAbove*evalArcAbove-2.*evalArcAbove*evalArcAbove2)
-							+(wP-wM )*(arcIntEnd*arcIntEnd + 2.*_arc*(evalArcAbove2 - arcIntEnd)) ) / (2.*deltaEvalArcSqr);
-			stateGradCfParamTI(1)     = - deltaArcIntBound * (vP-vM) / deltaEvalArcSqr;
-			stateGradCfParamTI(2)     = - deltaArcIntBound * (wP-wM) / deltaEvalArcSqr;
-			stateGradCfParamTI(4)     = - ( +(vM-vMM)* evalArcAbove2*evalArcAbove2
-							+(vP-vMM)*(evalArcAbove*evalArcAbove-2.*evalArcAbove*evalArcAbove2)
-							+(vP-vM )*(arcIntEnd*arcIntEnd + 2.*_arc*(evalArcAbove2 - arcIntEnd)) ) / (2.*deltaEvalArcSqr);
-		    } else {
-			const NumType& vP      = this->paramFuncs_.ctrlPtVal(0,i+2,CtrlPtDim::VAL);
-			const NumType& vM      = this->paramFuncs_.ctrlPtVal(0,i+0,CtrlPtDim::VAL);
-			const NumType& wP      = this->paramFuncs_.ctrlPtVal(1,i+2,CtrlPtDim::VAL);
-			const NumType& wM      = this->paramFuncs_.ctrlPtVal(1,i+0,CtrlPtDim::VAL);
-			stateGradCfParamTI(0)     = - (wP-wM)/2.;
-			stateGradCfParamTI(4)     = - (vP-vM)/2.;
-		    }
-		} else if ( _arc > evalArcBelow ) {
-		    const NumType& vP      = this->paramFuncs_.ctrlPtVal(0,i+1,CtrlPtDim::VAL);
-		    const NumType& vM      = this->paramFuncs_.ctrlPtVal(0,i+0,CtrlPtDim::VAL);
-		    const NumType& wP      = this->paramFuncs_.ctrlPtVal(1,i+1,CtrlPtDim::VAL);
-		    const NumType& wM      = this->paramFuncs_.ctrlPtVal(1,i+0,CtrlPtDim::VAL);
-		    stateGradCfParamTI(0)     = - (wP-wM)/2.;
-		    stateGradCfParamTI(4)     = - (vP-vM)/2.;
+	    for(size_t i = 0; i < _gradXCf.subSize(); ++i) {
+		for(size_t j = 0; j < _gradXCf.sub(i).subSize(); ++j) {
+		    _gradXCf.sub(i).sub(j).subResize(ctrlPtOptNr);
 		}
 	    }
 	}
     }
-    
-    public  : void   setStateCfWithGradImpl       ( const NumType& _arc, const PfEaG& _eAG ) {
-	setStateCfWithGradNmStepImpl(_arc, _eAG);
-	
-	auto& stateCf = this->state().stateCf();
-	stateCf.w () = this->paramFuncs_.computeFuncVal(asInt(StateSimDiffDriveVWBase<StateWithGradSimDiffDriveVW<TDiscretizationType>, StateWithGradDiffDriveVW, TDiscretizationType>::ParamFuncVars::W));
-	stateCf.s () = this->paramFuncs_.computeS();
+    public  : void   setGradXCfImpl       ( auto& _gradXCf, const auto& _XCf, const TNumType& _arc, const PfEaG& _eAG ) {
+	setGradXCfNmStep ( _gradXCf, _XCf, _arc, _eAG );
     }
-    
-    public  : auto& stateWithGradNmDotImpl () {
+    public  : void setGradXNmDotImpl ( auto& _gradXNmDot, auto& _XGradXCf, const auto& _XGradXNm, const TNumType& _arc, const PfEaG& _eAG ) {
+	if( (arcGradNmStepCache_ == _arc) && (_eAG == PfEaG::NEAR_LAST) ) { return; } arcGradNmStepCache_ = _arc;
 	
-	auto& stateNmDot = this->stateWithGradNmDotCache_.template sub<0>();
-	stateNmDot.x () = this->state().stateCf().v() * this->cosTheta_;
-	stateNmDot.y () = this->state().stateCf().v() * this->sinTheta_;
-	
-	const auto& stateCf     = this->state().stateCf();
-	const auto& stateGradCf = this->state().stateGradCf();
-	auto& stateGradNmDot    = this->stateWithGradNmDotCache_.template sub<1>();
+	auto& gradXCf   = _XGradXCf.stateGrad();
+	const auto& XCf = _XGradXCf.state();
+	setGradXCfNmStep(gradXCf, XCf, _arc, _eAG);
 	
 	//combining dfdx * GradX + dfdu * dudp
-	static Eigen::Matrix<NumType,2,1> dfduX;
-	static Eigen::Matrix<NumType,2,1> dfduY;
+	static Eigen::Matrix<TNumType,2,1> dfduX;
+	static Eigen::Matrix<TNumType,2,1> dfduY;
 	
-	dfduX(0) = this->cosTheta_;
-	dfduX(1) = this->sinTheta_;
-	dfduY(0) = - stateCf.v() * this->sinTheta_;
-	dfduY(1) = + stateCf.v() * this->cosTheta_;
-	auto& stateGradNmDotParamV = stateGradNmDot.sub(0);
-	auto& stateGradNmDotParamW = stateGradNmDot.sub(1);
-	auto& stateGradNmDotParamT = stateGradNmDot.sub(2);
-	for(size_t i = 0; i < stateGradNmDotParamV.subSize(); ++i) {
-	    const auto& stateGradCfParamVIV     = stateGradCf.sub(0).sub(i).v();
-	    const auto& stateGradCfParamWITheta = stateGradCf.sub(1).sub(i).theta();
-	    const auto& stateGradCfParamTIV     = stateGradCf.sub(2).sub(i).v();
-	    const auto& stateGradCfParamTITheta = stateGradCf.sub(2).sub(i).theta();
-	    stateGradNmDotParamV.sub(i).data() = stateGradCfParamVIV * dfduX;
-	    stateGradNmDotParamW.sub(i).data() = stateGradCfParamWITheta * dfduY;
-	    stateGradNmDotParamT.sub(i).data() = stateGradCfParamTIV * dfduX + stateGradCfParamTITheta * dfduY;
+	dfduX(0) = cosTheta_;
+	dfduX(1) = sinTheta_;
+	dfduY(0) = - XCf.v() * sinTheta_;
+	dfduY(1) = + XCf.v() * cosTheta_;
+	
+	auto& dXdParamV = _gradXNmDot.x().optParamV().data();
+	auto& dYdParamV = _gradXNmDot.y().optParamV().data();
+	auto& dXdParamW = _gradXNmDot.x().optParamW().data();
+	auto& dYdParamW = _gradXNmDot.y().optParamW().data();
+	auto& dXdParamT = _gradXNmDot.x().optParamT().data();
+	auto& dYdParamT = _gradXNmDot.y().optParamT().data();
+	const auto& stateGradCfParamVIV     = gradXCf.v    ().optParamV();
+	const auto& stateGradCfParamWITheta = gradXCf.theta().optParamW();
+	const auto& stateGradCfParamTIV     = gradXCf.v    ().optParamT();
+	const auto& stateGradCfParamTITheta = gradXCf.theta().optParamT();
+	
+	for(int i = 0; i < dXdParamV.size(); ++i) {
+	    const auto& stateGradCfParamVIVI     = stateGradCfParamVIV.sub(i);
+	    const auto& stateGradCfParamWIThetaI = stateGradCfParamWITheta.sub(i);
+	    const auto& stateGradCfParamTIVI     = stateGradCfParamTIV.sub(i);
+	    const auto& stateGradCfParamTIThetaI = stateGradCfParamTITheta.sub(i);
+	    dXdParamV(i) = stateGradCfParamVIVI     * dfduX(0);
+	    dYdParamV(i) = stateGradCfParamVIVI     * dfduX(1);
+	    dXdParamW(i) = stateGradCfParamWIThetaI * dfduY(0);
+	    dYdParamW(i) = stateGradCfParamWIThetaI * dfduY(1);
+	    dXdParamT(i) = stateGradCfParamTIVI     * dfduX(0) + stateGradCfParamTIThetaI * dfduY(0);
+	    dYdParamT(i) = stateGradCfParamTIVI     * dfduX(1) + stateGradCfParamTIThetaI * dfduY(1);
 	}
-	return this->stateWithGradNmDotCache_;
+    }
+    
+    
+    //implement evaluation of the numerical state variables derivatives at a given arc and a given evaluation order guarantee
+    private : void setGradXCfNmStep ( auto& _gradXCf, const auto& _XCf, const TNumType& _arc, const PfEaG& _eAG ) { 
+	if( (arcGradCache_ == _arc) && (_eAG == PfEaG::NEAR_LAST) ) { return; } arcGradCache_ = _arc;
+	auto& paramFuncs = this->paramStruct->paramFuncs;
+
+	_gradXCf.data().setZero();
+	auto& dVdParamV  = _gradXCf. v().optParamV();
+	auto& dSdParamV  = _gradXCf. s().optParamV();
+	for(size_t i = 0; i < dVdParamV.subSize(); ++i) {
+	    auto& dVdParamVI  = dVdParamV .sub(i);
+	    auto& dSdParamVI  = dSdParamV .sub(i);
+	    
+	    if(i+1 < dVdParamV.subSize()) {
+		const TNumType& evalArcAbove = paramFuncs.ctrlPtVal(0,i+2,CtrlPtDim::ARC);
+		const TNumType& evalArcBelow = paramFuncs.ctrlPtVal(0,i+1,CtrlPtDim::ARC);
+		if(_arc > evalArcBelow) {
+		    const TNumType arcIntEnd = fmin(_arc, evalArcAbove);
+		    const TNumType deltaEvalArc = evalArcAbove-evalArcBelow;
+		    dSdParamVI = + (arcIntEnd - evalArcBelow) * (evalArcBelow - 2. * _arc + arcIntEnd) / (2.*deltaEvalArc);
+		    dVdParamVI = - (arcIntEnd - evalArcBelow) / deltaEvalArc;
+		}
+	    }
+	    const TNumType& evalArcAbove = paramFuncs.ctrlPtVal(0,i+1,CtrlPtDim::ARC);
+	    const TNumType& evalArcBelow = paramFuncs.ctrlPtVal(0,i  ,CtrlPtDim::ARC);
+	    if(_arc > evalArcBelow) {
+		const TNumType arcIntEnd = fmin(_arc, evalArcAbove);
+		const TNumType deltaEvalArc = evalArcAbove-evalArcBelow;
+		dSdParamVI += - (arcIntEnd - evalArcBelow) * (evalArcBelow - 2. * _arc + arcIntEnd) / (2.*deltaEvalArc);
+		dVdParamVI += + (arcIntEnd - evalArcBelow) / deltaEvalArc;
+	    }
+	}
+	
+	auto& dThdParamW = _gradXCf.theta().optParamW();
+	auto& dWdParamW  = _gradXCf.w    ().optParamW();
+	for(size_t i = 0; i < dThdParamW.subSize(); ++i) {
+	    auto& dThdParamWI = dThdParamW.sub(i);
+	    auto& dWdParamWI  = dWdParamW .sub(i);
+	    if( i+1 < dThdParamW.subSize() ) {
+		const TNumType& evalArcAbove = paramFuncs.ctrlPtVal(1,i+2,CtrlPtDim::ARC);
+		const TNumType& evalArcBelow = paramFuncs.ctrlPtVal(1,i+1,CtrlPtDim::ARC);
+		if(_arc > evalArcBelow) {
+		    const TNumType arcIntEnd = fmin(_arc, evalArcAbove);
+		    const TNumType deltaEvalArc = evalArcAbove-evalArcBelow;
+		    dThdParamWI = + (arcIntEnd - evalArcBelow) * (evalArcBelow - 2. * _arc + arcIntEnd) / (2.*deltaEvalArc);
+		    dWdParamWI  = - (arcIntEnd - evalArcBelow) / deltaEvalArc;
+		}
+	    }
+	    const TNumType& evalArcAbove = paramFuncs.ctrlPtVal(1,i+1,CtrlPtDim::ARC);
+	    const TNumType& evalArcBelow = paramFuncs.ctrlPtVal(1,i  ,CtrlPtDim::ARC);
+	    if(_arc > evalArcBelow) {
+		const TNumType arcIntEnd = fmin(_arc, evalArcAbove);
+		const TNumType deltaEvalArc = evalArcAbove-evalArcBelow;
+		dThdParamWI += - (arcIntEnd - evalArcBelow) * (evalArcBelow - 2. * _arc + arcIntEnd) / (2.*deltaEvalArc);
+		dWdParamWI  += + (arcIntEnd - evalArcBelow) / deltaEvalArc;
+	    }
+	}
+	
+	auto& dThdParamT = _gradXCf.theta().optParamT();
+	auto& dVdParamT  = _gradXCf.v    ().optParamT();
+	auto& dWdParamT  = _gradXCf.w    ().optParamT();
+	auto& dSdParamT  = _gradXCf.s    ().optParamT();
+	
+	auto& dAVdParamV = _gradXCf.av().optParamV();
+	auto& dAVdParamT = _gradXCf.av().optParamT();
+	auto& dAWdParamW = _gradXCf.aw().optParamW();
+	auto& dAWdParamT = _gradXCf.aw().optParamT();
+	for(size_t i = 0; i < dVdParamT.subSize(); ++i) {
+	    auto& dThdParamTI = dThdParamT.sub(i);
+	    auto& dVdParamTI  = dVdParamT .sub(i);
+	    auto& dWdParamTI  = dWdParamT .sub(i);
+	    auto& dSdParamTI  = dSdParamT .sub(i);
+	    
+	    auto& dAVdParamVI = dAVdParamV.sub(i);
+	    auto& dAWdParamWI = dAWdParamW.sub(i);
+	    auto& dAVdParamTI = dAVdParamT.sub(i);
+	    auto& dAWdParamTI = dAWdParamT.sub(i);
+	    if ( i+1 < paramFuncs.funcCtrlPtSize(0) ) {
+		const TNumType& evalArcAbove  = paramFuncs.ctrlPtVal(1,i+1,CtrlPtDim::ARC);
+		const TNumType& evalArcBelow  = paramFuncs.ctrlPtVal(1,i  ,CtrlPtDim::ARC);
+		if ( ( _arc <= evalArcAbove ) && ( _arc > evalArcBelow ) ) {
+		    const TNumType& vP              = paramFuncs.ctrlPtVal(0,i+1,CtrlPtDim::VAL);
+		    const TNumType& vM              = paramFuncs.ctrlPtVal(0,i+0,CtrlPtDim::VAL);
+		    const TNumType& wP              = paramFuncs.ctrlPtVal(1,i+1,CtrlPtDim::VAL);
+		    const TNumType& wM              = paramFuncs.ctrlPtVal(1,i+0,CtrlPtDim::VAL);
+		    const TNumType arcIntEnd        = fmin(_arc, evalArcAbove);
+		    const TNumType deltaEvalArc     = evalArcAbove-evalArcBelow;
+		    const TNumType deltaEvalArcSqr  = deltaEvalArc*deltaEvalArc;
+		    const TNumType deltaArcIntBound = arcIntEnd - evalArcBelow;
+		    dThdParamTI = + deltaArcIntBound * (wP-wM) * (evalArcBelow - 2. * _arc + arcIntEnd) / (2.*deltaEvalArcSqr);
+		    dVdParamTI  = - deltaArcIntBound * (vP-vM) / deltaEvalArcSqr;
+		    dWdParamTI  = - deltaArcIntBound * (wP-wM) / deltaEvalArcSqr;
+		    dAVdParamTI = - (vP-vM) / deltaEvalArcSqr;
+		    dAWdParamTI = - (wP-wM) / deltaEvalArcSqr;
+		    dAVdParamVI = + 1. / deltaEvalArc;
+		    dAWdParamWI = + 1. / deltaEvalArc;
+		    dSdParamTI  = + deltaArcIntBound * (vP-vM) * (evalArcBelow - 2. * _arc + arcIntEnd) / (2.*deltaEvalArcSqr);
+		} else if ( ( _arc > evalArcBelow ) && ( i+1 < dVdParamT.subSize() ) ) {
+		    const TNumType& evalArcAbove2  = paramFuncs.ctrlPtVal(1,i+2,CtrlPtDim::ARC);
+		    const TNumType deltaEvalArc    = evalArcAbove2-evalArcAbove;
+		    const TNumType deltaEvalArcSqr = deltaEvalArc*deltaEvalArc;
+		    if ( _arc <=  evalArcAbove2 ) {
+			dAVdParamVI = - 1. / deltaEvalArc;
+			dAWdParamWI = - 1. / deltaEvalArc;
+			const TNumType& vP = paramFuncs.ctrlPtVal(0,i+2,CtrlPtDim::VAL);
+			const TNumType& vM = paramFuncs.ctrlPtVal(0,i+1,CtrlPtDim::VAL);
+			const TNumType& wP = paramFuncs.ctrlPtVal(1,i+2,CtrlPtDim::VAL);
+			const TNumType& wM = paramFuncs.ctrlPtVal(1,i+1,CtrlPtDim::VAL);
+			dAVdParamTI = + (vP-vM) / deltaEvalArcSqr;
+			dAWdParamTI = + (wP-wM) / deltaEvalArcSqr;
+		    }
+		    if ( _arc < evalArcAbove2 ) {
+			const TNumType& vP  = paramFuncs.ctrlPtVal(0,i+2,CtrlPtDim::VAL);
+			const TNumType& vM  = paramFuncs.ctrlPtVal(0,i+1,CtrlPtDim::VAL);
+			const TNumType& vMM = paramFuncs.ctrlPtVal(0,i+0,CtrlPtDim::VAL);
+			const TNumType& wP  = paramFuncs.ctrlPtVal(1,i+2,CtrlPtDim::VAL);
+			const TNumType& wM  = paramFuncs.ctrlPtVal(1,i+1,CtrlPtDim::VAL);
+			const TNumType& wMM = paramFuncs.ctrlPtVal(1,i+0,CtrlPtDim::VAL);
+			const TNumType arcIntEnd = fmin(_arc, evalArcAbove2);
+			
+			const TNumType deltaArcIntBound = evalArcAbove2 - arcIntEnd;
+			dThdParamTI = - ( +(wM-wMM)* evalArcAbove2*evalArcAbove2
+					+(wP-wMM)*(evalArcAbove*evalArcAbove-2.*evalArcAbove*evalArcAbove2)
+					+(wP-wM )*(arcIntEnd*arcIntEnd + 2.*_arc*(evalArcAbove2 - arcIntEnd)) ) / (2.*deltaEvalArcSqr);
+			dVdParamTI  = - deltaArcIntBound * (vP-vM) / deltaEvalArcSqr;
+			dWdParamTI  = - deltaArcIntBound * (wP-wM) / deltaEvalArcSqr;
+			dSdParamTI  = - ( +(vM-vMM)* evalArcAbove2*evalArcAbove2
+					+(vP-vMM)*(evalArcAbove*evalArcAbove-2.*evalArcAbove*evalArcAbove2)
+					+(vP-vM )*(arcIntEnd*arcIntEnd + 2.*_arc*(evalArcAbove2 - arcIntEnd)) ) / (2.*deltaEvalArcSqr);
+		    } else {
+			const TNumType& vP = paramFuncs.ctrlPtVal(0,i+2,CtrlPtDim::VAL);
+			const TNumType& vM = paramFuncs.ctrlPtVal(0,i+0,CtrlPtDim::VAL);
+			const TNumType& wP = paramFuncs.ctrlPtVal(1,i+2,CtrlPtDim::VAL);
+			const TNumType& wM = paramFuncs.ctrlPtVal(1,i+0,CtrlPtDim::VAL);
+			dThdParamTI = - (wP-wM)/2.;
+			dSdParamTI  = - (vP-vM)/2.;
+		    }
+		} else if ( _arc > evalArcBelow ) {
+		    const TNumType& vP = paramFuncs.ctrlPtVal(0,i+1,CtrlPtDim::VAL);
+		    const TNumType& vM = paramFuncs.ctrlPtVal(0,i+0,CtrlPtDim::VAL);
+		    const TNumType& wP = paramFuncs.ctrlPtVal(1,i+1,CtrlPtDim::VAL);
+		    const TNumType& wM = paramFuncs.ctrlPtVal(1,i+0,CtrlPtDim::VAL);
+		    dThdParamTI = - (wP-wM)/2.;
+		    dSdParamTI  = - (vP-vM)/2.;
+		}
+	    }
+	}
+    }
+    
+    //internal helper variables
+    protected: TNumType cosTheta_;
+    protected: TNumType sinTheta_;
+    protected: TNumType arcCfNmStepCache_;
+    protected: TNumType arcNmDotCache_;
+    protected: TNumType arcGradCache_;
+    protected: TNumType arcGradNmStepCache_;
+};
+//---------------------------------------------------------------------Optimization parameters
+
+
+// template<class TNumType> using OptVarDiffDriveVW = OptVarStructDiffDriveVW<TNumType, TNumType>;
+
+template<class TNumType,class TParamStructType>
+struct OptVarMapDiffDriveVW {
+    static void setOptVar( TParamStructType& _paramStruct, const std::vector<double>& _optVarExt ) {
+	auto& paramFuncs = _paramStruct->paramFuncs;
+	size_t idxOptVec = 0;
+	for ( size_t i = 0; i < paramFuncs->funcsSize(); ++i ) {
+	    for ( size_t j = 1; j < paramFuncs->funcCtrlPtSize(i); ++j ) {
+		paramFuncs->ctrlPtVal ( i, j, CtrlPtDim::VAL ) = _optVarExt[idxOptVec++];
+	    }
+	}
+	for ( size_t j = 1; j < paramFuncs->funcsArcSize(0); ++j ) {
+	    paramFuncs->funcsArc ( 0, j ) = _optVarExt[idxOptVec++];
+	}
+    }
+    static void getOptVar(std::vector<double>& _optVarExt, const TParamStructType& _paramStruct) {
+	auto& paramFuncs = _paramStruct->paramFuncs;
+	size_t newSize = paramFuncs->funcsSize() * (paramFuncs->funcCtrlPtSize(0)-1) + ( paramFuncs->funcsArcSize(0) - 1 );
+	if ( newSize != _optVarExt.size() ) { _optVarExt.resize( newSize ); }
+	size_t idxOptVec = 0;
+	for ( size_t i = 0; i < paramFuncs->funcsSize(); ++i ) {
+	    for ( size_t j = 1; j < paramFuncs->funcCtrlPtSize(i); ++j ) {
+		_optVarExt[idxOptVec++] = paramFuncs->ctrlPtVal ( i, j, CtrlPtDim::VAL );
+	    }
+	}
+	for ( size_t j = 1; j < paramFuncs->funcsArcSize(0); ++j ) {
+	    _optVarExt[idxOptVec++]  = paramFuncs->funcsArc ( 0, j );
+	}
     }
 };
-class StateSimDiffDriveVWGradMap : public StateWithGradMapBase<StateWithGradDiffDriveVW> {
-    public   : StateSimDiffDriveVWGradMap() : StateWithGradMapBase<StateWithGradDiffDriveVW>() {
-	for( size_t i = 0; i < optParamBlockSize; ++i ) {
-	    stateGradNm().setPBlockSize(i, 3);
-	    stateGradCf().setPBlockSize(i, 3);
-	}
-    }
-};
 
-// using StateDiffDriveType = StateDiffDriveVW;
-using StateDiffDriveType    = StateWithGradDiffDriveVW;
-template<template<class> class TDiscretizationType> using StateSimDiffDriveType = StateWithGradSimDiffDriveVW<TDiscretizationType>;
+// //Full system state
+// // template<class TNumType> using StateDiffDriveVW              = StateMap        < TNumType, StateNmDiffDriveVW     , StateCfDiffDriveVW>;
+// template<class TNumType> using StateWithLDiffDriveVW         = StateMap        < TNumType, StateNmWithLDiffDriveVW, StateCfDiffDriveVW>;
+// template<class TNumType> using StateWithGradDiffDriveVW      = StateWithGradMap< TNumType, StateNmDiffDriveVW     , StateCfDiffDriveVW, OptVarStructDiffDriveVW>;
+// template<class TNumType> using StateWithLWithGradDiffDriveVW = StateWithGradMap< TNumType, StateNmWithLDiffDriveVW, StateCfDiffDriveVW, OptVarStructDiffDriveVW>;
 
-template<template<class> class TDiscretizationType> using StateSimDiffDriveVWCRTPType = StateSimBaseCRTP<StateSimDiffDriveType<TDiscretizationType>>;
+template<class TNumType, class TMapDataType, template<class> class TDiscretizationType>
+class StateSimDiffDriveVW : public StateSimDiffDriveVWBase<TNumType, 
+                                                           TMapDataType, 
+							   StateDiffDriveVW<TNumType>, 
+							   TDiscretizationType > {};
 
-using StateSimDiffDriveVWHeunType     = StateSimDiffDriveType<heun_abc>;
-using StateSimDiffDriveVWHeunCRTPType = StateSimDiffDriveVWCRTPType<heun_abc>;
+template<class TNumType, class TMapDataType, template<class> class TDiscretizationType, class TCostFuncType>
+class StateWithLSimDiffDriveVW : public StateSimDiffDriveVWBase<TNumType,
+                                                                TMapDataType, 
+								StateWithLDiffDriveVW<TNumType>,
+								TDiscretizationType, 
+								TCostFuncType > {};
+								
 
 
+template<class TNumType, class TMapDataType, template<class> class TDiscretizationType>
+class StateWithGradSimDiffDriveVW : public StateSimDiffDriveVWBase<TNumType,
+                                                                   TMapDataType,
+                                                                   StateWithGradDiffDriveVW<TNumType>, 
+								   TDiscretizationType > {};
+
+template<class TNumType, class TMapDataType, template<class> class TDiscretizationType, class TCostFuncType>
+class StateWithLWithGradSimDiffDriveVW : public StateSimDiffDriveVWBase<TNumType, 
+                                                                        TMapDataType,
+                                                                        StateWithLWithGradDiffDriveVW<TNumType>, 
+									TDiscretizationType,
+									TCostFuncType > {};
 
 }
 

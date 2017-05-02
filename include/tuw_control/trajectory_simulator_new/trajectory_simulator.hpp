@@ -48,17 +48,16 @@ namespace tuw {
 // using TrajectorySimulatorUPtr      = std::unique_ptr<TrajectorySimulator>;
 // using TrajectorySimulatorConstUPtr = std::unique_ptr<TrajectorySimulator const>;
 
-template<typename TNumType, typename TStateSimType, typename TStateType>
+template<typename TNumType, typename TSimType>
 class TrajectorySimulator {
     
-    public   : using StateType = TStateType;
-    using StateSPtr = std::shared_ptr<TStateType>;
+    public   : using StateSimSPtr    = std::shared_ptr<TSimType>;
+    public   : using StateType       = typename TSimType::StateType;
+    public   : using StateSPtr       = std::shared_ptr<StateType>;
+    public   : using StateForSimType = typename TSimType::StateForSimType;
+    public   : static constexpr const bool CanComputeStateGrad = !std::is_same<EmptyGradType, typename StateMapBaseTraits<StateType>::StateWithGradNmType>::value;
+    
     //enums
-    ///@brief Mode of the simulation.
-    public   : enum class SimMode {
-	ONLINE ,///> Online evaluation. In this mode, every trajectory compuation step is performed incrementally for each lattice point: choosing the lattices order, simulation, grading (efficient when expected to interrupt simulation prematurely)
-	PRECALC ///> Precomputed evaluation. In this mode, every sub-problem is executed entirely for all lattice points: choosing the lattices order, simulation, grading (efficient when full trajectory computation is desired)
-    };
     ///@brief Fundamental lattice types.
     public   : enum class BaseSimLatticeType : signed int {
 	ARC_BG_BK = -3,///> begin and end of the simulation lattice
@@ -73,16 +72,15 @@ class TrajectorySimulator {
 	LatticePoint(                                     ) : arc( -1 ), statePtr( nullptr ) {}
 	LatticePoint( TNumType _arc                       ) : arc(_arc), statePtr( nullptr ) {}
 	LatticePoint( TNumType _arc, StateSPtr& _statePtr ) : arc(_arc), statePtr(_statePtr) {}
-	LatticePoint( bool _makePtrShared ) : arc( -1 ), statePtr(std::make_shared<TStateType>()) {}
+	LatticePoint( bool _makePtrShared ) : arc( -1 ), statePtr(std::make_shared<StateType>()) {}
 	virtual ~LatticePoint(){}
 	TNumType    arc;
 	StateSPtr   statePtr;
     };
-    
     using LatticeVec        =                                std::vector<LatticePoint>;
     using LatticeVecSPtr    =              std::shared_ptr < std::vector<LatticePoint> >;
     using LatticeVecSPtrVec = std::vector< std::shared_ptr < std::vector<LatticePoint> > >;
-    using StateSimSPtr      = std::shared_ptr<TStateSimType>;
+    
     
     ///@brief Structure containing the lattice type afferent to a @param LatticePoint.
     public   : struct LatticePointType : public LatticePoint { 
@@ -156,12 +154,18 @@ class TrajectorySimulator {
      *  @param _lastValidArc Specifies the last arc at which the previous simulation was still valid. Setting it non-zero is beneficial if already computed (in memory) @ref trajStates()
      *  are guaranteed to not have changed. Thus, it allows the function to simulate only portions of the entire arc parametrization domain.
      */
+    
+    bool simulatingWithGrad;
     public   : void simulateTrajectory ( TNumType _lastValidArc = 0 ) {  
-	advanceFunc = &TrajectorySimulator<TNumType, TStateSimType, TStateType>::advanceFuncSim;
+	advanceFunc = &TrajectorySimulator<TNumType, TSimType>::advanceFuncSim;
+	simulatingWithGrad = false;
 	simulateTrajectoryImpl(_lastValidArc);
     }
-    public   : void simulateTrajectoryWithGrad ( TNumType _lastValidArc = 0 ) {  
-	advanceFunc = &TrajectorySimulator<TNumType, TStateSimType, TStateType>::advanceFuncSimGrad;
+    public   : template< bool canComputeStateGrad = CanComputeStateGrad, 
+	                 typename std::enable_if< ( canComputeStateGrad ) >::type* = nullptr >
+		void simulateTrajectoryWithGrad ( TNumType _lastValidArc = 0 ) {  
+	advanceFunc = &TrajectorySimulator<TNumType, TSimType>::advanceFuncSimGrad;
+	simulatingWithGrad = true;
 	simulateTrajectoryImpl(_lastValidArc);
     }
     private  : void simulateTrajectoryImpl ( TNumType _lastValidArc ) {  
@@ -248,41 +252,173 @@ class TrajectorySimulator {
 	return idxMin;
     }
     
-    using AdvanceFunction = void (TrajectorySimulator<TNumType, TStateSimType, TStateType>::*)(const TNumType&);
+    using AdvanceFunction = void (TrajectorySimulator<TNumType, TSimType>::*)(const TNumType&);
     AdvanceFunction advanceFunc;
     
-    void advanceFuncSim(const TNumType& _arcNow) {
-	if( ( stateSim_->stateArc() < _arcNow ) || firstTime_ ) {
-	    stateSim_->advance( _arcNow ); 
-	    auto& simLatticeI = simulationLattice_[simAppendIdx_];
-	    auto& stateSimState = stateSim_->state();
-	    simLatticeI.arc = _arcNow;
-	    simLatticeI.statePtr->stateCf().data() = stateSimState.stateCf().data();
-	    simLatticeI.statePtr->stateNm().data() = stateSimState.stateNm().data();
-	    simAppendIdx_++;
-	    firstTime_ = false;
-	} 
+    private : void advanceFuncSim    (const TNumType& _arcNow) { stateSim_->advance( _arcNow ); }
+    private : template< bool canComputeStateGrad = CanComputeStateGrad, 
+	                     typename std::enable_if< ( canComputeStateGrad ) >::type* = nullptr >
+	      void advanceFuncSimGrad(const TNumType& _arcNow) {  stateSim_->advanceWithGrad( _arcNow ); }
+	      
+	      
+    private : auto& dtIdpNm(const size_t _i, const TNumType& _arcNow, const int& _latticePtType) const {
+	static Eigen::Matrix<TNumType, 1, -1> ans;
+	ans.resize(stateSim_->state().stateGradNm().sub(0).data().size());
+	ans.setZero();
+	if(_arcNow != 0) {
+	    ans(ans.cols()-1) = (TNumType)1. / (TNumType)(partLattices_[lattTypeIdx(-2)]->size()-1);
+	}
+	return ans;
     }
-    void advanceFuncSimGrad(const TNumType& _arcNow) {
-	if( ( stateSim_->stateArc() < _arcNow ) || firstTime_ ) {
-	    stateSim_->advanceWithGrad( _arcNow ); 
-	    auto& simLatticeI = simulationLattice_[simAppendIdx_];
-	    auto& stateSimState = stateSim_->state();
-	    simLatticeI.arc = _arcNow;
-	    simLatticeI.statePtr->stateCf().data()     = stateSimState.stateCf().data();
-	    simLatticeI.statePtr->stateNm().data()     = stateSimState.stateNm().data();
-	    simLatticeI.statePtr->stateGradCf().data() = stateSimState.stateGradCf().data();
-	    simLatticeI.statePtr->stateGradNm().data() = stateSimState.stateGradNm().data();
-	    simAppendIdx_++;
-	    firstTime_ = false;
-	} 
+    private : auto& dtIdpCf(const size_t _i, const TNumType& _arcNow, const int& _latticePtType) const {
+	static Eigen::Matrix<TNumType, 1, -1> ans;
+	ans.resize(stateSim_->state().stateGradNm().sub(0).data().size());
+	ans.setZero();
+	if(_arcNow == stateSim_->paramFuncs()->funcsArcEnd()) {
+	    ans(ans.cols()-1) = (TNumType)_i / (TNumType)(partLattices_[lattTypeIdx(-2)]->size()-1);
+	}
+	return ans;
     }
+    
+    private : template< typename TSimState, typename TState, bool canComputeStateGrad = CanComputeStateGrad, 
+	                     typename std::enable_if< (!canComputeStateGrad ) >::type* = nullptr >
+		static void copyDataFromSimStateToState(const TSimState& _simState, TState& _state) {
+		    _state.stateCf  ().data() = _simState.stateCf().data();
+		    _state.stateNm  ().data() = _simState.stateNm().data();
+		}
+    private : template< typename TSimState, typename TState, bool canComputeStateGrad = CanComputeStateGrad, 
+	                     typename std::enable_if< ( canComputeStateGrad ) >::type* = nullptr >
+		static void copyDataFromSimStateToState(const TSimState& _simState, TState& _state) {
+		    _state.stateCf    ().data() = _simState.stateCf    ().data();
+		    _state.stateNm    ().data() = _simState.stateNm    ().data();
+		    _state.stateGradNm().data() = _simState.stateGradNm().data();
+		    _state.stateGradCf().data() = _simState.stateGradCf().data();
+		}
+    private : template< typename TSimState, typename TState, bool canComputeStateGrad = CanComputeStateGrad, 
+	                     typename std::enable_if< (!canComputeStateGrad ) >::type* = nullptr >
+		static void copyStructureFromSimStateToState(const TSimState& _simState, TState& _state) {
+		    _state.stateCf  () = _simState.stateCf();
+		    _state.stateNm  () = _simState.stateNm();
+		}
+    private : template< typename TSimState, typename TState, bool canComputeStateGrad = CanComputeStateGrad, 
+	                     typename std::enable_if< ( canComputeStateGrad ) >::type* = nullptr >
+		static void copyStructureFromSimStateToState(const TSimState& _simState, TState& _state) {
+		    _state.stateCf    () = _simState.stateCf    ();
+		    _state.stateNm    () = _simState.stateNm    ();
+		    _state.stateGradNm() = _simState.stateGradNm();
+		    _state.stateGradCf() = _simState.stateGradCf();
+		}
+    private : template< typename TSimState, typename TState, bool canComputeStateGrad = CanComputeStateGrad, 
+	                     typename std::enable_if< (!canComputeStateGrad ) >::type* = nullptr >
+		static void copyDataFromStateToSimState(const TState& _state, TSimState& _simState) {
+		    _simState.stateCf  ().data() = _state.stateCf().data();
+		    _simState.stateNm  ().data() = _state.stateNm().data();
+		}
+    private : template< typename TSimState, typename TState, bool canComputeStateGrad = CanComputeStateGrad, 
+	                     typename std::enable_if< ( canComputeStateGrad ) >::type* = nullptr >
+		static void copyDataFromStateToSimState(const TState& _state, TSimState& _simState) {
+		    _simState.stateCf    ().data() = _state.stateCf    ().data();
+		    _simState.stateNm    ().data() = _state.stateNm    ().data();
+		    _simState.stateGradNm().data() = _state.stateGradNm().data();
+		    _simState.stateGradCf().data() = _state.stateGradCf().data();
+		}
     
     ///@brief Performs a simulation step (if @param _arcNow is different than last simulated arc) and appends the new arc and state pointer to the afferent partial lattice point.
     protected: void   simAppendToSimPartLat          ( const TNumType& _arcNow, const int& _latticePtType, const std::size_t& _minArcLatCacheIdx) {
-	(this->*advanceFunc)(_arcNow);
+	
+	if( ( stateSim_->stateArc() < _arcNow ) || firstTime_ ) {
+	    (this->*advanceFunc)(_arcNow);
+	    auto& simLatticeI = simulationLattice_[simAppendIdx_];
+	    
+	    auto& stateSimState = stateSim_->state();
+	    simLatticeI.arc = _arcNow;
+	    
+	    if ( simulatingWithGrad ) {
+		stateSim_->setStateCfWithGrad(_arcNow, PfEaG::NEAR_LAST);
+		copyDataFromSimStateToState(stateSimState, *simLatticeI.statePtr);
+		stateSim_->stateNmDot( stateSim_->state().stateNm(), stateSim_->state().stateCf(), _arcNow, PfEaG::NEAR_LAST );
+		stateSim_->stateCfDot();
+		const auto& dtIdpVal = dtIdpCf(simAppendIdx_, _arcNow, _latticePtType);
+		static Eigen::Matrix<TNumType,-1,-1> fCfdtIdpVal;
+		static Eigen::Matrix<TNumType,-1,-1> fNmdtIdpVal;
+		
+		fCfdtIdpVal = (stateSim_->stateCfDotCache_.data() * dtIdpVal).transpose();
+		fNmdtIdpVal = (stateSim_->stateNmDotCache_.data() * dtIdpVal).transpose();
+		
+		auto& stateGradCf = simLatticeI.statePtr->stateGradCf();
+		auto& stateGradNm = simLatticeI.statePtr->stateGradNm();
+		stateGradCf.data() += Eigen::Map<Eigen::Matrix<TNumType,-1,1>>(fCfdtIdpVal.data(), fCfdtIdpVal.size());
+		stateGradNm.data() += Eigen::Map<Eigen::Matrix<TNumType,-1,1>>(fNmdtIdpVal.data(), fNmdtIdpVal.size());
+	    } else {
+		stateSim_->setStateCf(_arcNow, PfEaG::NEAR_LAST);
+		copyDataFromSimStateToState(stateSimState, *simLatticeI.statePtr);
+	    }
+	    
+	    simAppendIdx_++;
+	    firstTime_ = false;
+	} 
 	appendToPartLat( _arcNow, _latticePtType, _minArcLatCacheIdx );
     }
+    
+    
+//     protected: void   simAppendToSimPartLat          ( const TNumType& _arcNow, const int& _latticePtType, const std::size_t& _minArcLatCacheIdx) {
+// 	
+// 	
+// 	auto& dtIdpVal = dtIdpCf(simAppendIdx_, _arcNow, _latticePtType);
+// 	
+// 	Eigen::Matrix<TNumType,-1,-1> fNmdtIdpVal;
+// 	static Eigen::Matrix<TNumType,-1,-1> fNmdtIdpValOld;
+// 	if(_arcNow == 0) {
+// 	    fNmdtIdpVal = (stateSim_->stateNmDotCache_.data() * dtIdpVal).transpose();
+// 	    fNmdtIdpValOld = fNmdtIdpVal;
+// 	}
+// 	
+// 	if( ( stateSim_->stateArc() < _arcNow ) || firstTime_ ) {
+// 	    (this->*advanceFunc)(_arcNow);
+// 	    auto& simLatticeI = simulationLattice_[simAppendIdx_];
+// 	    
+// 	    auto& stateSimState = stateSim_->state();
+// 	    simLatticeI.arc = _arcNow;
+// 	    copyDataFromSimStateToState(stateSimState, *simLatticeI.statePtr);
+// 	    
+// 	    
+// 	    if(simulatingWithGrad) {
+// 		
+// 		stateSim_->stateCfDot();
+// 		Eigen::Matrix<TNumType,-1,-1> fCfdtIdpVal = (stateSim_->stateCfDotCache_.data() * dtIdpVal).transpose();
+// 		if(_arcNow>0){
+// 		    fNmdtIdpVal = ((stateSim_->state().stateNm().data() - simulationLattice_[simAppendIdx_-1].statePtr->stateNm().data())/(_arcNow-simulationLattice_[simAppendIdx_-1].arc) * dtIdpVal).transpose();
+// 		}
+// 		
+// 		auto& stateGradCf = simLatticeI.statePtr->stateGradCf();
+// 		auto& stateGradNm = simLatticeI.statePtr->stateGradNm();
+// 		stateGradCf.data() += Eigen::Map<Eigen::Matrix<TNumType,-1,1>>(fCfdtIdpVal.data(), fCfdtIdpVal.size());
+// 		stateSim_->state().stateGrad() = 
+// 		stateGradNm.data() += Eigen::Map<Eigen::Matrix<TNumType,-1,1>>(fNmdtIdpVal.data(), fNmdtIdpVal.size());
+// 		
+// // 		auto& stateSimGradNm = stateSim_->state().stateGradNm();
+// // 		stateSimGradNm.data() += Eigen::Map<Eigen::Matrix<TNumType,-1,1>>(fNmdtIdpVal   .data(), fNmdtIdpVal   .size()); 
+// // 		stateSimGradNm.data() -= Eigen::Map<Eigen::Matrix<TNumType,-1,1>>(fNmdtIdpValOld.data(), fNmdtIdpValOld.size());
+// // 		stateGradNm.data() = stateSimGradNm.data();
+// // 		std::cout<<Eigen::Map<Eigen::Matrix<TNumType,-1,1>>(fNmdtIdpVal   .data(), fNmdtIdpVal   .size())-Eigen::Map<Eigen::Matrix<TNumType,-1,1>>(fNmdtIdpValOld.data(), fNmdtIdpValOld.size())<<std::endl;
+// 		
+// // 		std::cout<<"_arcNow="<<_arcNow<<std::endl;
+// // 		std::cout<<"fNmdtIdpVal="<<std::endl<<fNmdtIdpVal<<std::endl;
+// // 		std::cout<<"fNmdtIdpValOld="<<std::endl<<fNmdtIdpValOld<<std::endl<<std::endl;
+// 		
+// 		fNmdtIdpValOld = fNmdtIdpVal;
+// 	    }
+// 	    
+// 	    
+// 	    
+// 	    simAppendIdx_++;
+// 	    firstTime_ = false;
+// 	} 
+// 	appendToPartLat( _arcNow, _latticePtType, _minArcLatCacheIdx );
+//     }
+    
+    
+    
     ///@brief Appends the new arc and state pointer to the afferent partial lattice point.
     protected: void   appendToPartLat                ( const TNumType& _arcNow, const int& _latticePtType, const std::size_t& _minArcLatCacheIdx) {
 	auto& partLatticeNow = partLattices_[lattTypeIdx(_latticePtType)]->at(_minArcLatCacheIdx);
@@ -321,10 +457,8 @@ class TrajectorySimulator {
 	}
 	if      ( _firstLaticeInvalidIdx == 0 )                         { stateSim_->toState0(); }
 	else if ( _firstLaticeInvalidIdx <= simulationLattice_.size() ) { 
-	    stateSim_->toState0();
-	    stateSim_->setStateCf( simulationLattice_[_firstLaticeInvalidIdx-1].arc, /*ParamFuncs::*/EvalArcGuarantee::NONE );
-	    stateSim_->arcOld_ = simulationLattice_[_firstLaticeInvalidIdx-1].arc;
-	    stateSim_->state().data() = simulationLattice_[_firstLaticeInvalidIdx-1].statePtr->data(); 
+	    auto& lastValidSimState = simulationLattice_[_firstLaticeInvalidIdx-1];
+	    stateSim_->toState( *lastValidSimState.statePtr, lastValidSimState.arc );
 	}
 	return true;
     }
@@ -347,7 +481,18 @@ class TrajectorySimulator {
 	partLattices_[lattTypeIdx(asInt(BaseSimLatticeType::ARC_BG_BK))]->resize(2);
 	//reserve maximum computable lattice points
 	for ( size_t i = extArcLatIdxBegin; i < partLattices_.size(); ++i ) { simLatticeSize += partLattices_[i]->size(); } simLatticeSize = std::max(simLatticeSize, (size_t)0 );
-	if ( simLatticeSize != simulationLattice_.size() ) { simulationLattice_.resize(simLatticeSize); }
+	bool forceResize = false;
+	bool resize = false;
+	if ( ( simLatticeSize > simulationLattice_.size() ) ) { 
+	    forceResize = true;
+	    resize = true;
+	} else if (simulationLattice_.size() > 0) {
+	    if(stateSim_->state0().data().size() != simulationLattice_[0].statePtr->data().size()) {
+		forceResize = true;
+	    }
+	} else { forceResize = true; }
+	if(resize)      { simulationLattice_.resize(simLatticeSize); }
+	if(forceResize) { for(auto& simLatticeI : simulationLattice_) { copyStructureFromSimStateToState(stateSim_->state0(), *simLatticeI.statePtr); simLatticeI.statePtr->stateGrad().bindMat(); } }
 	
 	//compute equal time lattice initial value and multiplier; if init, push_back the 0 lattice point
 	simAppendIdx_ = _firstLaticeInvalidIdx;

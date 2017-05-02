@@ -9,7 +9,6 @@
 
 #include <tuw_control/param_func_new/param_func_spline/param_func_spline0_dist.hpp>
 
-
 using namespace std;
 using namespace Eigen;
 

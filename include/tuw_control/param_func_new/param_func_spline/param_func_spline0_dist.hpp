@@ -238,35 +238,42 @@ class ParamFuncsSpline0Dist : public ParamFuncsBase    < ParamFuncsSpline0Dist<T
 		funcIEvalCacheHig.cache[asInt(fem::INT2)] = funcIEvalCacheLow.cache[asInt(fem::INT2)] + computeFuncDeltaInt2(funcIdx, funcIEvalCacheHig.arc); 
 	    }
 	}
+	this->funcsArcEval_ = -1;
 	this->setEvalArc(this->funcsArcBegin_, EvalArcGuarantee::AT_BEGIN);
 	precomputeDist();
     }
     public   : void      setEvalArcImpl       ( const TNumType& _arcEval , const EvalArcGuarantee& _eAG ) {
 	using eag = EvalArcGuarantee;
-	
-	this->funcsArcEval_ = fmax( fmin( _arcEval, this->funcsArcEnd_ ), this->funcsArcBegin_ );
+	const double arcEvalNewBound = fmax( fmin( _arcEval, this->funcsArcEnd_ ), this->funcsArcBegin_ );
+	if(arcEvalNewBound == this->funcsArcEval_) { return; }
 	const size_t& funcsArcSz = this->funcsArcSize();
 	switch (_eAG) {
-	    case eag::AFTER_LAST : 
-		for ( size_t i = 0; i < funcsArcSz; ++i ) { 
-		    const size_t arcISize = this->funcCtrlPt_[i].size();
-		    size_t&             j = this->funcEvalArcCacheIdxUnder_[i];
-		    while( this->funcsArc( i, j ) <  this->funcsArcEval_ ){ if( ++j >= arcISize) { break; } } 
-    // 		--j;
-		    j = std::max(0, (int)j - 1);
+	    case eag::NEAR_LAST : 
+		if(_arcEval > this->funcsArcEval_) {
+		    for ( size_t i = 0; i < funcsArcSz; ++i ) { 
+			const size_t arcISize = this->funcCtrlPt_[i].size();
+			size_t&             j = this->funcEvalArcCacheIdxUnder_[i];
+			while( this->funcsArc( i, j ) <  arcEvalNewBound ){ if( ++j >= arcISize) { break; } } //--j;
+			j = std::max(0, (int)j - 1);
+		    }
+		} else {
+		    for ( size_t i = 0; i < funcsArcSz; ++i ) { 
+			size_t& j = this->funcEvalArcCacheIdxUnder_[i];
+			while( this->funcsArc( i, j ) >= arcEvalNewBound ){ if( j == 0 ) { break; } --j; }      
+		    }
 		}
 		break;
 	    case eag::AT_BEGIN   :
 		for ( size_t i = 0; i < funcsArcSz; ++i ) { this->funcEvalArcCacheIdxUnder_[i] = 0; }
 		break;
 	    case eag::AT_END     : 
-		for ( size_t i = 0; i < funcsArcSz; ++i ) { this->funcEvalArcCacheIdxUnder_[i] = this->funcCtrlPt_[this->arc2func_[i][0]].size(); }
+		for ( size_t i = 0; i < funcsArcSz; ++i ) { this->funcEvalArcCacheIdxUnder_[i] = this->funcCtrlPt_[this->arc2func_[i][0]].size()-1; }
 		break;
 	    case eag::NONE       : 
 		for ( size_t i = 0; i < funcsArcSz; ++i ) { 
 		    auto& aFuncAtArc = this->funcCtrlPt_[this->arc2func_[i][0]];
 		    static double referenceArc; static FuncCtrlPtType dummy(0, referenceArc);
-		    referenceArc = this->funcsArcEval_;
+		    referenceArc = arcEvalNewBound;
 		    this->funcEvalArcCacheIdxUnder_[i] = std::max( (int)std::distance( aFuncAtArc.begin(), 
 									         std::upper_bound( aFuncAtArc.begin(), 
 											           aFuncAtArc.end(), 
@@ -275,13 +282,8 @@ class ParamFuncsSpline0Dist : public ParamFuncsBase    < ParamFuncsSpline0Dist<T
 									        ) - 1, 0);
 		}
 		break;
-	    case eag::BEFORE_LAST: 
-		for ( size_t i = 0; i < funcsArcSz; ++i ) { 
-		    size_t& j = this->funcEvalArcCacheIdxUnder_[i];
-		    while( this->funcsArc( i, j ) >= this->funcsArcEval_ ){ if( j == 0 ) { break; } --j; }      
-		}
-		break;
 	}
+	this->funcsArcEval_ = arcEvalNewBound;
     }
     public   : TNumType  computeFuncValImpl   ( const std::size_t& _funcIdx ) const {
 	const FuncCacheDataType& cacheData = this->funcEvalCache_[_funcIdx][this->funcEvalArcCacheIdxUnder_[this->func2Arc_[_funcIdx]]];
@@ -377,7 +379,7 @@ class ParamFuncsSpline0Dist : public ParamFuncsBase    < ParamFuncsSpline0Dist<T
 	    this->setEvalDist ( _sLattice[i], EvalArcGuarantee::NONE );
 	    while( ( this->funcsArcEval_ < this->funcsArcEnd_ ) && ( i+1 < slSize ) ){ 
 		_tLattice.emplace_back(this->funcsArcEval_);
-		this->setEvalDist ( _sLattice[++i], EvalArcGuarantee::AFTER_LAST ); 
+		this->setEvalDist ( _sLattice[++i], EvalArcGuarantee::NEAR_LAST ); 
 	    }
 	}
 	_tLattice.emplace_back(this->funcsArcEnd_);
@@ -389,10 +391,10 @@ class ParamFuncsSpline0Dist : public ParamFuncsBase    < ParamFuncsSpline0Dist<T
 	const size_t idxBeforeStart = static_cast<int>( computeSImpl() / _ds ) - 1;
 	
 	size_t i = 0;
-	this->setEvalDist ( _ds * ( ++i + idxBeforeStart ), EvalArcGuarantee::AFTER_LAST );
+	this->setEvalDist ( _ds * ( ++i + idxBeforeStart ), EvalArcGuarantee::NEAR_LAST );
 	while( this->funcsArcEval_ < this->funcsArcEnd_ ){ 
 	    _tLattice.emplace_back(this->funcsArcEval_);
-	    this->setEvalDist ( _ds * ( ++i + idxBeforeStart ), EvalArcGuarantee::AFTER_LAST );
+	    this->setEvalDist ( _ds * ( ++i + idxBeforeStart ), EvalArcGuarantee::NEAR_LAST );
 	}
 	_tLattice.emplace_back(this->funcsArcEnd_);
 	this->setEvalArc(this->funcsArcBegin_, EvalArcGuarantee::AT_BEGIN);
@@ -446,11 +448,15 @@ class ParamFuncsSpline0Dist : public ParamFuncsBase    < ParamFuncsSpline0Dist<T
 	const size_t ctrlPtSize = this->funcCtrlPt_[distLinkedFuncIdx_[0]].size();
 	
 	switch (_evalArcGuarantee) {
-	    case eag::AFTER_LAST : while( distEvalCache_[arcCacheIdx] <= _s ){ if( ++arcCacheIdx >= ctrlPtSize) { break; } } --arcCacheIdx; break;
+	    case eag::NEAR_LAST  : {
+		const double& distCache = distEvalCache_[arcCacheIdx];
+		if(distCache <= _s) { while( distEvalCache_[arcCacheIdx] <= _s ){ if( ++arcCacheIdx >= ctrlPtSize) { break; }                } --arcCacheIdx; }
+		else                { while( distEvalCache_[arcCacheIdx] >= _s ){ if( arcCacheIdx   == 0         ) { break; } --arcCacheIdx; }                }
+		break;
+	    }
 	    case eag::AT_BEGIN   : arcCacheIdx = 0; break;
 	    case eag::AT_END     : arcCacheIdx = this->funcCtrlPt_[distLinkedFuncIdx_[0]].size()-1; break;
 	    case eag::NONE       : arcCacheIdx = std::distance( distEvalCache_.begin(), std::upper_bound( distEvalCache_.begin(), distEvalCache_.end(), _s ) ) - 1; break;
-	    case eag::BEFORE_LAST: while( distEvalCache_[arcCacheIdx] >= _s ){ if( arcCacheIdx   == 0         ) { break; } --arcCacheIdx; } break;
 	}
 	this->funcsArcEval_ = this->ctrlPtVal(distLinkedFuncIdx_[0], arcCacheIdx, CtrlPtDim::ARC );
 	

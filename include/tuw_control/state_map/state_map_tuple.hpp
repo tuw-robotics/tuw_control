@@ -149,7 +149,7 @@ class StateMapTuple : public StateMapBaseCRTP<StateMapTuple<TNumericType, TLeafT
     public   : using StateMapBaseCRTP<StateMapTuple<TNumericType, TLeafTypes...>>::subResize;
     public   : using StateMapBaseCRTP<StateMapTuple<TNumericType, TLeafTypes...>>::subSize;
     public   : using StateMapBaseCRTP<StateMapTuple<TNumericType, TLeafTypes...>>::memStartRef;
-    private  : using StateMapBaseCRTP<StateMapTuple<TNumericType, TLeafTypes...>>::bindToMemory;
+    public   : using StateMapBaseCRTP<StateMapTuple<TNumericType, TLeafTypes...>>::bindToMemory;
     
     private  :       MapTypeVirt           dataImplVirt        ()                               override final { return MapTypeVirt(memStartRef_, mapElementSize_); }
     private  : const MapTypeVirt           dataImplVirt        ()                         const override final { return MapTypeVirt(memStartRef_, mapElementSize_); }

@@ -218,7 +218,7 @@ class StateMapBaseCRTP {
     public   : template<bool isDynamic = IsDynamic, typename std::enable_if< ( isDynamic ) >::type* = nullptr> 
 	             void      subResize   ( const size_t& _size     )       { thisDerived().subResizeImplCRTP   ( _size     ); }
 	             
-    private  :       void      bindToMemory( NumericType* _memRef    )       { thisDerived().bindToMemoryImplCRTP( _memRef   ); }
+    public   :       void      bindToMemory( NumericType* _memRef    )       { thisDerived().bindToMemoryImplCRTP( _memRef   ); }
     public   : const size_t    subSize     ()                          const { return thisDerived().subSizeImplCRTP(); }
     public   : NumericType* const memStartRef ()                          const { return thisDerived().memStartRefImplCRTP(); }
     

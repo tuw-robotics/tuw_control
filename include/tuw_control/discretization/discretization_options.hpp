@@ -47,25 +47,44 @@ namespace tuw {
 namespace odeint = boost::numeric::odeint;
 
 template< class TValue = double>
+struct rk4_38_abc {
+    static constexpr const size_t stageNr = 4;
+    static constexpr const boost::array< TValue , 1         > a1 = {{ + 1.0 / 3.0 }};
+    static constexpr const boost::array< TValue , 2         > a2 = {{ - 1.0 / 3.0, + 1.0       }};
+    static constexpr const boost::array< TValue , 3         > a3 = {{ + 1.0      , - 1.0      , + 1.0       }};
+    static constexpr const boost::array< TValue , stageNr   > b  = {{ + 1.0 / 8.0, + 3.0 / 8.0, + 3.0 / 8.0, + 1.0 / 8.0 }};
+    static constexpr const boost::array< TValue , stageNr   > c  = {{ + 0.0      , + 1.0 / 3.0, + 2.0 / 3.0, + 1.0       }};
+    static auto  a(){ return std::move( boost::fusion::make_vector( a1, a2, a3 ) ); }
+};
+template< class Value >constexpr const boost::array< Value , 1                         >rk4_38_abc<Value>::a1;
+template< class Value >constexpr const boost::array< Value , 2                         >rk4_38_abc<Value>::a2;
+template< class Value >constexpr const boost::array< Value , 3                         >rk4_38_abc<Value>::a3;
+template< class Value >constexpr const boost::array< Value , rk4_38_abc<Value>::stageNr>rk4_38_abc<Value>::b;
+template< class Value >constexpr const boost::array< Value , rk4_38_abc<Value>::stageNr>rk4_38_abc<Value>::c;
+
+template< class TValue = double>
 struct heun_abc {
-//     struct rk_b {
-// 	static boost::array< TValue , stageNr   > b;
-//     };
-//     struct rk_c {
-// 	static boost::array< TValue , stageNr   > c;
-//     };
     static constexpr const size_t stageNr = 2;
     static constexpr const boost::array< TValue , 1         > a1 = {{ 1.0 / 2.0 }};
     static constexpr const boost::array< TValue , stageNr   > b  = {{ 0.0      , 1.0       }};
     static constexpr const boost::array< TValue , stageNr   > c  = {{ 0.0      , 1.0 / 2.0 }};
     static auto  a(){ return std::move( boost::fusion::make_vector( a1 ) ); }
-//     static auto  b(){ return b_; }
-//     static auto  b(){ return c_; }
-//     static auto  b(){ return static_cast<TDerived&>(*this)->b; }
 };
 template< class Value >constexpr const boost::array< Value , 1                       >heun_abc<Value>::a1;
 template< class Value >constexpr const boost::array< Value , heun_abc<Value>::stageNr>heun_abc<Value>::b;
 template< class Value >constexpr const boost::array< Value , heun_abc<Value>::stageNr>heun_abc<Value>::c;
+
+template< class TValue = double>
+struct euler_abc {
+    static constexpr const size_t stageNr = 1;
+    static constexpr const boost::array< TValue , 0         > a1 = {{ }};
+    static constexpr const boost::array< TValue , stageNr   > b  = {{ 1.0       }};
+    static constexpr const boost::array< TValue , stageNr   > c  = {{ 1.0 }};
+    static auto  a(){ return std::move( boost::fusion::make_vector() ); }
+};
+template< class Value >constexpr const boost::array< Value , 0                        >euler_abc<Value>::a1;
+template< class Value >constexpr const boost::array< Value , euler_abc<Value>::stageNr>euler_abc<Value>::b;
+template< class Value >constexpr const boost::array< Value , euler_abc<Value>::stageNr>euler_abc<Value>::c;
 
 template<
     template<class> class MethodType,

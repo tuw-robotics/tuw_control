@@ -39,8 +39,9 @@
 namespace tuw {
 
 template<class TNum, class TStateNm, class TStateCf>
-class StateMapSimBase : public StateMapTuple<TNum, TStateNm, TStateCf> {
-    public   : using StateMapSimBaseType = StateMapSimBase;
+class StateMapBase : public StateMapTuple<TNum, TStateNm, TStateCf> {
+    public   : using StateMapSimBaseType = StateMapBase<TNum, TStateNm, TStateCf>;
+    public   : using StateMapBaseType    = StateMapBase<TNum, TStateNm, TStateCf>;
     public   : using StateMapTuple<TNum, TStateNm, TStateCf>::StateMapTuple;
     public   :       auto& stateNm()       { return this->template sub<0>(); }
     public   : const auto& stateNm() const { return this->template sub<0>(); }
@@ -50,112 +51,223 @@ class StateMapSimBase : public StateMapTuple<TNum, TStateNm, TStateCf> {
     public   : const auto& state  () const { return *this; }
 };
 
+
+    
+template<class TNum, template<class,class> class TStateNm, template<class,class> class TStateCf>
+using StateMap = StateMapBase<TNum, TStateNm<TNum, TNum>, TStateCf<TNum, TNum>>;
+
+
+template<class TNum, class TStateNmByOptVar, class TStateCfByOptVar>
+class StateGradMapBase : public StateMapBase<TNum, TStateNmByOptVar, TStateCfByOptVar> {
+    public   : using StateMapSimBaseType = StateMapBase<TNum, TStateNmByOptVar, TStateCfByOptVar>;
+    public   : using StateMapBaseType    = StateGradMapBase<TNum, TStateNmByOptVar, TStateCfByOptVar>;
+    public   : StateGradMapBase() : StateMapBase<TNum, TStateNmByOptVar, TStateCfByOptVar>::StateMapBase(), gradMatMap_(nullptr, 0, 0) {}
+    public   : StateGradMapBase(auto&& _a, auto&& _b) : StateMapBase<TNum, TStateNmByOptVar, TStateCfByOptVar>::StateMapBase(_a, _b), gradMatMap_(nullptr, 0, 0) {}
+    public   :       auto& mat ()       { return gradMatMap_; }
+    public   : const auto& mat () const { return gradMatMap_; }
+    public   : void bindMat(){ 
+	new (&gradMatMap_) Eigen::Map<Eigen::Matrix<TNum,-1,-1, Eigen::RowMajor>>(this->memStartRef(), this->stateNm().subSize()+this->stateCf().subSize(), this->stateNm().sub(0).data().size() ); 
+	this->stateNm().bindMat();
+	this->stateCf().bindMat();
+    }
+    private  : Eigen::Map<Eigen::Matrix<TNum,-1,-1, Eigen::RowMajor>> gradMatMap_;
+};
+
+
+template<class TNum, class TstateGrad>
+class StateGradWithMatMap : public TstateGrad {
+    public   : StateGradWithMatMap() : TstateGrad(), gradMatMap_(nullptr, 0, 0) {}
+    public   : StateGradWithMatMap(auto&& _a, auto&& _b) : TstateGrad(_a, _b), gradMatMap_(nullptr, 0, 0) {}
+    public   : StateGradWithMatMap           (const StateGradWithMatMap& _rhs) : TstateGrad(_rhs), gradMatMap_(nullptr, 0, 0) {}
+    public   : StateGradWithMatMap& operator=(const StateGradWithMatMap& _rhs) { TstateGrad::operator=(_rhs); return *this; }
+    public   : StateGradWithMatMap           (StateGradWithMatMap&&)      = default;
+    public   : StateGradWithMatMap& operator=(StateGradWithMatMap&&)      = default;
+    public   :       auto& mat ()       { return gradMatMap_; }
+    public   : const auto& mat () const { return gradMatMap_; }
+    public   : void bindMat(){ 
+	new (&gradMatMap_) Eigen::Map<Eigen::Matrix<TNum,-1,-1, Eigen::RowMajor>>(this->memStartRef(), this->subSize(), this->sub(0).data().size() );
+    }
+    private  : Eigen::Map<Eigen::Matrix<TNum,-1,-1, Eigen::RowMajor>> gradMatMap_;
+};
+
+
 namespace /*<anonymous>*/ {
 
 template<class TNum, class TStateNm, class TStateCf>
-struct StateMapSimBaseTraits<StateMapSimBase<TNum, TStateNm, TStateCf>> {
-    public   : using StateType         = StateMapSimBase<TNum, TStateNm, TStateCf>;
-    public   : using NumType           = TNum;
-    public   : using StateCfType       = TStateCf;
-    public   : using StateNmType       = TStateNm;
-    public   : using StateVirtType     = StateMapBaseVirt<TNum>;
-    public   : using StateNmNumType    = typename TStateNm::StateMapBaseCRTP::MatrixTypeCRTP;
-    
-    public   : using StateWithGradNmType     = EmptyGradType;
-    public   : using StateWithGradNmNumType  = EmptyGradType;
+struct StateMapBaseTraits< StateMapBase<TNum, TStateNm, TStateCf> > {
+    public   : using StateType              = StateMapBase<TNum, TStateNm, TStateCf>;
+    public   : using StateForSimType        = StateMapBase<TNum, TStateNm, TStateCf>;
+    public   : using NumType                = TNum;
+    public   : using StateCfType            = TStateCf;
+    public   : using StateNmType            = TStateNm;
+    public   : using StateVirtType          = StateMapBaseVirt<TNum>;
+    public   : using StateNmNumType         = typename TStateNm::StateMapBaseCRTP::MatrixTypeCRTP;
+    public   : using StateWithGradNmType    = EmptyGradType;
+    public   : using StateWithGradCfType    = EmptyGradType;
+    public   : using StateWithGradNmNumType = EmptyGradType;
 };
+template<class TNum, class TStateNm, class TStateCf>
+struct StateMapBaseTraits< StateGradMapBase<TNum, TStateNm, TStateCf> > {
+    public   : using StateType              = StateGradMapBase<TNum, TStateNm, TStateCf>;
+    public   : using StateForSimType        = StateMapBase<TNum, TStateNm, TStateCf>;
+    public   : using NumType                = TNum;
+    public   : using StateCfType            = TStateCf;
+    public   : using StateNmType            = TStateNm;
+    public   : using StateVirtType          = StateMapBaseVirt<TNum>;
+    public   : using StateNmNumType         = typename TStateNm::StateMapBaseCRTP::MatrixTypeCRTP;
+    public   : using StateWithGradNmType    = EmptyGradType;
+    public   : using StateWithGradCfType    = EmptyGradType;
+    public   : using StateWithGradNmNumType = EmptyGradType;
+};
+template<class TNum, class TstateGrad>
+struct StateMapBaseTraits< StateGradWithMatMap<TNum, TstateGrad> > {
+    public   : using StateType              = typename StateMapBaseTraits<TstateGrad>::StateType;
+    public   : using StateForSimType        = typename StateMapBaseTraits<TstateGrad>::StateForSimType;
+    public   : using NumType                = typename StateMapBaseTraits<TstateGrad>::NumType;
+    public   : using StateCfType            = typename StateMapBaseTraits<TstateGrad>::StateCfType;
+    public   : using StateNmType            = typename StateMapBaseTraits<TstateGrad>::StateNmType;
+    public   : using StateVirtType          = typename StateMapBaseTraits<TstateGrad>::StateVirtType;
+    public   : using StateNmNumType         = typename StateMapBaseTraits<TstateGrad>::StateNmNumType;
+    public   : using StateWithGradNmType    = typename StateMapBaseTraits<TstateGrad>::StateWithGradNmType;
+    public   : using StateWithGradCfType    = typename StateMapBaseTraits<TstateGrad>::StateWithGradCfType;
+    public   : using StateWithGradNmNumType = typename StateMapBaseTraits<TstateGrad>::StateWithGradNmNumType;
+};
+// template<class TNum, template<class> class TStateNm, template<class> class TStateCf>
+// struct StateMapBaseTraits< StateMapBase<TNum, TStateNm, TStateCf> > {
+//     public   : using StateType              = StateMapBase<TNum, TStateNm<TNum>, TStateCf<TNum>>;
+//     public   : using StateForSimType        = StateMapBase<TNum, TStateNm<TNum>, TStateCf<TNum>>;
+//     public   : using NumType                = TNum;
+//     public   : using StateCfType            = TStateCf<TNum>;
+//     public   : using StateNmType            = TStateNm;
+//     public   : using StateVirtType          = StateMapBaseVirt<TNum>;
+//     public   : using StateNmNumType         = typename TStateNm::StateMapBaseCRTP::MatrixTypeCRTP;
+//     public   : using StateWithGradNmType    = EmptyGradType;
+//     public   : using StateWithGradCfType    = EmptyGradType;
+//     public   : using StateWithGradNmNumType = EmptyGradType;
+// };
 
 } //namespace <anonymous>
 
-template<class TNum, class TStateNmCf, size_t TGradBlockSize>
-class GradStateMapNmCfSimBase : public StateMapArray<TNum, StateMapVector<TNum, TStateNmCf>, TGradBlockSize> {
-    public   : using StateMapArray<TNum, StateMapVector<TNum, TStateNmCf>, TGradBlockSize>::StateMapArray;
-    public   :       auto& dxdpBlockI   (const size_t& _i)                         { return this->sub(_i); }
-    public   : const auto& dxdpBlockI   (const size_t& _i)                   const { return this->sub(_i); }
-    public   : void        setPBlockSize(const size_t& _i, const size_t& _n)       { this->sub(_i).subResize(_n); }
-};
-
-template<class TNum, class TStateNm, class TStateCf, template<class> class TOptVarStruct>
-class StateWithGradMapSimBase : public StateMapTuple<TNum, StateMapTuple<TNum, TStateNm, TOptVarStruct<TStateNm>>, StateMapTuple<TNum, TStateCf, TOptVarStruct<TStateCf>>> {
-    public   : using StateMapSimBaseType = StateWithGradMapSimBase;
-    public   : using StateMapTuple<TNum, StateMapTuple<TNum, TStateNm, TOptVarStruct<TStateNm>>, StateMapTuple<TNum, TStateCf, TOptVarStruct<TStateCf>>>::StateMapTuple;
-    public   :       auto& stateWithGradNm()       { return this->template sub<0>(); }
-    public   : const auto& stateWithGradNm() const { return this->template sub<0>(); }
-    public   :       auto& stateWithGradCf()       { return this->template sub<1>(); }
-    public   : const auto& stateWithGradCf() const { return this->template sub<1>(); }
-    public   :       auto& stateNm()       { return this->template sub<0>().template sub<0>(); }
-    public   : const auto& stateNm() const { return this->template sub<0>().template sub<0>(); }
-    public   :       auto& stateCf()       { return this->template sub<1>().template sub<0>(); }
-    public   : const auto& stateCf() const { return this->template sub<1>().template sub<0>(); }
-    public   :       auto& stateGradNm()       { return this->template sub<0>().template sub<1>(); }
-    public   : const auto& stateGradNm() const { return this->template sub<0>().template sub<1>(); }
-    public   :       auto& stateGradCf()       { return this->template sub<1>().template sub<1>(); }
-    public   : const auto& stateGradCf() const { return this->template sub<1>().template sub<1>(); }
-    public   : void        setPBlockSize(const size_t& _i, const size_t& _n)       { stateGradNm().setPSize(_i, _n); stateGradCf().setPSize(_i, _n); }
-};
-
-template<class TStateWithGradMapSimType>
-class StateWithGradMapBase :  public StateMapTuple<typename StateMapSimBaseTraits<typename TStateWithGradMapSimType::StateMapSimBaseType>::NumType, 
-                                                   StateMapTuple<typename StateMapSimBaseTraits<typename TStateWithGradMapSimType::StateMapSimBaseType>::NumType, 
-				 		                 typename StateMapSimBaseTraits<typename TStateWithGradMapSimType::StateMapSimBaseType>::StateNmType, 
-								 typename StateMapSimBaseTraits<typename TStateWithGradMapSimType::StateMapSimBaseType>::StateCfType>, 
-						   StateMapTuple<typename StateMapSimBaseTraits<typename TStateWithGradMapSimType::StateMapSimBaseType>::NumType, 
-						                 typename StateMapSimBaseTraits<typename TStateWithGradMapSimType::StateMapSimBaseType>::StateNmGradType, 
-								 typename StateMapSimBaseTraits<typename TStateWithGradMapSimType::StateMapSimBaseType>::StateCfGradType> > {
-    public   : using StateMapTuple<typename StateMapSimBaseTraits<typename TStateWithGradMapSimType::StateMapSimBaseType>::NumType, 
-				   StateMapTuple<typename StateMapSimBaseTraits<typename TStateWithGradMapSimType::StateMapSimBaseType>::NumType, 
-				   		 typename StateMapSimBaseTraits<typename TStateWithGradMapSimType::StateMapSimBaseType>::StateNmType, 
-						 typename StateMapSimBaseTraits<typename TStateWithGradMapSimType::StateMapSimBaseType>::StateCfType>, 
-				   StateMapTuple<typename StateMapSimBaseTraits<typename TStateWithGradMapSimType::StateMapSimBaseType>::NumType, 
-						 typename StateMapSimBaseTraits<typename TStateWithGradMapSimType::StateMapSimBaseType>::StateNmGradType, 
-						 typename StateMapSimBaseTraits<typename TStateWithGradMapSimType::StateMapSimBaseType>::StateCfGradType> >::StateMapTuple;
-						 
-    using NumType = typename StateMapSimBaseTraits<typename TStateWithGradMapSimType::StateMapSimBaseType>::NumType;
+namespace /*<anonymous>*/  {
     
+template<class TStateWithGradMapType>
+using StateMapTraits = StateMapBaseTraits<typename TStateWithGradMapType::StateMapBaseType>;
+    
+} //namespace <anonymous>
+
+template<class TNum, class TState, class TStateGrad>
+class StateWithGradMapSimBaseInternal : public StateMapTuple< TNum, TState, TStateGrad > {
+    public   : using StateMapTuple< TNum, TState, TStateGrad >::StateMapTuple;
+    public   :       auto& state     ()       { return this->template sub<0>(); }
+    public   : const auto& state     () const { return this->template sub<0>(); }
+    public   :       auto& stateGrad ()       { return this->template sub<1>(); }
+    public   : const auto& stateGrad () const { return this->template sub<1>(); }
+};
+
+template<class TStateWithGradMapType>
+class StateWithGradMapSimBase :  public StateMapTuple<typename StateMapTraits<TStateWithGradMapType>::NumType,
+                                                      StateWithGradMapSimBaseInternal<typename StateMapTraits<TStateWithGradMapType>::NumType, 
+								    typename StateMapTraits<TStateWithGradMapType>::StateNmType,
+								    typename StateMapTraits<TStateWithGradMapType>::StateNmGradType>,
+						      StateWithGradMapSimBaseInternal<typename StateMapTraits<TStateWithGradMapType>::NumType, 
+								    typename StateMapTraits<TStateWithGradMapType>::StateCfType,
+								    typename StateMapTraits<TStateWithGradMapType>::StateCfGradType> > {
+
+    public   : using StateMapBaseType    = typename StateMapTraits<TStateWithGradMapType>::StateType;
+    private  : using NumType             = typename StateMapTraits<TStateWithGradMapType>::NumType;
+    private  : using BaseClassType       = StateMapTuple<typename StateMapTraits<TStateWithGradMapType>::NumType,
+							 StateWithGradMapSimBaseInternal<typename StateMapTraits<TStateWithGradMapType>::NumType, 
+								       typename StateMapTraits<TStateWithGradMapType>::StateNmType,
+								       typename StateMapTraits<TStateWithGradMapType>::StateNmGradType>,
+							 StateWithGradMapSimBaseInternal<typename StateMapTraits<TStateWithGradMapType>::NumType, 
+								       typename StateMapTraits<TStateWithGradMapType>::StateCfType,
+								       typename StateMapTraits<TStateWithGradMapType>::StateCfGradType> >;
+    
+    public   : StateWithGradMapSimBase() : BaseClassType::StateMapTuple() {}
+    public   : StateWithGradMapSimBase           (const StateWithGradMapSimBase& _rhs) : BaseClassType(_rhs) {}
+    public   : StateWithGradMapSimBase& operator=(const StateWithGradMapSimBase& _rhs) {
+	BaseClassType::operator=(_rhs);
+	return *this;
+    }
+    public   : StateWithGradMapSimBase           (StateWithGradMapSimBase&&)      = default;
+    public   : StateWithGradMapSimBase& operator=(StateWithGradMapSimBase&&)      = default;
+    
+    public   :       auto& stateWithGradNm ()       { return this->template sub<0>(); }
+    public   : const auto& stateWithGradNm () const { return this->template sub<0>(); }
+    public   :       auto& stateNm         ()       { return this->stateWithGradNm ().template sub<0>(); }
+    public   : const auto& stateNm         () const { return this->stateWithGradNm ().template sub<0>(); }
+    public   :       auto& stateGradNm     ()       { return this->stateWithGradNm ().template sub<1>(); }
+    public   : const auto& stateGradNm     () const { return this->stateWithGradNm ().template sub<1>(); }
+    
+    public   :       auto& stateWithGradCf ()       { return this->template sub<1>(); }
+    public   : const auto& stateWithGradCf () const { return this->template sub<1>(); }
+    public   :       auto& stateCf         ()       { return this->stateWithGradCf ().template sub<0>(); }
+    public   : const auto& stateCf         () const { return this->stateWithGradCf ().template sub<0>(); }
+    public   :       auto& stateGradCf     ()       { return this->stateWithGradCf ().template sub<1>(); }
+    public   : const auto& stateGradCf     () const { return this->stateWithGradCf ().template sub<1>(); }
+};
+
+
+template<class TNum, template<class,class> class TStateNm, template<class,class> class TStateCf, template<class,class> class TOptVarStruct>
+class StateWithGradMapBase : public StateMapTuple<TNum, 
+                                                  StateMapBase    < TNum, TStateNm<TNum,TNum>, TStateCf<TNum,TNum> >, 
+						  StateGradMapBase< TNum, 
+						                    StateGradWithMatMap<TNum, TStateNm<TNum, TOptVarStruct<TNum,TNum>>>, 
+								    StateGradWithMatMap<TNum, TStateCf<TNum, TOptVarStruct<TNum,TNum>>> > > {
+
+    public   : using StateMapBaseType = StateWithGradMapBase<TNum, TStateNm, TStateCf, TOptVarStruct>;
+    private  : using BaseClassType    = StateMapTuple<TNum, 
+						      StateMapBase< TNum, TStateNm<TNum,TNum>, TStateCf<TNum,TNum> >, 
+						      StateGradMapBase< TNum, 
+						                        StateGradWithMatMap<TNum, TStateNm<TNum, TOptVarStruct<TNum,TNum>>>, 
+									StateGradWithMatMap<TNum, TStateCf<TNum, TOptVarStruct<TNum,TNum>>> > >;
+				   
+    public   : StateWithGradMapBase() : BaseClassType::StateMapTuple(){}
+    public   : StateWithGradMapBase           (const StateWithGradMapBase& _rhs) : BaseClassType(_rhs) {}
+    public   : StateWithGradMapBase& operator=(const StateWithGradMapBase& _rhs) {
+	BaseClassType::operator=(_rhs);
+	return *this;
+    }
+    public   : StateWithGradMapBase           (StateWithGradMapBase&&)      = default;
+    public   : StateWithGradMapBase& operator=(StateWithGradMapBase&&)      = default;
+    
+    public   :       auto& stateNm    ()       { return this->state    ().template sub<0>(); }
+    public   : const auto& stateNm    () const { return this->state    ().template sub<0>(); }
+    public   :       auto& stateCf    ()       { return this->state    ().template sub<1>(); }
+    public   : const auto& stateCf    () const { return this->state    ().template sub<1>(); }
+    public   :       auto& stateGradNm()       { return this->stateGrad().template sub<0>(); }
+    public   : const auto& stateGradNm() const { return this->stateGrad().template sub<0>(); }
+    public   :       auto& stateGradCf()       { return this->stateGrad().template sub<1>(); }
+    public   : const auto& stateGradCf() const { return this->stateGrad().template sub<1>(); }
     public   :       auto& state      ()       { return this->template sub<0>(); }
     public   : const auto& state      () const { return this->template sub<0>(); }
     public   :       auto& stateGrad  ()       { return this->template sub<1>(); }
     public   : const auto& stateGrad  () const { return this->template sub<1>(); }
-    public   :       auto& stateNm    ()       { return this->template sub<0>().template sub<0>(); }
-    public   : const auto& stateNm    () const { return this->template sub<0>().template sub<0>(); }
-    public   :       auto& stateCf    ()       { return this->template sub<0>().template sub<1>(); }
-    public   : const auto& stateCf    () const { return this->template sub<0>().template sub<1>(); }
-    public   :       auto& stateGradNm()       { return this->template sub<1>().template sub<0>(); }
-    public   : const auto& stateGradNm() const { return this->template sub<1>().template sub<0>(); }
-    public   :       auto& stateGradCf()       { return this->template sub<1>().template sub<1>(); }
-    public   : const auto& stateGradCf() const { return this->template sub<1>().template sub<1>(); }
-    public   : void        setPBlockSize(const size_t& _i, const size_t& _n)       { stateGradNm().setPSize(_i, _n); stateGradCf().setPSize(_i, _n); }
-    
-    public   :       Eigen::Matrix<NumType,-1,-1>& stateGradMat  ()       { 
-	const size_t cfSize = stateCf().data().size();
-	const size_t nmSize = stateNm().data().size();
-	gradMat_.resize(cfSize+nmSize, stateGradCf().subSize() * stateGradCf().template sub<0>().subSize()); 
-	for(size_t j = 0; j < gradMat_.cols(); ++j) {
-	    gradMat_.block(     0,j, nmSize,1) = stateGradNm().data().block(nmSize*j,0, nmSize,1);
-	    gradMat_.block(nmSize,j, cfSize,1) = stateGradCf().data().block(cfSize*j,0, cfSize,1);
-	}
-	return gradMat_;
-    }
-    
-    private  : Eigen::Matrix<NumType,-1,-1> gradMat_;
 };
+
+template<class TNum, template<class,class> class TStateNm, template<class,class> class TStateCf, template<class,class> class TOptVarStruct>
+using StateWithGradMap = StateWithGradMapBase<TNum, TStateNm, TStateCf, TOptVarStruct>;
 
 
 namespace /*<anonymous>*/ {
 
-template<class TNum, class TStateNm, class TStateCf, template<class> class TOptVarStruct>
-struct StateMapSimBaseTraits<StateWithGradMapSimBase<TNum, TStateNm, TStateCf, TOptVarStruct>> {
-    public   : using StateType         = StateWithGradMapSimBase<TNum, TStateNm, TStateCf, TOptVarStruct>;
-    public   : using NumType           = TNum;
-    public   : using StateCfType       = TStateCf;
-    public   : using StateNmType       = TStateNm;
-    public   : using StateCfGradType   = TOptVarStruct<TStateCf>;
-    public   : using StateNmGradType   = TOptVarStruct<TStateNm>;
-    public   : using StateVirtType     = StateMapBaseVirt<TNum>;
-    public   : using StateNmNumType    = typename TStateNm::StateMapBaseCRTP::MatrixTypeCRTP;
-    
-    public   : using StateWithGradNmType    = StateMapTuple<TNum, TStateNm, TOptVarStruct<TStateNm>>;
-    public   : using StateWithGradNmNumType = typename StateMapTuple<TNum, TStateNm, TOptVarStruct<TStateNm>>::StateMapBaseCRTP::MatrixTypeCRTP;
+template<class TNum, template<class,class> class TStateNm, template<class,class> class TStateCf, template<class,class> class TOptVarStruct>
+struct StateMapBaseTraits<StateWithGradMapBase<TNum, TStateNm, TStateCf, TOptVarStruct>> {
+    public   : using StateType              = StateWithGradMapBase<TNum, TStateNm, TStateCf, TOptVarStruct>;
+    public   : using StateForSimType        = StateWithGradMapSimBase<StateType>;
+    public   : using NumType                = TNum;
+    public   : using StateCfType            = TStateCf<TNum,TNum>;
+    public   : using StateNmType            = TStateNm<TNum,TNum>;
+    public   : using StateCfGradType        = StateGradWithMatMap<TNum, TStateCf<TNum,TOptVarStruct<TNum,TNum>>>;
+    public   : using StateNmGradType        = StateGradWithMatMap<TNum, TStateNm<TNum,TOptVarStruct<TNum,TNum>>>;
+    public   : using StateGradType          = StateGradMapBase< TNum, 
+						                        StateGradWithMatMap<TNum, TStateNm<TNum,TOptVarStruct<TNum,TNum>>>, 
+									StateGradWithMatMap<TNum, TStateCf<TNum,TOptVarStruct<TNum,TNum>>> >;
+    public   : using StateVirtType          = StateMapBaseVirt<TNum>;
+    public   : using StateNmNumType         = typename TStateNm<TNum, TNum>::StateMapBaseCRTP::MatrixTypeCRTP;
+    public   : using StateWithGradNmType    = StateWithGradMapSimBaseInternal<TNum, StateNmType, StateNmGradType>;
+    public   : using StateWithGradCfType    = StateWithGradMapSimBaseInternal<TNum, StateCfType, StateCfGradType>;
+    public   : using StateWithGradNmNumType = typename StateWithGradNmType::StateMapBaseCRTP::MatrixTypeCRTP;
 };
 
 } //namespace <anonymous>

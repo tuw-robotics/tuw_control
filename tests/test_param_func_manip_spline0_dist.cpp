@@ -183,24 +183,24 @@ namespace EvalArcFuncValFuncValDiff1 {
 	funcs->setEvalArc(     3.5+initT, EaG::NONE); EXPECT_DOUBLE_EQ(       3+funcShift, funcs->computeFuncVal( funcIdx ) );
 
 	funcs->setEvalArc(       0+initT, EaG::NONE);
-	funcs->setEvalArc(       0+initT, EaG::AFTER_LAST); EXPECT_DOUBLE_EQ(     0  +funcShift, funcs->computeFuncVal( funcIdx ) ); 
-	funcs->setEvalArc(       1+initT, EaG::AFTER_LAST); EXPECT_DOUBLE_EQ(     1  +funcShift, funcs->computeFuncVal( funcIdx ) ); 
-	funcs->setEvalArc(     1.5+initT, EaG::AFTER_LAST); EXPECT_DOUBLE_EQ(     1.5+funcShift, funcs->computeFuncVal( funcIdx ) ); 
-	funcs->setEvalArc(2.0-1e-5+initT, EaG::AFTER_LAST); EXPECT_DOUBLE_EQ(2.0-1e-5+funcShift, funcs->computeFuncVal( funcIdx ) ); 
-	funcs->setEvalArc(     2.0+initT, EaG::AFTER_LAST); EXPECT_DOUBLE_EQ(     2.0+funcShift, funcs->computeFuncVal( funcIdx ) ); 
-	funcs->setEvalArc(2.0+1e-5+initT, EaG::AFTER_LAST); EXPECT_DOUBLE_EQ(2.0-1e-5+funcShift, funcs->computeFuncVal( funcIdx ) ); 
-	funcs->setEvalArc(     2.5+initT, EaG::AFTER_LAST); EXPECT_DOUBLE_EQ(     1.5+funcShift, funcs->computeFuncVal( funcIdx ) );
-	funcs->setEvalArc(     3.5+initT, EaG::AFTER_LAST); EXPECT_DOUBLE_EQ(       3+funcShift, funcs->computeFuncVal( funcIdx ) );
+	funcs->setEvalArc(       0+initT, EaG::NEAR_LAST); EXPECT_DOUBLE_EQ(     0  +funcShift, funcs->computeFuncVal( funcIdx ) ); 
+	funcs->setEvalArc(       1+initT, EaG::NEAR_LAST); EXPECT_DOUBLE_EQ(     1  +funcShift, funcs->computeFuncVal( funcIdx ) ); 
+	funcs->setEvalArc(     1.5+initT, EaG::NEAR_LAST); EXPECT_DOUBLE_EQ(     1.5+funcShift, funcs->computeFuncVal( funcIdx ) ); 
+	funcs->setEvalArc(2.0-1e-5+initT, EaG::NEAR_LAST); EXPECT_DOUBLE_EQ(2.0-1e-5+funcShift, funcs->computeFuncVal( funcIdx ) ); 
+	funcs->setEvalArc(     2.0+initT, EaG::NEAR_LAST); EXPECT_DOUBLE_EQ(     2.0+funcShift, funcs->computeFuncVal( funcIdx ) ); 
+	funcs->setEvalArc(2.0+1e-5+initT, EaG::NEAR_LAST); EXPECT_DOUBLE_EQ(2.0-1e-5+funcShift, funcs->computeFuncVal( funcIdx ) ); 
+	funcs->setEvalArc(     2.5+initT, EaG::NEAR_LAST); EXPECT_DOUBLE_EQ(     1.5+funcShift, funcs->computeFuncVal( funcIdx ) );
+	funcs->setEvalArc(     3.5+initT, EaG::NEAR_LAST); EXPECT_DOUBLE_EQ(       3+funcShift, funcs->computeFuncVal( funcIdx ) );
 
 	funcs->setEvalArc(       4+initT, EaG::NONE);
-	funcs->setEvalArc(     3.5+initT, EaG::BEFORE_LAST); EXPECT_DOUBLE_EQ(       3+funcShift, funcs->computeFuncVal( funcIdx ) );
-	funcs->setEvalArc(     2.5+initT, EaG::BEFORE_LAST); EXPECT_DOUBLE_EQ(     1.5+funcShift, funcs->computeFuncVal( funcIdx ) );
-	funcs->setEvalArc(2.0+1e-5+initT, EaG::BEFORE_LAST); EXPECT_DOUBLE_EQ(2.0-1e-5+funcShift, funcs->computeFuncVal( funcIdx ) );
-	funcs->setEvalArc(     2.0+initT, EaG::BEFORE_LAST); EXPECT_DOUBLE_EQ(     2.0+funcShift, funcs->computeFuncVal( funcIdx ) ); 
-	funcs->setEvalArc(2.0-1e-5+initT, EaG::BEFORE_LAST); EXPECT_DOUBLE_EQ(2.0-1e-5+funcShift, funcs->computeFuncVal( funcIdx ) ); 
-	funcs->setEvalArc(     1.5+initT, EaG::BEFORE_LAST); EXPECT_DOUBLE_EQ(     1.5+funcShift, funcs->computeFuncVal( funcIdx ) ); 
-	funcs->setEvalArc(       1+initT, EaG::BEFORE_LAST); EXPECT_DOUBLE_EQ(     1  +funcShift, funcs->computeFuncVal( funcIdx ) ); 
-	funcs->setEvalArc(       0+initT, EaG::BEFORE_LAST); EXPECT_DOUBLE_EQ(     0  +funcShift, funcs->computeFuncVal( funcIdx ) ); 
+	funcs->setEvalArc(     3.5+initT, EaG::NEAR_LAST); EXPECT_DOUBLE_EQ(       3+funcShift, funcs->computeFuncVal( funcIdx ) );
+	funcs->setEvalArc(     2.5+initT, EaG::NEAR_LAST); EXPECT_DOUBLE_EQ(     1.5+funcShift, funcs->computeFuncVal( funcIdx ) );
+	funcs->setEvalArc(2.0+1e-5+initT, EaG::NEAR_LAST); EXPECT_DOUBLE_EQ(2.0-1e-5+funcShift, funcs->computeFuncVal( funcIdx ) );
+	funcs->setEvalArc(     2.0+initT, EaG::NEAR_LAST); EXPECT_DOUBLE_EQ(     2.0+funcShift, funcs->computeFuncVal( funcIdx ) ); 
+	funcs->setEvalArc(2.0-1e-5+initT, EaG::NEAR_LAST); EXPECT_DOUBLE_EQ(2.0-1e-5+funcShift, funcs->computeFuncVal( funcIdx ) ); 
+	funcs->setEvalArc(     1.5+initT, EaG::NEAR_LAST); EXPECT_DOUBLE_EQ(     1.5+funcShift, funcs->computeFuncVal( funcIdx ) ); 
+	funcs->setEvalArc(       1+initT, EaG::NEAR_LAST); EXPECT_DOUBLE_EQ(     1  +funcShift, funcs->computeFuncVal( funcIdx ) ); 
+	funcs->setEvalArc(       0+initT, EaG::NEAR_LAST); EXPECT_DOUBLE_EQ(     0  +funcShift, funcs->computeFuncVal( funcIdx ) ); 
     }
 }
 
@@ -250,7 +250,7 @@ TEST_F ( ParamFuncManipSplineDistTest, funcValInt1funcValInt2 ) {
     funcs->setEvalArc(     4.0+initT, EaG::NONE); EXPECT_DOUBLE_EQ(  10./3., funcs->computeFuncInt2( 0 ) );
     
     funcs->setEvalArc(     2+initT, EaG::NONE      ); EXPECT_DOUBLE_EQ( 1, funcs->computeFuncDiff1( 0 ) );
-    funcs->setEvalArc(     2+initT, EaG::AFTER_LAST); EXPECT_DOUBLE_EQ( 1, funcs->computeFuncDiff1( 0 ) );
+    funcs->setEvalArc(     2+initT, EaG::NEAR_LAST); EXPECT_DOUBLE_EQ( 1, funcs->computeFuncDiff1( 0 ) );
     
     ParamFuncsExtType funcs2( dynamic_cast<ParamFuncsExtType&>(*funcs) );
     
@@ -269,7 +269,7 @@ TEST_F ( ParamFuncManipSplineDistTest, funcValInt1funcValInt2 ) {
     funcs2.setEvalArc(     4.0+initT, EaG::NONE); EXPECT_DOUBLE_EQ(  10./3., funcs2.computeFuncInt2( 0 ) );
     
     funcs2.setEvalArc(     2+initT, EaG::NONE      ); EXPECT_DOUBLE_EQ( 1, funcs2.computeFuncDiff1( 0 ) );
-    funcs2.setEvalArc(     2+initT, EaG::AFTER_LAST); EXPECT_DOUBLE_EQ( 1, funcs2.computeFuncDiff1( 0 ) );
+    funcs2.setEvalArc(     2+initT, EaG::NEAR_LAST); EXPECT_DOUBLE_EQ( 1, funcs2.computeFuncDiff1( 0 ) );
     
     ParamFuncsExtType funcs3;
     funcs3 = dynamic_cast<ParamFuncsExtType&>(*funcs);
@@ -289,7 +289,7 @@ TEST_F ( ParamFuncManipSplineDistTest, funcValInt1funcValInt2 ) {
     funcs3.setEvalArc(     4.0+initT, EaG::NONE); EXPECT_DOUBLE_EQ(  10./3., funcs3.computeFuncInt2( 0 ) );
     
     funcs3.setEvalArc(     2+initT, EaG::NONE      ); EXPECT_DOUBLE_EQ( 1, funcs3.computeFuncDiff1( 0 ) );
-    funcs3.setEvalArc(     2+initT, EaG::AFTER_LAST); EXPECT_DOUBLE_EQ( 1, funcs3.computeFuncDiff1( 0 ) );
+    funcs3.setEvalArc(     2+initT, EaG::NEAR_LAST); EXPECT_DOUBLE_EQ( 1, funcs3.computeFuncDiff1( 0 ) );
 }
 
 
@@ -434,16 +434,16 @@ TEST_F ( ParamFuncManipSplineDistTest, distTimeV ) {
     
     funcss->setEvalArc(  1+initT, EaG::NONE); EXPECT_DOUBLE_EQ(     0.5, funcss->computeS() ); 
     
-    EXPECT_DOUBLE_EQ(  1+initT, funcss->computeT( 0.5, EaG::AFTER_LAST));
-    EXPECT_DOUBLE_EQ(  2+initT, funcss->computeT(   1, EaG::AFTER_LAST));
-    EXPECT_DOUBLE_EQ(  3+initT, funcss->computeT( 1.5, EaG::AFTER_LAST));
-    EXPECT_DOUBLE_EQ(3.5+initT, funcss->computeT( 2.5, EaG::AFTER_LAST));
-    EXPECT_DOUBLE_EQ(  4+initT, funcss->computeT( 4.5, EaG::AFTER_LAST));
+    EXPECT_DOUBLE_EQ(  1+initT, funcss->computeT( 0.5, EaG::NEAR_LAST));
+    EXPECT_DOUBLE_EQ(  2+initT, funcss->computeT(   1, EaG::NEAR_LAST));
+    EXPECT_DOUBLE_EQ(  3+initT, funcss->computeT( 1.5, EaG::NEAR_LAST));
+    EXPECT_DOUBLE_EQ(3.5+initT, funcss->computeT( 2.5, EaG::NEAR_LAST));
+    EXPECT_DOUBLE_EQ(  4+initT, funcss->computeT( 4.5, EaG::NEAR_LAST));
     
-    funcss->setEvalArc(  2+initT, EaG::AFTER_LAST); EXPECT_DOUBLE_EQ(     1  , funcss->computeS() );
-    funcss->setEvalArc(  3+initT, EaG::AFTER_LAST); EXPECT_DOUBLE_EQ(     1.5, funcss->computeS() ); 
-    funcss->setEvalArc(3.5+initT, EaG::AFTER_LAST); EXPECT_DOUBLE_EQ(     2.5, funcss->computeS() );
-    funcss->setEvalArc(  4+initT, EaG::AFTER_LAST); EXPECT_DOUBLE_EQ(     4.5, funcss->computeS() );
+    funcss->setEvalArc(  2+initT, EaG::NEAR_LAST); EXPECT_DOUBLE_EQ(     1  , funcss->computeS() );
+    funcss->setEvalArc(  3+initT, EaG::NEAR_LAST); EXPECT_DOUBLE_EQ(     1.5, funcss->computeS() ); 
+    funcss->setEvalArc(3.5+initT, EaG::NEAR_LAST); EXPECT_DOUBLE_EQ(     2.5, funcss->computeS() );
+    funcss->setEvalArc(  4+initT, EaG::NEAR_LAST); EXPECT_DOUBLE_EQ(     4.5, funcss->computeS() );
     
     double evalTempSol;
     for(size_t i = 0; i < 4; i++){
@@ -615,7 +615,7 @@ TEST_F ( ParamFuncManipSplineDistTest, timeShift ) {
 //     funcs->precompute();
 //     
 //     funcs->setEvalArc(4.0+initT, EaG::NONE      ); EXPECT_DOUBLE_EQ(     0, funcs->computeFuncVal(1) ); 
-//     funcs->setEvalArc(5.0+initT, EaG::AFTER_LAST); EXPECT_DOUBLE_EQ(    -1, funcs->computeFuncVal(1) );//goes till 2nd range where 5 is found...first range is [3,5)
+//     funcs->setEvalArc(5.0+initT, EaG::NEAR_LAST); EXPECT_DOUBLE_EQ(    -1, funcs->computeFuncVal(1) );//goes till 2nd range where 5 is found...first range is [3,5)
 //     
 //     funcIdx = 1;
 //     funcs->ctrlPtVal(funcIdx, 0, PfCpD::VAL) =  0;
