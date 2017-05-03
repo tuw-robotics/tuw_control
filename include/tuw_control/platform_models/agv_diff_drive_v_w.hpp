@@ -170,7 +170,7 @@ class StateSimDiffDriveVWBase : public StateSimBase< StateSimDiffDriveVWBase<TNu
     using PFV = typename MyParamType<TNumType, MapDataType>::ParamFuncVars;
     
     public   : void adjustXSizeImpl(auto& _XNm, auto& _XCf) {
-	
+	this->paramStruct->paramFuncs.precompute();
     }
     public   : void setXNm0Impl(auto& _XNm0) {
 	for(int i = 0; i < _XNm0.data().size(); ++i) { _XNm0.data()(i) = 0; }
@@ -450,31 +450,37 @@ class StateSimDiffDriveVWBase : public StateSimBase< StateSimDiffDriveVWBase<TNu
 
 template<class TNumType,class TParamStructType>
 struct OptVarMapDiffDriveVW {
-    static void setOptVar( TParamStructType& _paramStruct, const std::vector<double>& _optVarExt ) {
-	auto& paramFuncs = _paramStruct->paramFuncs;
+    static void setOptVar( TParamStructType& _paramStruct, const std::vector<TNumType>& _optVarExt ) {
+	auto& paramFuncs = _paramStruct.paramFuncs;
 	size_t idxOptVec = 0;
-	for ( size_t i = 0; i < paramFuncs->funcsSize(); ++i ) {
-	    for ( size_t j = 1; j < paramFuncs->funcCtrlPtSize(i); ++j ) {
-		paramFuncs->ctrlPtVal ( i, j, CtrlPtDim::VAL ) = _optVarExt[idxOptVec++];
+	for ( size_t i = 0; i < paramFuncs.funcsSize(); ++i ) {
+	    for ( size_t j = 1; j < paramFuncs.funcCtrlPtSize(i); ++j ) {
+		paramFuncs.ctrlPtVal ( i, j, CtrlPtDim::VAL ) = _optVarExt[idxOptVec++];
 	    }
 	}
-	for ( size_t j = 1; j < paramFuncs->funcsArcSize(0); ++j ) {
-	    paramFuncs->funcsArc ( 0, j ) = _optVarExt[idxOptVec++];
+	for ( size_t j = 1; j < paramFuncs.funcsArcSize(0); ++j ) {
+	    paramFuncs.funcsArc ( 0, j ) = _optVarExt[idxOptVec++];
 	}
+	auto& optParamIneqVec = _paramStruct.cfData.optParamIneqVec;
+	size_t shift = idxOptVec;
+	for(; idxOptVec < _optVarExt.size(); ++idxOptVec){ optParamIneqVec[idxOptVec-shift] = _optVarExt[idxOptVec]; }
     }
-    static void getOptVar(std::vector<double>& _optVarExt, const TParamStructType& _paramStruct) {
-	auto& paramFuncs = _paramStruct->paramFuncs;
-	size_t newSize = paramFuncs->funcsSize() * (paramFuncs->funcCtrlPtSize(0)-1) + ( paramFuncs->funcsArcSize(0) - 1 );
-	if ( newSize != _optVarExt.size() ) { _optVarExt.resize( newSize ); }
+    static void getOptVar(std::vector<TNumType>& _optVarExt, const TParamStructType& _paramStruct) {
+	auto& paramFuncs      = _paramStruct.paramFuncs;
+	auto& optParamIneqVec = _paramStruct.cfData.optParamIneqVec;
+	size_t newSize = paramFuncs.funcsSize() * (paramFuncs.funcCtrlPtSize(0)-1) + ( paramFuncs.funcsArcSize(0) - 1 ) + optParamIneqVec.size();
+	if ( newSize != _optVarExt.size() ) { _optVarExt.resize( newSize ); for(size_t i = newSize; i > 0; --i){ _optVarExt[i-1] = 0.0001; } }
 	size_t idxOptVec = 0;
-	for ( size_t i = 0; i < paramFuncs->funcsSize(); ++i ) {
-	    for ( size_t j = 1; j < paramFuncs->funcCtrlPtSize(i); ++j ) {
-		_optVarExt[idxOptVec++] = paramFuncs->ctrlPtVal ( i, j, CtrlPtDim::VAL );
+	for ( size_t i = 0; i < paramFuncs.funcsSize(); ++i ) {
+	    for ( size_t j = 1; j < paramFuncs.funcCtrlPtSize(i); ++j ) {
+		_optVarExt[idxOptVec++] = paramFuncs.ctrlPtVal ( i, j, CtrlPtDim::VAL );
 	    }
 	}
-	for ( size_t j = 1; j < paramFuncs->funcsArcSize(0); ++j ) {
-	    _optVarExt[idxOptVec++]  = paramFuncs->funcsArc ( 0, j );
+	for ( size_t j = 1; j < paramFuncs.funcsArcSize(0); ++j ) {
+	    _optVarExt[idxOptVec++]  = paramFuncs.funcsArc ( 0, j );
 	}
+	size_t shift = idxOptVec;
+// 	for(; idxOptVec < _optVarExt.size(); ++idxOptVec){ _optVarExt[idxOptVec] = optParamIneqVec[idxOptVec-shift]; }
     }
 };
 

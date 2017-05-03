@@ -256,7 +256,9 @@ class StateSimBase : public StateSimBaseCRTP<StateSimBase<TDerived, TParamType, 
 		    
 		    setXNm0();
 		    stateWithGradNmDotCache_ = state_.stateNm();
-		    setXCf(0, PfEaG::AT_BEGIN);
+		    
+		    setXCf   (0, PfEaG::AT_BEGIN);
+		    setXNmDot(0, PfEaG::AT_BEGIN);
 		    arcOld_ = 0;
 		}
     private :  template< bool stateGradientRepresentation = hasStateGrad, 
@@ -270,8 +272,11 @@ class StateSimBase : public StateSimBaseCRTP<StateSimBase<TDerived, TParamType, 
 		    setXNm0();
 		    setGradXNm0();
 		    stateWithGradNmDotCache_ = state_.stateWithGradNm();
-		    setXCf    (0, PfEaG::AT_BEGIN);
-		    setGradXCf(0, PfEaG::AT_BEGIN);
+		    
+		    setXCf       (0, PfEaG::AT_BEGIN);
+		    setGradXCf   (0, PfEaG::AT_BEGIN);
+		    setXNmDot    (0, PfEaG::AT_BEGIN);
+		    setGradXNmDot(0, PfEaG::AT_BEGIN);
 		    arcOld_ = 0;
 		}
     private : void advanceSet0ImplCRTP ( const NumType& _tEnd, const NumType& _dt ) {
