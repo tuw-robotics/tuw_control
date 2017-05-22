@@ -8,7 +8,7 @@
 
 using namespace tuw;
 using namespace std;
-
+using namespace DiffDrive;
 
 namespace {
 
@@ -31,8 +31,8 @@ template<class TNumType> using DiscrType   = heun_abc<TNumType>;
 
 
 
-using StateDiffDriveType       = StateWithGradDiffDriveVW<NumType>;
-using StateSimDiffDriveType    = StateWithGradSimDiffDriveVW<NumType, MapDataType, DiscrType>;
+using StateDiffDriveType       = StateWithGradVW<NumType>;
+using StateSimDiffDriveType    = StateWithGradSimVW<NumType, MapDataType, DiscrType>;
 using StateSimPtr              = std::shared_ptr<StateSimDiffDriveType>;
 using TrajectorySimulatorType  = TrajectorySimulator<NumType, 
                                                      StateSimDiffDriveType, 
@@ -42,7 +42,7 @@ using TrajectorySimulatorType  = TrajectorySimulator<NumType,
 						     LatticeTypeStateSimCtrlPtKnotsSim >;
 using TrajectorySimulatorSPtr     = std::shared_ptr<TrajectorySimulatorType>;
 
-using PFV = MyParamType<NumType,MapDataType>::ParamFuncVars;
+using PFV = ParamType<NumType,MapDataType>::ParamFuncVars;
     
 // The fixture for testing class Foo.
 class TrajectorySimulatorTest : public ::testing::Test {

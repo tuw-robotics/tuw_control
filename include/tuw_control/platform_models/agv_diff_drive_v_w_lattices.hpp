@@ -62,10 +62,14 @@ class LatticeTypeStateSimEqDt : public LatticeTypeBaseCRTP<LatticeTypeStateSimEq
     public   : void computeLatticeArcsImpl (TSimType& _sim, std::vector<TNumType>& _latticeArcs ) const {
 	const TNumType arcParamMax    =  _sim.paramStruct->paramFuncs.funcsArcEnd();
 	double dt = dt_;
-	if (nrPts_ > 1) { dt = arcParamMax / (TNumType)(nrPts_); }
-	const size_t latticeSize = std::max( 0, (int)( ceil( arcParamMax / dt )  ) ); 
-	if(latticeSize != _latticeArcs.size()) { _latticeArcs.resize( latticeSize ); }
-	for ( size_t i = 0; i < latticeSize; ++i ) { _latticeArcs[i] = (i+1) * dt; }
+	if (nrPts_ >= 1) { dt = arcParamMax / (TNumType)(nrPts_); }
+// 	const size_t latticeSize = std::max( 0, (int)( ceil( arcParamMax / dt )  ) ); 
+// 	if(latticeSize != _latticeArcs.size()) { _latticeArcs.resize( latticeSize ); }
+// 	for ( size_t i = 0; i < latticeSize; ++i ) { _latticeArcs[i] = (i+1) * dt; }
+// 	_latticeArcs.back() = arcParamMax;
+	
+	if((int)_latticeArcs.size() != nrPts_) { _latticeArcs.resize( nrPts_ ); }
+	for ( int i = 0; i < nrPts_; ++i ) { _latticeArcs[i] = (i+1) * dt; }
 	_latticeArcs.back() = arcParamMax;
     }
     public   : void computeDArcIdPImpl(const TSimType& _sim, const TNumType _arc, const size_t& _lattIdx, auto& _dstStateGrad ) {
@@ -92,42 +96,55 @@ template<typename TNumType, class TSimType, class... TCostFuncsType>
 class LatticeTypeStateSimEqDs : public LatticeTypeBaseCRTP<LatticeTypeStateSimEqDs<TNumType, TSimType, TCostFuncsType...>, TNumType, TSimType, TCostFuncsType...> {
     public   : using LatticeTypeBaseCRTP<LatticeTypeStateSimEqDs, TNumType, TSimType, TCostFuncsType...>::LatticeTypeBaseCRTP;
     public   : void computeLatticeArcsImpl (TSimType& _sim, std::vector<TNumType>& _latticeArcs ) {
-	if ( (ds_ > 0) || (nrPts_ > 1) ) { 
-	    auto& paramFuncs = _sim.paramStruct->paramFuncs;
-	    if(nrPts_ > 1) {
-		paramFuncs.setEvalArc(  paramFuncs.funcsArcEnd()   );
-		ds_ =  paramFuncs.computeS() / (TNumType)(nrPts_);
-		paramFuncs.setEvalArc(  paramFuncs.funcsArcBegin() );
-	    }
-	    paramFuncs.computeS2TLattice( ds_, ds_, _latticeArcs );
-	} 
-	else        { _latticeArcs.clear(); }
+// 	if ( (ds_ > 0) || (nrPts_ > 1) ) { 
+// 	    auto& paramFuncs = _sim.paramStruct->paramFuncs;
+// 	    if(nrPts_ > 1) {
+// 		paramFuncs.setEvalArc(  paramFuncs.funcsArcEnd()   );
+// 		ds_ =  paramFuncs.computeS() / (TNumType)(nrPts_);
+// 		paramFuncs.setEvalArc(  paramFuncs.funcsArcBegin() );
+// 	    }
+// 	    paramFuncs.computeS2TLattice( 0, ds_, _latticeArcs );
+// 	    _latticeArcs.erase(_latticeArcs.begin());
+// 	} 
+// 	else        { _latticeArcs.clear(); }
+	
+	auto& paramFuncs = _sim.paramStruct->paramFuncs;
+	double sEnd;
+	if(nrPts_ > 1) {
+	    paramFuncs.setEvalArc(  paramFuncs.funcsArcEnd()   );
+	    sEnd = paramFuncs.computeS();
+	    ds_  =  sEnd / (TNumType)(nrPts_);
+	    paramFuncs.setEvalArc(  paramFuncs.funcsArcBegin() );
+	    if((int)_latticeArcs.size() != nrPts_) { _latticeArcs.resize( nrPts_ ); }
+	    for ( int i = 0; i < nrPts_; ++i ) { _latticeArcs[i] = (i+1) * ds_; }
+	    _latticeArcs.back() = sEnd;
+	    paramFuncs.computeS2TLattice( _latticeArcs, _latticeArcs );
+	}
     }
     public   : void computeDArcIdPImpl(const TSimType& _sim, const TNumType _arc, const size_t& _lattIdx, auto& _dstStateGrad ) {
 	if (nrPts_ > 1) { 
 	    static Eigen::Matrix<TNumType,-1,1> dsdp;
 	    static Eigen::Matrix<TNumType,-1,1> stateDotCache;
-	    static Eigen::Matrix<TNumType,-1,1> dtEndDp;
 	    if(_lattIdx == 0) { 
 		TNumType tEnd = _sim.paramStruct->paramFuncs.funcsArcEnd();
 		auto& simNonConst = const_cast<TSimType&>(_sim);
 		simNonConst.setXCf     (  tEnd, PfEaG::NONE );
-		simNonConst.setGradXCf (  tEnd, PfEaG::NONE );
-		simNonConst.setXCfDot  (  tEnd, PfEaG::NONE );
+		simNonConst.setGradXCf (  tEnd, PfEaG::NEAR_LAST );
+		simNonConst.setXCfDot  (  tEnd, PfEaG::NEAR_LAST );
 		
 		dsdp = _sim.state().stateGradCf().s().data();
 		dsdp(dsdp.rows()-1) += _sim.stateCfDotCache().s();
-		dtEndDp = dsdp * 0;
 		
-		simNonConst.setXCf     (  0, PfEaG::AT_BEGIN );
-		simNonConst.setGradXCf (  0, PfEaG::AT_BEGIN );
+		simNonConst.setXCf     (  _arc, PfEaG::AT_BEGIN  );
+		simNonConst.setGradXCf (  _arc, PfEaG::NEAR_LAST );
+		simNonConst.setXCfDot  (  _arc, PfEaG::NEAR_LAST );
 		stateDotCache.resize(_sim.stateNmDotCache().data().size()+ _sim.stateCfDotCache().data().size());
 	    }
 	    stateDotCache.block(                                   0, 0, _sim.stateNmDotCache().data().size(), 1) =  _sim.stateNmDotCache().data();
 	    stateDotCache.block(_sim.stateNmDotCache().data().size(), 0, _sim.stateCfDotCache().data().size(), 1) =  _sim.stateCfDotCache().data();
 	    auto& v = _sim.state().stateCf().v();
-	    if(fabs(v) > 1e-3) {///@todo would be nicer to do linear interp between singularity
-		TNumType iByNS = _sim.state().stateCf().s() / (ds_*nrPts_);
+	    if(fabs(v) > 1e-4) {///@todo would be nicer to do linear interp between singularity
+		TNumType iByNS = (TNumType)(_lattIdx+1) / (TNumType)(this->lattice.size()/*-1*/)/*_sim.state().stateCf().s() / (ds_*nrPts_)*/;
 		_dstStateGrad.mat() += ( stateDotCache ) * ( ( iByNS * dsdp - _dstStateGrad.stateCf().s().data() )  / v).transpose();
 	    }
 	}

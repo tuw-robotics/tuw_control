@@ -219,7 +219,7 @@ class StateMapBaseCRTP {
 	             void      subResize   ( const size_t& _size     )       { thisDerived().subResizeImplCRTP   ( _size     ); }
 	             
     public   :       void      bindToMemory( NumericType* _memRef    )       { thisDerived().bindToMemoryImplCRTP( _memRef   ); }
-    public   : const size_t    subSize     ()                          const { return thisDerived().subSizeImplCRTP(); }
+    public   : constexpr const size_t    subSize     ()                          const { return thisDerived().subSizeImplCRTP(); }
     public   : NumericType* const memStartRef ()                          const { return thisDerived().memStartRefImplCRTP(); }
     
     private  :       TDerived& thisDerived()       { return static_cast<      TDerived&>(*this); }

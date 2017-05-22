@@ -39,11 +39,25 @@
 namespace tuw {
 
     
+template<template<class, class, class...>class TLatticeType,
+	 template<class>class TCostsJ, 
+	 template<class>class TCostsG, 
+	 template<class>class TCostsH, 
+	 template<class>class TCostsK >
+class EvaluatedLattice {
+    public   : template<class TNumType, class TMapDataType> using FuncJ   = TLatticeType<TNumType, TMapDataType, TCostsJ<TNumType> >;
+    public   : template<class TNumType, class TMapDataType> using FuncG   = TLatticeType<TNumType, TMapDataType, TCostsG<TNumType>, TCostsK<TNumType> >;
+    public   : template<class TNumType, class TMapDataType> using FuncH   = TLatticeType<TNumType, TMapDataType, TCostsH<TNumType> >;
+    public   : template<class TNumType, class TMapDataType> using FuncJGH = TLatticeType<TNumType, TMapDataType, TCostsJ<TNumType>, TCostsG<TNumType>, TCostsH<TNumType>, TCostsK<TNumType> >;
+};
+    
+    
 template<class TNumType>
 bool isSame( const std::vector<TNumType>& _optVar0, const std::vector<TNumType>& _optVar1 ) {
     const size_t optVar0Size =  _optVar0.size();
     if ( optVar0Size != _optVar1.size() ) { return false; }
-    for(size_t i = 0; i < optVar0Size; ++i) { if( fabs(_optVar0[i] - _optVar1[i])  > 2*FLT_MIN ) { return false; } }
+    static constexpr const double eps = 2*FLT_MIN;
+    for(size_t i = 0; i < optVar0Size; ++i) { if( fabs(_optVar0[i] - _optVar1[i])  > eps ) { return false; } }
     return true;
 }
    
@@ -72,7 +86,7 @@ class CostsEvaluatorCached : public TTrajSim {
 	    } 
 	}
 	if ( !cached ) {
-// 	    std::cout<<"computing it!";
+	    std::cout<<"computing it Func!"<<std::endl;
 	    setOptVar(_x);
 	    this->simulateTrajectory();
 	    *xCacheConstr_[asInt(_cacheType)] = _x;
@@ -94,7 +108,7 @@ class CostsEvaluatorCached : public TTrajSim {
 	    } 
 	}
 	if ( !cached ) {
-// 	    std::cout<<"computing it!";
+	    std::cout<<"computing it Grad!"<<std::endl;
 	    setOptVar(_x);
 	    this->simulateTrajectoryWithGrad();
 	    *xCacheConstr_   [asInt(_cacheType)] = *xCacheGradConstr_[asInt(_cacheType)] = _x;
@@ -129,10 +143,12 @@ struct  TrajectoryOptimizer {
 	
 	trajSimJ.constCache_[idxIterStart][0] = trajSimJGH.constCache_[idxIterStart][0];
 	trajSimG.constCache_[idxIterStart][0] = trajSimJGH.constCache_[idxIterStart][1];
+	trajSimG.constCache_[idxIterStart][1] = trajSimJGH.constCache_[idxIterStart][3];//here
 	trajSimH.constCache_[idxIterStart][0] = trajSimJGH.constCache_[idxIterStart][2];
 	
 	trajSimJ.gradConstrCache_[idxIterStart][0] = trajSimJGH.gradConstrCache_[idxIterStart][0];
 	trajSimG.gradConstrCache_[idxIterStart][0] = trajSimJGH.gradConstrCache_[idxIterStart][1];
+	trajSimG.gradConstrCache_[idxIterStart][1] = trajSimJGH.gradConstrCache_[idxIterStart][3];//here
 	trajSimH.gradConstrCache_[idxIterStart][0] = trajSimJGH.gradConstrCache_[idxIterStart][2];
     }
     CostsEvaluatorCached<TNumType, TTrajSimJ  , TMyParamType, TOptVarMap> trajSimJ;

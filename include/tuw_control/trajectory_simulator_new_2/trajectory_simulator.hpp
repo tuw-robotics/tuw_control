@@ -102,23 +102,24 @@ class LatticeTypeBaseCRTP {
     public   : static constexpr const size_t costFuncsTypesNr() /*const*/ { return std::tuple_size<std::tuple<TLatticeCostFuncs...>>::value; }
     public   : template<size_t FuncsNr = 0, size_t TupSize = std::tuple_size<std::tuple<TLatticeCostFuncs...>>::value, typename std::enable_if< (TupSize  > 0) >::type* = nullptr > 
 	       void evaluate          (const auto& _x, const size_t& _i, TSimType& _sim, auto& _ansPtr) { 
-		    for_each_tuple( std::get<FuncsNr>(costFuncs_), [this, &_x, &_sim, &_ansPtr, &_i](auto& costFuncIJ) { 
-			    *_ansPtr = costFuncIJ.f(_x, _i, _sim, *this); _ansPtr++;
+		    for_each_tuple( std::get<FuncsNr>(costFuncs_), [this, &_x, &_sim, &_ansPtr, &_i](auto& costFuncI) { 
+			    *_ansPtr = costFuncI.f(_x, _i, _sim, *this); _ansPtr++;
 			}
 		    );
 		}
     public   : template<size_t FuncsNr = 0, size_t TupSize = std::tuple_size<std::tuple<TLatticeCostFuncs...>>::value, typename std::enable_if< (TupSize == 0) >::type* = nullptr > 
 	       void evaluate          (const auto& _x, const size_t& _i, TSimType& _sim, auto& _ansPtr) { }
     public   : template<size_t FuncsNr = 0, size_t TupSize = std::tuple_size<std::tuple<TLatticeCostFuncs...>>::value, typename std::enable_if< (TupSize  > 0) >::type* = nullptr > 
-		void evaluateGrad     (const auto& _x, const size_t& _i, const auto& _gradX, TSimType& _sim, auto& _ansPtr, const size_t& elSize) { 
-		    for_each_tuple( std::get<FuncsNr>(costFuncs_), [this, &_x, &_gradX, &_sim,  &_ansPtr, &elSize, &_i](auto& costFuncI) { 
-			    Eigen::Map<Eigen::Matrix<TNumType, -1,1>> map(_ansPtr, elSize, 1);
-			    costFuncI.gradF(map, _x, _gradX, _i, _sim, *this); _ansPtr+=elSize; 
+		void evaluateWithGrad (const auto& _x, const size_t& _i, const auto& _gradX, TSimType& _sim, auto& _ansPtr, auto& _ansGradPtr, const size_t& elSize) { 
+		    for_each_tuple( std::get<FuncsNr>(costFuncs_), [this, &_x, &_gradX, &_sim,  &_ansPtr, &_ansGradPtr, &elSize, &_i](auto& costFuncI) { 
+			    *_ansPtr = costFuncI.f(_x, _i, _sim, *this); _ansPtr++;
+			    Eigen::Map<Eigen::Matrix<TNumType, -1,1>> map(_ansGradPtr, elSize, 1);
+			    costFuncI.gradF(map, _x, _gradX, _i, _sim, *this); _ansGradPtr+=elSize; 
 			} 
 		    );
 		}
     public   : template<size_t FuncsNr = 0, size_t TupSize = std::tuple_size<std::tuple<TLatticeCostFuncs...>>::value, typename std::enable_if< (TupSize == 0) >::type* = nullptr > 
-		void evaluateGrad     (const auto& _x, const size_t& _i, const auto& _gradX, TSimType& _sim, auto& _ansPtr, const size_t& elSize) { }
+		void evaluateWithGrad  (const auto& _x, const size_t& _i, const auto& _gradX, TSimType& _sim, auto& _ansPtr, auto& _ansGradPtr, const size_t& elSize) { }
     
 //     public   : void computedArcIdP( const size_t& _i, const NumType& _arc ) { thisDerived().computedArcIdP(_i, _arc); }
     
@@ -293,8 +294,8 @@ class TrajectorySimulator {
 				if ( simulatingWithGrad ) {
 				    for ( size_t i = 0; i < latticeISize; ++i ) {
 					const auto& latticeI = partLatI.lattice[i];
-					partLatI.template evaluate<FuncNr>    ( latticeI.statePtr->state(), i, *stateSim_, _cfPtr );
-					partLatI.template evaluateGrad<FuncNr>( latticeI.statePtr->state(), i, latticeI.statePtr->stateGrad(), *stateSim_, _cfGradPtr, _optParamSize);
+// 					partLatI.template evaluate<FuncNr>    ( latticeI.statePtr->state(), i, *stateSim_, _cfPtr );
+					partLatI.template evaluateWithGrad<FuncNr>( latticeI.statePtr->state(), i, latticeI.statePtr->stateGrad(), *stateSim_, _cfPtr, _cfGradPtr, _optParamSize);
 				    }
 				} else {
 				    for ( size_t i = 0; i < latticeISize; ++i ) {
@@ -319,33 +320,30 @@ class TrajectorySimulator {
 		       );
     }
     size_t bindFromPartLatticesToSimLattice(const bool& _saveLatticeStates = false) {
-	size_t simLatticeIdx_ = 0; bool first = true;
+	int simLatticeIdx_ = -1; bool first = true;
 	static typename std::vector<LatticePointType>::iterator* itMinPtr;
 	size_t latVecIdx;
 	getMinArcLatCacheIdx (itMinPtr, latVecIdx);
+	for ( size_t i = 0; i < simulationLattice_.size(); ++i ) { simulationLattice_[i].arc = -1; }
 	while ( itMinPtr != nullptr ) {
 	    const TNumType& arcNow = (*itMinPtr)->arc;
-	    if ( !first ) { 
-		if ( simulationLattice_[simLatticeIdx_].arc < arcNow ) { (this->*advanceFunc)(arcNow); }
-		++simLatticeIdx_;
-	    } else { first = false; }
-	    
+	    if      ( first                                           ) { (this->*advanceFunc)(arcNow); first = false; }
+	    else if ( simulationLattice_[simLatticeIdx_].arc < arcNow ) { (this->*advanceFunc)(arcNow); }
+	    ++simLatticeIdx_;
 	    auto& simLatticeI = simulationLattice_[simLatticeIdx_];
 	    simLatticeI.arc = arcNow;
 	    simLatticeI.latticeIdx = (*(*itMinPtr)).latticeIdx;
 	    (*(*itMinPtr)).statePtr = simLatticeI.statePtr;
 	    if ( (sizeCostsPerPartLattice_[simLatticeI.latticeIdx] > 0 ) || (_saveLatticeStates)) {
-		if(!first) {
-		    stateSim_->setXCf (arcNow, PfEaG::NEAR_LAST);
-		    if ( simulatingWithGrad ) {
-			stateSim_->setGradXCf( arcNow, PfEaG::NEAR_LAST );
-			stateSim_->setXCfDot ( arcNow, PfEaG::NEAR_LAST );
-			stateSim_->setXNmDot ( arcNow, PfEaG::NEAR_LAST );
-			copyReqDataFromSimToSimLatticeI(*stateSim_, simLatticeI);
-			correctStateGradFunc[simLatticeI.latticeIdx](*stateSim_, arcNow, latVecIdx, simLatticeI.statePtr->stateGrad() );
-		    } else {
-			copyReqDataFromSimToSimLatticeI(*stateSim_, simLatticeI);
-		    }
+		stateSim_->setXCf (arcNow, PfEaG::NEAR_LAST);
+		if ( simulatingWithGrad ) {
+		    stateSim_->setGradXCf( arcNow, PfEaG::NEAR_LAST );
+		    stateSim_->setXCfDot ( arcNow, PfEaG::NEAR_LAST );
+		    stateSim_->setXNmDot ( arcNow, PfEaG::NEAR_LAST );
+		    copyReqDataFromSimToSimLatticeI(*stateSim_, simLatticeI);
+		    correctStateGradFunc[simLatticeI.latticeIdx](*stateSim_, arcNow, latVecIdx, simLatticeI.statePtr->stateGrad() );
+		} else {
+		    copyReqDataFromSimToSimLatticeI(*stateSim_, simLatticeI);
 		}
 	    }
 	    (*itMinPtr)++;

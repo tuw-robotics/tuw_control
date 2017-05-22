@@ -198,7 +198,8 @@ class StateMapTuple : public StateMapBaseCRTP<StateMapTuple<TNumericType, TLeafT
     private   :                     const MapTypeCRTP&                                                      dataImplCRTP () const { return map_; }
     private   : template<size_t _i>       typename std::tuple_element<_i, std::tuple<TLeafTypes...>>::type& subImplCRTP  ()       { return std::get<_i>(this->subs_); }
     private   : template<size_t _i> const typename std::tuple_element<_i, std::tuple<TLeafTypes...>>::type& subImplCRTP  () const { return std::get<_i>(this->subs_); }
-    private   :                     const size_t       subSizeImplCRTP()                 const { return sizeof...(TLeafTypes); }
+    private   : constexpr const size_t       subSizeImplCRTP()                 const { return sizeof...(TLeafTypes); }
+    
     private   :                     NumericType* const memStartRefImplCRTP()             const { return memStartRef_; }
     
     //friends

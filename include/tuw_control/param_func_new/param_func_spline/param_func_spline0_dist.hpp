@@ -191,7 +191,7 @@ class ParamFuncsSpline0Dist : public ParamFuncsBase    < ParamFuncsSpline0Dist<T
 	    }
 	}
 	
-	const double funcSize = this->funcCtrlPt_.size();
+	const TNumType funcSize = this->funcCtrlPt_.size();
 	for( size_t funcIdx = 0; funcIdx < funcSize; ++funcIdx ) {
 	    
 	    auto& funcIEvalCache        = this->funcEvalCache_[funcIdx];
@@ -244,12 +244,12 @@ class ParamFuncsSpline0Dist : public ParamFuncsBase    < ParamFuncsSpline0Dist<T
     }
     public   : void      setEvalArcImpl       ( const TNumType& _arcEval , const EvalArcGuarantee& _eAG ) {
 	using eag = EvalArcGuarantee;
-	const double arcEvalNewBound = fmax( fmin( _arcEval, this->funcsArcEnd_ ), this->funcsArcBegin_ );
+	const TNumType arcEvalNewBound = fmax( fmin( _arcEval, this->funcsArcEnd_ ), this->funcsArcBegin_ );
 	if(arcEvalNewBound == this->funcsArcEval_) { return; }
 	const size_t& funcsArcSz = this->funcsArcSize();
 	switch (_eAG) {
 	    case eag::NEAR_LAST : 
-		if(_arcEval > this->funcsArcEval_) {
+		if(arcEvalNewBound > this->funcsArcEval_) {
 		    for ( size_t i = 0; i < funcsArcSz; ++i ) { 
 			const size_t arcISize = this->funcCtrlPt_[i].size();
 			size_t&             j = this->funcEvalArcCacheIdxUnder_[i];
@@ -272,7 +272,7 @@ class ParamFuncsSpline0Dist : public ParamFuncsBase    < ParamFuncsSpline0Dist<T
 	    case eag::NONE       : 
 		for ( size_t i = 0; i < funcsArcSz; ++i ) { 
 		    auto& aFuncAtArc = this->funcCtrlPt_[this->arc2func_[i][0]];
-		    static double referenceArc; static FuncCtrlPtType dummy(0, referenceArc);
+		    static TNumType referenceArc; static FuncCtrlPtType dummy(0, referenceArc);
 		    referenceArc = arcEvalNewBound;
 		    this->funcEvalArcCacheIdxUnder_[i] = std::max( (int)std::distance( aFuncAtArc.begin(), 
 									         std::upper_bound( aFuncAtArc.begin(), 
@@ -308,14 +308,14 @@ class ParamFuncsSpline0Dist : public ParamFuncsBase    < ParamFuncsSpline0Dist<T
     ///@brief Computes the integral of the parametric function @ref _\funcIdx on interval [@ref funcEvalArcCacheIdxOld\_[func2Arc_[_funcIdx]] - 1, @ref \_arcEnd]
     private  : TNumType computeFuncDeltaInt1 ( const std::size_t& _funcIdx, const TNumType& _arcEnd ) const {
 	const FuncCacheDataType& ctrlPtLow  = this->funcEvalCache_[_funcIdx][this->funcEvalArcCacheIdxUnder_[this->func2Arc_[_funcIdx]]];
-	const double dt = _arcEnd - ctrlPtLow.arc;
+	const TNumType dt = _arcEnd - ctrlPtLow.arc;
 	return ctrlPtLow.val * dt +  computeFuncDiff1Impl ( _funcIdx ) * dt*dt / 2.;
     }
     ///@brief Computes the double integral integral of the parametric function @ref _\funcIdx on interval [@ref funcEvalArcCacheIdxOld\_[func2Arc_[_funcIdx]] - 1, @ref \_arcEnd]
     private  : TNumType computeFuncDeltaInt2 ( const std::size_t& _funcIdx, const TNumType& _arcEnd ) const {
 	const FuncCacheDataType& ctrlPtLow  = this->funcEvalCache_[_funcIdx][this->funcEvalArcCacheIdxUnder_[this->func2Arc_[_funcIdx]]];
-	const double dt   = _arcEnd - ctrlPtLow.arc;
-	const double dtdt = dt*dt;
+	const TNumType dt   = _arcEnd - ctrlPtLow.arc;
+	const TNumType dtdt = dt*dt;
 	return ctrlPtLow.val * dtdt / 2.+ computeFuncDiff1Impl ( _funcIdx ) * dtdt * dt / 6.;
     }
     
@@ -360,7 +360,7 @@ class ParamFuncsSpline0Dist : public ParamFuncsBase    < ParamFuncsSpline0Dist<T
 	const size_t cacheCtrlPtIdxRestore = arcIdx;
 	const size_t cacheArcEvalRestore   = this->funcsArcEval_;
 	
-	double resultT = computeTImplInternal( _s, _evalArcGuarantee );
+	TNumType resultT = computeTImplInternal( _s, _evalArcGuarantee );
 	
 	arcIdx              = cacheCtrlPtIdxRestore;
 	this->funcsArcEval_ = cacheArcEvalRestore;
@@ -388,7 +388,7 @@ class ParamFuncsSpline0Dist : public ParamFuncsBase    < ParamFuncsSpline0Dist<T
     public   : void   computeS2TLatticeImpl ( const TNumType& _arc0, const TNumType& _ds, std::vector<TNumType>& _tLattice ) {
 	this->setEvalArc ( _arc0, EvalArcGuarantee::NONE );
 	_tLattice.clear(); _tLattice.reserve( distEvalCache_.back() / _ds );
-	const size_t idxBeforeStart = static_cast<int>( computeSImpl() / _ds ) - 1;
+	const int idxBeforeStart = static_cast<int>( computeSImpl() / _ds ) - 1;
 	
 	size_t i = 0;
 	this->setEvalDist ( _ds * ( ++i + idxBeforeStart ), EvalArcGuarantee::NEAR_LAST );
@@ -449,7 +449,7 @@ class ParamFuncsSpline0Dist : public ParamFuncsBase    < ParamFuncsSpline0Dist<T
 	
 	switch (_evalArcGuarantee) {
 	    case eag::NEAR_LAST  : {
-		const double& distCache = distEvalCache_[arcCacheIdx];
+		const TNumType& distCache = distEvalCache_[arcCacheIdx];
 		if(distCache <= _s) { while( distEvalCache_[arcCacheIdx] <= _s ){ if( ++arcCacheIdx >= ctrlPtSize) { break; }                } --arcCacheIdx; }
 		else                { while( distEvalCache_[arcCacheIdx] >= _s ){ if( arcCacheIdx   == 0         ) { break; } --arcCacheIdx; }                }
 		break;

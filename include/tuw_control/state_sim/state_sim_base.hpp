@@ -83,14 +83,15 @@ class StateSimBaseCRTP {
     
     public   : template< bool stateGradientRepresentation = hasStateGrad, 
 	                 typename std::enable_if< ( stateGradientRepresentation ) >::type* = nullptr > 
-	       void                          advanceWithGrad ( const double& _arc )                                       { thisDerived().advanceWithGradImplCRTP      (_arc); }
-    public   : void                          advance         ( const double& _arc )                                       { thisDerived().advanceImplCRTP              (_arc); }
+	       void                          advanceWithGrad ( const NumType& _arc )                                       { thisDerived().advanceWithGradImplCRTP      (_arc); }
+    public   : void                          advance         ( const NumType& _arc )                                       { thisDerived().advanceImplCRTP              (_arc); }
+    public   : void                          simToT          ( const NumType& _arcEnd, const NumType& _dt )                { thisDerived().simToTImplCRTP              (_arcEnd, _dt); }
     public   : void                          toState0        ()                                                           { thisDerived().toState0ImplCRTP             ();     }
 //     public   :       StateForSimType&        state0          ()                                                           { return thisDerived().state0ImplCRTP        (); }
 //     public   : const StateForSimType&        state0          ()                                                     const { return thisDerived().state0ImplCRTP        (); }
     public   :       StateForSimType&        state           ()                                                           { return thisDerived().stateImplCRTP         (); }
     public   : const StateForSimType&        state           ()                                                     const { return thisDerived().stateImplCRTP         (); }
-    public   : void                          advanceSet0     ( const double& _tEnd, const double& _dt )                   { thisDerived().advanceSet0ImplCRTP(_tEnd, _dt); }
+    public   : void                          advanceSet0     (  auto& _state0, const NumType& _tEnd, const NumType& _dt )   { thisDerived().advanceSet0ImplCRTP(_state0, _tEnd, _dt); }
     
     private  :       TDerived& thisDerived()       { return static_cast<      TDerived&>(*this); }
     private  : const TDerived& thisDerived() const { return static_cast<const TDerived&>(*this); }
@@ -112,17 +113,11 @@ class StateSimBaseVirt {
     public   : void                          advanceWithGrad  ( const TNumType& _arc )                             { advanceWithGradImplVirt      (_arc);       }
     public   : void                          toState0         ()                                                   { toState0ImplVirt             ();           }
     public   : void                          toState          ()                                                   { toState0ImplVirt             ();           }
-//     public   :       StateVirtType&          state0           ()                                                   { return state0ImplVirt        ();           }
-//     public   : const StateVirtType&          state0           ()                                             const { return state0ImplVirt        ();           }
-    public   : void                          advanceSet0      ( const TNumType& _tEnd, const TNumType& _dt )       { advanceSet0ImplVirt          (_tEnd, _dt); }
     
     //pure virtual functions
     private  : virtual void                          advanceImplVirt          ( const TNumType& _arc )                             = 0;
     private  : virtual void                          advanceWithGradImplVirt  ( const TNumType& _arc )                             = 0;
     private  : virtual void                          toState0ImplVirt         ()                                                   = 0;
-//     private  : virtual       StateVirtType&          state0ImplVirt           ()                                                   = 0;
-//     private  : virtual const StateVirtType&          state0ImplVirt           ()                                             const = 0;
-    private  : virtual void                          advanceSet0ImplVirt      ( const TNumType& _tEnd, const TNumType& _dt )       = 0;
 };
 
 template<class NumType, class StateWithGradNmNumType, template<class> class  TDiscretizationType>
@@ -175,6 +170,7 @@ class StateSimBase : public StateSimBaseCRTP<StateSimBase<TDerived, TParamType, 
 								       NumType, 
 								       odeint::vector_space_algebra>;
     public   : static constexpr const bool hasStateGrad = !std::is_same<EmptyGradType, StateWithGradNmType>::value;
+    public   : using StateNumSimType = typename std::conditional<hasStateGrad, StateWithGradNmType, StateNmType>::type;
     
     //special class member functions
     public   : StateSimBase           ()                    = default;
@@ -187,16 +183,12 @@ class StateSimBase : public StateSimBaseCRTP<StateSimBase<TDerived, TParamType, 
     public   : using StateSimBaseCRTP<StateSimBaseType>::advance;
     public   : using StateSimBaseCRTP<StateSimBaseType>::advanceWithGrad;
     public   : using StateSimBaseCRTP<StateSimBaseType>::toState0;
-//     public   : using StateSimBaseCRTP<StateSimBaseType>::state0;
     public   : using StateSimBaseCRTP<StateSimBaseType>::state;
     public   : using StateSimBaseCRTP<StateSimBaseType>::advanceSet0;
     
     private  : void                 advanceImplVirt         ( const NumType& _arc )                            override final { advanceImplCRTP(_arc); }
     private  : void                 advanceWithGradImplVirt ( const NumType& _arc )                            override final { advanceWithGradImplVirtDispatch(_arc); }
     private  : void                 toState0ImplVirt        ()                                                 override final { toState0ImplCRTP(); }
-//     private  :       StateVirtType& state0ImplVirt          ()                                                 override final { return state0ImplCRTP(); }
-//     private  : const StateVirtType& state0ImplVirt          ()                                           const override final { return state0ImplCRTP(); }
-    private  : void                 advanceSet0ImplVirt     ( const NumType& _tEnd, const NumType& _dt )       override final { advanceSet0ImplCRTP(_tEnd, _dt); }
     
     private  : template< bool stateGradientRepresentation = hasStateGrad, 
 	                 typename std::enable_if< (  stateGradientRepresentation ) >::type* = nullptr > 
@@ -205,8 +197,6 @@ class StateSimBase : public StateSimBaseCRTP<StateSimBase<TDerived, TParamType, 
 	                 typename std::enable_if< ( !stateGradientRepresentation ) >::type* = nullptr > 
 		void advanceWithGradImplVirtDispatch ( const NumType& _arc ) { throw std::runtime_error("Cannot advance with gradient info (State class not suited)"); }
     
-//     private  :       StateForSimType& state0ImplCRTP ()       { return state0_; }
-//     private  : const StateForSimType& state0ImplCRTP () const { return state0_; }
     private  :       StateForSimType& stateImplCRTP  ()       { return state_; }
     private  : const StateForSimType& stateImplCRTP  () const { return state_; }
     private  : void advanceImplCRTP ( const NumType& _arc ) {
@@ -215,9 +205,7 @@ class StateSimBase : public StateSimBaseCRTP<StateSimBase<TDerived, TParamType, 
 			memStartRefNm = state_.stateNm().memStartRef();
 			state_.stateNm().bindToMemory( (NumType*)_x.data() );
 			setXNmDot    (_t, PfEaG::NEAR_LAST);
-			for_each_tuple(funcs_, [this, &_t](auto& funcI) { 
-			    funcI.computeFuncDot(stateWithGradNmDotCache_.state(), state_.stateNm(), state_.stateCf(), this->paramStruct->cfData, _t, PfEaG::NEAR_LAST); 
-			});
+			
 			_dxdt = stateWithGradNmDotCache_.state().data();
 			state_.stateNm().bindToMemory(memStartRefNm);
 		      }, 
@@ -235,11 +223,7 @@ class StateSimBase : public StateSimBaseCRTP<StateSimBase<TDerived, TParamType, 
 				state_.stateWithGradNm().bindToMemory( (NumType*)_x.data() );
 				setXNmDot    (_t, PfEaG::NEAR_LAST);
 				setGradXNmDot(_t, PfEaG::NEAR_LAST);
-				for_each_tuple(funcs_, [this, &_t](auto& funcI) { 
-				    auto& cfData = this->paramStruct->cfData;
-				    funcI.computeFuncDot     ( stateWithGradNmDotCache_.state    (), state_.stateNm        (), state_.stateCf        (), cfData, _t, PfEaG::NEAR_LAST);
-				    funcI.computeGradFuncDot ( stateWithGradNmDotCache_.stateGrad(), state_.stateWithGradNm(), state_.stateWithGradCf(), cfData, _t, PfEaG::NEAR_LAST);
-				});
+				
 				_dxdt = stateWithGradNmDotCache_.data();
 				state_.stateWithGradNm().bindToMemory(memStartRefNm);
 			    }, 
@@ -279,12 +263,16 @@ class StateSimBase : public StateSimBaseCRTP<StateSimBase<TDerived, TParamType, 
 		    setGradXNmDot(0, PfEaG::AT_BEGIN);
 		    arcOld_ = 0;
 		}
-    private : void advanceSet0ImplCRTP ( const NumType& _tEnd, const NumType& _dt ) {
+    private : void simToTImplCRTP ( const NumType& _tEnd, const NumType& _dt ) {
 	toState0();
 	NumType tSim = _dt;
 	while(tSim < _tEnd){ advance(tSim); tSim += _dt;  }
 	advance(_tEnd);
-// 	state0_.data() = state_.data();
+    }
+    private : void advanceSet0ImplCRTP ( auto& _state0, const NumType& _tEnd, const NumType& _dt ) {
+	simToTImplCRTP ( _tEnd, _dt );
+	_state0.stateNm().data() = state_.stateNm().data();
+	_state0.stateCf().data() = state_.stateCf().data();
     }
     
     //no guarantee on when it is called; for caching, parts of XCf might have been set by setXNmDot
@@ -292,7 +280,11 @@ class StateSimBase : public StateSimBaseCRTP<StateSimBase<TDerived, TParamType, 
     //guaranteed to be called after setXCf
     public   :  void setXCfDot   ( const NumType& _arc, const PfEaG& _eAG ) {  thisSimDerived().setXCfDotImpl( stateCfDotCache_, state_.stateCf(), _arc, _eAG ); }
     //no guarantee on when it is called; for caching, parts of XCf can be precalculated
-    public   :  void setXNmDot   ( const NumType& _arc, const PfEaG& _eAG ) {  thisSimDerived().setXNmDotImpl(stateWithGradNmDotCache_.state(), state_.stateCf(), state_.stateNm(), _arc, _eAG); }
+    public   :  void setXNmDot   ( const NumType& _arc, const PfEaG& _eAG ) {  
+	thisSimDerived().setXNmDotImpl(stateWithGradNmDotCache_.state(), state_.stateCf(), state_.stateNm(), _arc, _eAG); 
+	for_each_tuple( funcs_, 
+	                [this, &_arc](auto& funcI) { funcI.computeFuncDot ( stateWithGradNmDotCache_.state(), state_.stateNm(), state_.stateCf(), *this, _arc, PfEaG::NEAR_LAST); } );
+    }
     //guaranteed to be called after setXCf; for caching, parts of gradXCf might have been set by setGradXNmDot
     public   : template< bool stateGradientRepresentation = hasStateGrad, 
 	                 typename std::enable_if< (  stateGradientRepresentation ) >::type* = nullptr > 
@@ -302,6 +294,13 @@ class StateSimBase : public StateSimBaseCRTP<StateSimBase<TDerived, TParamType, 
 	                 typename std::enable_if< ( stateGradientRepresentation ) >::type* = nullptr > 
 	       void setGradXNmDot( const NumType& _arc, const PfEaG& _eAG ) { 
 		   thisSimDerived().setGradXNmDotImpl(stateWithGradNmDotCache_.stateGrad(), state_.stateWithGradCf(), state_.stateWithGradNm(), _arc, _eAG );
+		   for_each_tuple(funcs_, 
+		                  [this, &_arc](auto& funcI) { funcI.computeGradFuncDot ( stateWithGradNmDotCache_.stateGrad(), 
+				                                                          state_.stateWithGradNm(), 
+											  state_.stateWithGradCf(), 
+											  *this, 
+									                  _arc, 
+									                  PfEaG::NEAR_LAST); });
 	    }
     public  : void init(std::shared_ptr<TParamType> _paramStructPtr){ paramStruct = _paramStructPtr; }
     
@@ -317,10 +316,9 @@ class StateSimBase : public StateSimBaseCRTP<StateSimBase<TDerived, TParamType, 
     public   : void adjustGradXSize() { thisSimDerived().adjustGradXSizeImpl (state_.stateGradNm(), state_.stateGradCf()); }
     
     private  : StateCfType         stateCfDotCache_;
-    private  : StateWithGradNmType stateWithGradNmDotCache_;
+    private  : StateNumSimType     stateWithGradNmDotCache_;
     private  : NumType             arcOld_;
     private  : OdeStateSolverType  rk_;
-//     private  : StateForSimType     state0_;//this dissapears
     private  : StateForSimType     state_;
     public   : std::shared_ptr<TParamType> paramStruct;
     private  : std::tuple<TFuncsType...> funcs_;

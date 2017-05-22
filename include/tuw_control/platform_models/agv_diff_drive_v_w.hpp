@@ -39,15 +39,13 @@
 
 namespace tuw {
 
-
-
-
-
-
+    
+namespace DiffDrive {
+    
 // Defining the system state
 
 
-/*!@class StateNmDiffDriveVW
+/*!@class StateNmVW
  * @brief Defining the system numerical state variables.
  * 
  * Has to allways be an extended class from @ref StateMapArray, @ref StateMapVector or @ref StateMapTuple
@@ -56,15 +54,17 @@ namespace tuw {
  * @tparam TLeafType The leaf type. This has to be templated as the numerical state jacobian class will use another (non-numerical) leaf type
  */
 template<class TNumType, class TLeafType>
-class StateNmDiffDriveVW : public StateMapArray<TNumType, TLeafType, 2> {
+class StateNmVW : public StateMapArray<TNumType, TLeafType, 2> {
     public   : using StateMapArray<TNumType, TLeafType, 2>::StateMapArray;
     public   : auto&       x    ()       { return this->template sub<0>(); }
     public   : const auto& x    () const { return this->template sub<0>(); }
     public   : auto&       y    ()       { return this->template sub<1>(); }
     public   : const auto& y    () const { return this->template sub<1>(); }
+    public   : auto&       state()       { return *this; }
+    public   : const auto& state() const { return *this; }
 };
 
-/*!@class StateNmWithLDiffDriveVW
+/*!@class StateNmWithLVW
  * @brief Defining the system numerical state variables, including a scalar objective function L.
  * 
  * Has to allways be an extended class from @ref StateMapArray, @ref StateMapVector or @ref StateMapTuple
@@ -73,17 +73,21 @@ class StateNmDiffDriveVW : public StateMapArray<TNumType, TLeafType, 2> {
  * @tparam TLeafType The leaf type. This has to be templated as the numerical state jacobian class will use another (non-numerical) leaf type
  */
 template<class TNumType, class TLeafType>
-class StateNmWithLDiffDriveVW : public StateMapArray<TNumType, TLeafType, 3> {
-    public   : using StateMapArray<TNumType, TLeafType, 3>::StateMapArray;
-    public   : auto&       l    ()       { return this->template sub<0>(); }
-    public   : const auto& l    () const { return this->template sub<0>(); }
-    public   : auto&       x    ()       { return this->template sub<1>(); }
-    public   : const auto& x    () const { return this->template sub<1>(); }
-    public   : auto&       y    ()       { return this->template sub<2>(); }
-    public   : const auto& y    () const { return this->template sub<2>(); }
+class StateNmWithLVW : public StateMapArray<TNumType, TLeafType, 4> {
+    public   : using StateMapArray<TNumType, TLeafType, 4>::StateMapArray;
+    public   : auto&       rhoSqr ()       { return this->template sub<0>(); }
+    public   : const auto& rhoSqr () const { return this->template sub<0>(); }
+    public   : auto&       avSqr  ()       { return this->template sub<1>(); }
+    public   : const auto& avSqr  () const { return this->template sub<1>(); }
+    public   : auto&       x      ()       { return this->template sub<2>(); }
+    public   : const auto& x      () const { return this->template sub<2>(); }
+    public   : auto&       y      ()       { return this->template sub<3>(); }
+    public   : const auto& y      () const { return this->template sub<3>(); }
+    public   : auto&       state  ()       { return *this; }
+    public   : const auto& state  () const { return *this; }
 };
 
-/*!@class StateNmWithLDiffDriveVW
+/*!@class StateCfVW
  * @brief Defining the system closed-form state variables.
  * 
  * Has to allways be an extended class from @ref StateMapArray, @ref StateMapVector or @ref StateMapTuple
@@ -92,7 +96,7 @@ class StateNmWithLDiffDriveVW : public StateMapArray<TNumType, TLeafType, 3> {
  * @tparam TLeafType The leaf type. This has to be templated as the closed-form state jacobian class will use another (non-numerical) leaf type
  */
 template<class TNumType, class TLeafType>
-class StateCfDiffDriveVW : public StateMapArray<TNumType, TLeafType, 7> {
+class StateCfVW : public StateMapArray<TNumType, TLeafType, 7> {
     public   : using StateMapArray<TNumType, TLeafType, 7>::StateMapArray;
     public   : auto&       theta()       { return this->template sub<0>(); }
     public   : const auto& theta() const { return this->template sub<0>(); }
@@ -112,7 +116,7 @@ class StateCfDiffDriveVW : public StateMapArray<TNumType, TLeafType, 7> {
 
 static constexpr const size_t optParamBlockSize = 3;
 
-/*!@class OptVarStructDiffDriveVW
+/*!@class OptVarStructVW
  * @brief Defining the system optimization parameters structure
  * 
  * Has to allways be an extended class from @ref StateMapArray, @ref StateMapVector or @ref StateMapTuple
@@ -121,7 +125,7 @@ static constexpr const size_t optParamBlockSize = 3;
  * @tparam TLeafType The leaf type.
  */
 template<class TNumType, typename TLeafType>
-class OptVarStructDiffDriveVW : public StateMapArray<TNumType, StateMapVector<TNumType, TLeafType>, optParamBlockSize> {
+class OptVarStructVW : public StateMapArray<TNumType, StateMapVector<TNumType, TLeafType>, optParamBlockSize> {
     public   : using StateMapArray<TNumType, StateMapVector<TNumType, TLeafType>, optParamBlockSize>::StateMapArray;
     public   : auto&        optParamV()       { return this->template sub<0>(); }//parameters influencing linear velocity
     public   : const auto&  optParamV() const { return this->template sub<0>(); }
@@ -135,15 +139,15 @@ class OptVarStructDiffDriveVW : public StateMapArray<TNumType, StateMapVector<TN
 ///@todo make it work with "Empty" numerical / closed-form types
 
 ///Simple full system state [xNm,xCf].
-template<class TNumType> using StateDiffDriveVW              = StateMap        < TNumType, StateNmDiffDriveVW     , StateCfDiffDriveVW>;
+template<class TNumType> using StateVW              = StateMap        < TNumType, StateNmVW     , StateCfVW>;
 ///Full system state including scalar objective function [[xNm,L],xCf].
-template<class TNumType> using StateWithLDiffDriveVW         = StateMap        < TNumType, StateNmWithLDiffDriveVW, StateCfDiffDriveVW>;
+template<class TNumType> using StateWithLVW         = StateMap        < TNumType, StateNmWithLVW, StateCfVW>;
 ///Full system state, with derivatives [[xNm,L],xCf, d/dp([xNm,L]), d/dp(xCf)].
-template<class TNumType> using StateWithGradDiffDriveVW      = StateWithGradMap< TNumType, StateNmDiffDriveVW     , StateCfDiffDriveVW, OptVarStructDiffDriveVW>;
+template<class TNumType> using StateWithGradVW      = StateWithGradMap< TNumType, StateNmVW     , StateCfVW, OptVarStructVW>;
 ///Full system state including scalar objective function, with derivatives [[xNm,L],xCf, d/dp([xNm,L]), d/dp(xCf)].
-template<class TNumType> using StateWithLWithGradDiffDriveVW = StateWithGradMap< TNumType, StateNmWithLDiffDriveVW, StateCfDiffDriveVW, OptVarStructDiffDriveVW>;
+template<class TNumType> using StateWithLWithGradVW = StateWithGradMap< TNumType, StateNmWithLVW, StateCfVW, OptVarStructVW>;
 
-/*!@class MyParamType
+/*!@class ParamType
  * @brief Defining the system optimization parameters structure
  * 
  * It can have arbitrary structure. However, it has to posess the member variables @ref state0, @ref paramFuncs, @ref cfData.
@@ -152,9 +156,9 @@ template<class TNumType> using StateWithLWithGradDiffDriveVW = StateWithGradMap<
  * @tparam TCfDataType  The type of the map data object.
  */
 template<class TNumType, class TCfDataType>
-struct MyParamType {
+struct ParamType {
     ParamFuncsSpline0Dist<TNumType,2,1> paramFuncs;
-    StateDiffDriveVW<TNumType>          state0;
+    StateVW<TNumType>          state0;
     TCfDataType                         cfData;
     enum class ParamFuncVars{ V, W };
     
@@ -162,12 +166,12 @@ struct MyParamType {
 
 
 template<class TNumType, class MapDataType, class TStateType, template<class> class TDiscretizationType, class... TFuncsType>
-class StateSimDiffDriveVWBase : public StateSimBase< StateSimDiffDriveVWBase<TNumType, MapDataType, TStateType, TDiscretizationType, TFuncsType...>, 
-                                                     MyParamType<TNumType, MapDataType>, 
-						     TStateType, 
-						     TDiscretizationType, 
-						     TFuncsType...> {
-    using PFV = typename MyParamType<TNumType, MapDataType>::ParamFuncVars;
+class StateSimVWBase : public StateSimBase< StateSimVWBase<TNumType, MapDataType, TStateType, TDiscretizationType, TFuncsType...>, 
+                                            ParamType<TNumType, MapDataType>, 
+					    TStateType, 
+					    TDiscretizationType, 
+					    TFuncsType...> {
+    using PFV = typename ParamType<TNumType, MapDataType>::ParamFuncVars;
     
     public   : void adjustXSizeImpl(auto& _XNm, auto& _XCf) {
 	this->paramStruct->paramFuncs.precompute();
@@ -446,10 +450,8 @@ class StateSimDiffDriveVWBase : public StateSimBase< StateSimDiffDriveVWBase<TNu
 //---------------------------------------------------------------------Optimization parameters
 
 
-// template<class TNumType> using OptVarDiffDriveVW = OptVarStructDiffDriveVW<TNumType, TNumType>;
-
 template<class TNumType,class TParamStructType>
-struct OptVarMapDiffDriveVW {
+struct OptVarMapVW {
     static void setOptVar( TParamStructType& _paramStruct, const std::vector<TNumType>& _optVarExt ) {
 	auto& paramFuncs = _paramStruct.paramFuncs;
 	size_t idxOptVec = 0;
@@ -461,15 +463,11 @@ struct OptVarMapDiffDriveVW {
 	for ( size_t j = 1; j < paramFuncs.funcsArcSize(0); ++j ) {
 	    paramFuncs.funcsArc ( 0, j ) = _optVarExt[idxOptVec++];
 	}
-	auto& optParamIneqVec = _paramStruct.cfData.optParamIneqVec;
-	size_t shift = idxOptVec;
-	for(; idxOptVec < _optVarExt.size(); ++idxOptVec){ optParamIneqVec[idxOptVec-shift] = _optVarExt[idxOptVec]; }
     }
     static void getOptVar(std::vector<TNumType>& _optVarExt, const TParamStructType& _paramStruct) {
-	auto& paramFuncs      = _paramStruct.paramFuncs;
-	auto& optParamIneqVec = _paramStruct.cfData.optParamIneqVec;
-	size_t newSize = paramFuncs.funcsSize() * (paramFuncs.funcCtrlPtSize(0)-1) + ( paramFuncs.funcsArcSize(0) - 1 ) + optParamIneqVec.size();
-	if ( newSize != _optVarExt.size() ) { _optVarExt.resize( newSize ); for(size_t i = newSize; i > 0; --i){ _optVarExt[i-1] = 0.0001; } }
+	auto& paramFuncs = _paramStruct.paramFuncs;
+	size_t newSize = paramFuncs.funcsSize() * (paramFuncs.funcCtrlPtSize(0)-1) + ( paramFuncs.funcsArcSize(0) - 1 );
+	if ( newSize != _optVarExt.size() ) { _optVarExt.resize( newSize ); }
 	size_t idxOptVec = 0;
 	for ( size_t i = 0; i < paramFuncs.funcsSize(); ++i ) {
 	    for ( size_t j = 1; j < paramFuncs.funcCtrlPtSize(i); ++j ) {
@@ -479,44 +477,22 @@ struct OptVarMapDiffDriveVW {
 	for ( size_t j = 1; j < paramFuncs.funcsArcSize(0); ++j ) {
 	    _optVarExt[idxOptVec++]  = paramFuncs.funcsArc ( 0, j );
 	}
-	size_t shift = idxOptVec;
-// 	for(; idxOptVec < _optVarExt.size(); ++idxOptVec){ _optVarExt[idxOptVec] = optParamIneqVec[idxOptVec-shift]; }
     }
 };
 
-// //Full system state
-// // template<class TNumType> using StateDiffDriveVW              = StateMap        < TNumType, StateNmDiffDriveVW     , StateCfDiffDriveVW>;
-// template<class TNumType> using StateWithLDiffDriveVW         = StateMap        < TNumType, StateNmWithLDiffDriveVW, StateCfDiffDriveVW>;
-// template<class TNumType> using StateWithGradDiffDriveVW      = StateWithGradMap< TNumType, StateNmDiffDriveVW     , StateCfDiffDriveVW, OptVarStructDiffDriveVW>;
-// template<class TNumType> using StateWithLWithGradDiffDriveVW = StateWithGradMap< TNumType, StateNmWithLDiffDriveVW, StateCfDiffDriveVW, OptVarStructDiffDriveVW>;
+template<class TNumType, class TMapDataType, template<class> class TDiscretizationType>
+class StateSimVW              : public StateSimVWBase<TNumType, TMapDataType, StateVW             <TNumType>, TDiscretizationType > {};
+
+template<class TNumType, class TMapDataType, template<class> class TDiscretizationType, class... TCostFuncType>
+class StateWithLSimVW         : public StateSimVWBase<TNumType, TMapDataType, StateWithLVW        <TNumType>, TDiscretizationType, TCostFuncType... > {};
 
 template<class TNumType, class TMapDataType, template<class> class TDiscretizationType>
-class StateSimDiffDriveVW : public StateSimDiffDriveVWBase<TNumType, 
-                                                           TMapDataType, 
-							   StateDiffDriveVW<TNumType>, 
-							   TDiscretizationType > {};
+class StateWithGradSimVW      : public StateSimVWBase<TNumType, TMapDataType, StateWithGradVW     <TNumType>, TDiscretizationType > {};
 
-template<class TNumType, class TMapDataType, template<class> class TDiscretizationType, class TCostFuncType>
-class StateWithLSimDiffDriveVW : public StateSimDiffDriveVWBase<TNumType,
-                                                                TMapDataType, 
-								StateWithLDiffDriveVW<TNumType>,
-								TDiscretizationType, 
-								TCostFuncType > {};
-								
+template<class TNumType, class TMapDataType, template<class> class TDiscretizationType, class... TCostFuncType>
+class StateWithLWithGradSimVW : public StateSimVWBase<TNumType, TMapDataType, StateWithLWithGradVW<TNumType>, TDiscretizationType, TCostFuncType... > {};
 
-
-template<class TNumType, class TMapDataType, template<class> class TDiscretizationType>
-class StateWithGradSimDiffDriveVW : public StateSimDiffDriveVWBase<TNumType,
-                                                                   TMapDataType,
-                                                                   StateWithGradDiffDriveVW<TNumType>, 
-								   TDiscretizationType > {};
-
-template<class TNumType, class TMapDataType, template<class> class TDiscretizationType, class TCostFuncType>
-class StateWithLWithGradSimDiffDriveVW : public StateSimDiffDriveVWBase<TNumType, 
-                                                                        TMapDataType,
-                                                                        StateWithLWithGradDiffDriveVW<TNumType>, 
-									TDiscretizationType,
-									TCostFuncType > {};
+}
 
 }
 

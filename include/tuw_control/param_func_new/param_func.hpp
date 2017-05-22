@@ -325,7 +325,7 @@ struct ParamFuncsBaseFuncVarsStatic {
 
 template<typename TDerived, typename TNumType, int TFuncSize, int TArcLatticeSize>
 class ParamFuncsBase : public ParamFuncsBaseCRTP<ParamFuncsBase<TDerived, TNumType, TFuncSize, TArcLatticeSize>>, 
-                       public ParamFuncsBaseVirt<double>,
+                       public ParamFuncsBaseVirt<TNumType>,
 		       public std::conditional <TFuncSize      ==-1, ParamFuncsBaseFuncVarsDyn<TNumType>, ParamFuncsBaseFuncVarsStatic<TNumType, TFuncSize      > >::type,
 		       public std::conditional <TArcLatticeSize==-1, ParamFuncsBaseArcVarsDyn <TNumType>, ParamFuncsBaseArcVarsStatic <TNumType, TArcLatticeSize> >::type {
     
@@ -396,7 +396,7 @@ class ParamFuncsBase : public ParamFuncsBaseCRTP<ParamFuncsBase<TDerived, TNumTy
     protected: void   initImpl() { thisDerived().initImplImpl(); }
     
     private  : void      precomputeImplVirt       ()                                             override final { thisDerived().precomputeImpl(); }
-    private  : void      setEvalArcImplVirt       ( const TNumType& _arcEval , const eAG& _eAG ) override final { thisDerived().setEvalArcImpl(_arcEval, _eAG); }
+    private  : void      setEvalArcImplVirt       ( const TNumType& _arcEval , const typename ParamFuncsBaseCRTP<ParamFuncsBaseType>::eAG& _eAG ) override final { thisDerived().setEvalArcImpl(_arcEval, _eAG); }
     private  : TNumType  computeFuncValImplVirt   ( const std::size_t& _funcIdx ) const          override final { return thisDerived().computeFuncValImpl(_funcIdx); }
     private  : TNumType  computeFuncDiff1ImplVirt ( const std::size_t& _funcIdx ) const          override final { return thisDerived().computeFuncDiff1Impl(_funcIdx); }
     private  : TNumType  computeFuncDiff2ImplVirt ( const std::size_t& _funcIdx ) const          override final { return thisDerived().computeFuncDiff2Impl(_funcIdx); }
@@ -404,7 +404,7 @@ class ParamFuncsBase : public ParamFuncsBaseCRTP<ParamFuncsBase<TDerived, TNumTy
     private  : TNumType  computeFuncInt2ImplVirt  ( const std::size_t& _funcIdx ) const          override final { return thisDerived().computeFuncInt2Impl(_funcIdx); }
     
     private  : void      precomputeImplCRTP       ()                                             { thisDerived().precomputeImpl(); }
-    private  : void      setEvalArcImplCRTP       ( const TNumType& _arcEval , const eAG& _eAG ) { thisDerived().setEvalArcImpl(_arcEval, _eAG); }
+    private  : void      setEvalArcImplCRTP       ( const TNumType& _arcEval , const typename ParamFuncsBaseCRTP<ParamFuncsBaseType>::eAG& _eAG ) { thisDerived().setEvalArcImpl(_arcEval, _eAG); }
     private  : TNumType  computeFuncValImplCRTP   ( const std::size_t& _funcIdx ) const          { return thisDerived().computeFuncValImpl(_funcIdx); }
     private  : TNumType  computeFuncDiff1ImplCRTP ( const std::size_t& _funcIdx ) const          { return thisDerived().computeFuncDiff1Impl(_funcIdx); }
     private  : TNumType  computeFuncDiff2ImplCRTP ( const std::size_t& _funcIdx ) const          { return thisDerived().computeFuncDiff2Impl(_funcIdx); }
@@ -637,27 +637,23 @@ class ParamFuncsBase : public ParamFuncsBaseCRTP<ParamFuncsBase<TDerived, TNumTy
 	}
     }
     private  : void              shiftStartCtrlPtImplCRTP( const TNumType& _dt ) {
-	std::vector<std::vector<size_t> > ctrlPtModif(funcsSize(), std::vector<size_t>(0,0));
-	ctrlPtModif.reserve(10);///@todo not nice
-	const double evalArc = funcsArcBegin_ + _dt;
+	std::vector<TNumType> ctrlPtValPref(funcsSize(), 0);
+	const TNumType dtBound = fmin(fmax(funcsArcBegin_,_dt),funcsArcEnd_-funcsArcBegin_);
+	const TNumType evalArc = funcsArcBegin_ + dtBound;
 	setEvalArc ( evalArc );
+	for ( size_t i = 0; i < funcsSize(); ++i ) { ctrlPtValPref[i] = computeFuncVal(i); }
 	for ( size_t i = 0; i < funcsSize(); ++i ) { 
 	    for( size_t j = 0; j < funcCtrlPtSize(i); ++j ) {
-		if( ctrlPtVal(i,j,CtrlPtDim::ARC) < evalArc ) { ctrlPtModif[i].emplace_back ( j ); }
-	    }
-	}
-	for ( size_t i = 0; i < ctrlPtModif.size(); ++i ) { 
-	    const double newVal = computeFuncVal(i);
-	    for( size_t j = 0; j < ctrlPtModif[i].size(); ++j ) {
-		ctrlPtVal(i,j,CtrlPtDim::VAL) = newVal;
+		if( ctrlPtVal(i,j,CtrlPtDim::ARC) < evalArc ) { ctrlPtVal(i,j,CtrlPtDim::VAL) = ctrlPtValPref[i]; }
+		else { break; }
 	    }
 	}
 	for ( size_t k = 0; k < funcsArcSize(); ++k ) {
 	    for ( size_t j = 0; j < this->funcCtrlPtArc_[k].size(); ++j ) {
-		this->funcCtrlPtArc_[k][j] -= _dt;
+		this->funcCtrlPtArc_[k][j] = fmax(funcsArcBegin_, this->funcCtrlPtArc_[k][j]-dtBound);
 	    }
 	}
-	funcsArcEnd_ -= _dt;
+	funcsArcEnd_ -= dtBound;
 	precompute();
 	setEvalArc(funcsArcBegin_);
     }
