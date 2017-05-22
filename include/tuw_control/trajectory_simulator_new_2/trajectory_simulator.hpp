@@ -43,15 +43,7 @@
 
 namespace tuw {
 
-// class TrajectorySimulator;
-// using TrajectorySimulatorSPtr      = std::shared_ptr<TrajectorySimulator>;
-// using TrajectorySimulatorConstSPtr = std::shared_ptr<TrajectorySimulator const>;
-// using TrajectorySimulatorUPtr      = std::unique_ptr<TrajectorySimulator>;
-// using TrajectorySimulatorConstUPtr = std::unique_ptr<TrajectorySimulator const>;
-
 ///@brief Structure containing an evaluation arc and a state pointer.
-    
-    
 template<typename TNumType, typename TStateType>
 struct LatticePoint { 
     using StateSPtr = std::shared_ptr<TStateType>;
@@ -121,8 +113,6 @@ class LatticeTypeBaseCRTP {
     public   : template<size_t FuncsNr = 0, size_t TupSize = std::tuple_size<std::tuple<TLatticeCostFuncs...>>::value, typename std::enable_if< (TupSize == 0) >::type* = nullptr > 
 		void evaluateWithGrad  (const auto& _x, const size_t& _i, const auto& _gradX, TSimType& _sim, auto& _ansPtr, auto& _ansGradPtr, const size_t& elSize) { }
     
-//     public   : void computedArcIdP( const size_t& _i, const NumType& _arc ) { thisDerived().computedArcIdP(_i, _arc); }
-    
     private  :       TDerived& thisDerived()       { return static_cast<      TDerived&>(*this); }
     private  : const TDerived& thisDerived() const { return static_cast<const TDerived&>(*this); }
     
@@ -132,7 +122,7 @@ class LatticeTypeBaseCRTP {
     private  : typename std::vector<LatticePoint<NumType, StateType>>::iterator latticeVecCacheIter_;
     private  : typename std::vector<LatticePoint<NumType, StateType>>::iterator latticeVecIterEnd_;
     
-    template<typename TNumType2, typename TSimType2, template<typename, typename> class... TLatticeTypes2> friend class TrajectorySimulator;
+    template<typename TNumType2, typename TSimType2, bool TUseStateNm2, template<typename, typename> class... TLatticeTypes2> friend class TrajectorySimulator;
     template<typename T, typename... TTuple> friend size_t bindFromPartLatticesToSimLattice(std::tuple<TTuple...>&, std::vector<T>&);
 };
  
@@ -164,7 +154,7 @@ get_costs_sizes(auto& partLatI, const size_t& _i, auto& _sizeCostsPerPartLattice
 }
 
   
-template<typename TNumType, typename TSimType, template<typename, typename> class... TLatticeTypes>
+template<typename TNumType, typename TSimType, bool TUseStateNm, template<typename, typename> class... TLatticeTypes>
 class TrajectorySimulator {
     
     public   : using StateSimSPtr    = std::shared_ptr<TSimType>;
@@ -176,11 +166,11 @@ class TrajectorySimulator {
     
     public   : static constexpr const size_t CostFuncsTypesNr = std::tuple_element<0, std::tuple<TLatticeTypes<TNumType, TSimType>...>>::type::costFuncsTypesNr();
     
-    public   : TrajectorySimulator           () : stateSim_(std::make_shared<TSimType>())/*, gradCostsMap_(nullptr,0,0)*/ { 
+    public   : TrajectorySimulator           () : stateSim_(std::make_shared<TSimType>()) { 
 	for_each_tuple_class( partialLattices_, correctStateGradFunc ); 
 	for(size_t i = 0; i < gradCostsMap_.size(); ++i){ gradCostsMap_[i] = std::make_shared<Eigen::Map<Eigen::Matrix<TNumType,-1,-1, Eigen::RowMajor>>>(nullptr,0,0); } 
     }
-    public   : TrajectorySimulator           ( StateSimSPtr& _stateSim ) : stateSim_(_stateSim)/*, gradCostsMap_(nullptr,0,0)*/ { 
+    public   : TrajectorySimulator           ( StateSimSPtr& _stateSim ) : stateSim_(_stateSim) { 
 	for_each_tuple_class( partialLattices_, correctStateGradFunc ); 
 	for(size_t i = 0; i < gradCostsMap_.size(); ++i){ gradCostsMap_[i] = std::make_shared<Eigen::Map<Eigen::Matrix<TNumType,-1,-1, Eigen::RowMajor>>>(nullptr,0,0); } 
     }
@@ -200,23 +190,33 @@ class TrajectorySimulator {
     public   : template< size_t TLatticeIdx>       auto& partialLattice ()       { return std::get<TLatticeIdx>(partialLattices_); }
     public   : template< size_t TLatticeIdx> const auto& partialLattice () const { return std::get<TLatticeIdx>(partialLattices_); }
     
-    private  : using AdvanceFunction = void (TrajectorySimulator<TNumType, TSimType, TLatticeTypes...>::*)(const TNumType&);
+    private  : using AdvanceFunction = void (TrajectorySimulator<TNumType, TSimType, TUseStateNm, TLatticeTypes...>::*)(const TNumType&);
     private  : AdvanceFunction advanceFunc;
-    private  : void advanceFuncSim    (const TNumType& _arcNow) { stateSim_->advance( _arcNow ); }
+    private  : void advanceFuncSimEmpty(const TNumType& _arcNow) { }
+    private  : void advanceFuncSim     (const TNumType& _arcNow) { stateSim_->advance( _arcNow ); }
     private  : template< bool canComputeStateGrad = CanComputeStateGrad, 
 	                     typename std::enable_if< ( canComputeStateGrad ) >::type* = nullptr >
 	      void advanceFuncSimGrad(const TNumType& _arcNow) {  stateSim_->advanceWithGrad( _arcNow ); }
     
     private  : bool simulatingWithGrad;
+    private  : template< bool useStateSimNm = TUseStateNm, typename std::enable_if< ( useStateSimNm ) >::type* = nullptr>
+	       void bindAdvanceFunc()     { advanceFunc = &TrajectorySimulator<TNumType, TSimType, TUseStateNm, TLatticeTypes...>::advanceFuncSim; }
+    private  : template< bool useStateSimNm = TUseStateNm, typename std::enable_if< ( !useStateSimNm ) >::type* = nullptr>
+	       void bindAdvanceFunc()     { advanceFunc = &TrajectorySimulator<TNumType, TSimType, TUseStateNm, TLatticeTypes...>::advanceFuncSimEmpty; }
+    private  : template< bool useStateSimNm = TUseStateNm, typename std::enable_if< ( useStateSimNm ) >::type* = nullptr>
+	       void bindAdvanceFuncGrad() { advanceFunc = &TrajectorySimulator<TNumType, TSimType, TUseStateNm, TLatticeTypes...>::advanceFuncSimGrad; }
+    private  : template< bool useStateSimNm = TUseStateNm, typename std::enable_if< ( !useStateSimNm ) >::type* = nullptr>
+	       void bindAdvanceFuncGrad() { advanceFunc = &TrajectorySimulator<TNumType, TSimType, TUseStateNm, TLatticeTypes...>::advanceFuncSimEmpty; }
+	       
     public   : void simulateTrajectory (const bool& _saveLatticeStates = false) {  
-	advanceFunc = &TrajectorySimulator<TNumType, TSimType, TLatticeTypes...>::advanceFuncSim;
+	bindAdvanceFunc();
 	simulatingWithGrad = false;
 	simulateTrajectoryImpl(_saveLatticeStates);
     }
     public   : template< bool canComputeStateGrad = CanComputeStateGrad, 
 	                 typename std::enable_if< ( canComputeStateGrad ) >::type* = nullptr >
 		void simulateTrajectoryWithGrad (const bool& _saveLatticeStates = false) {  
-	advanceFunc = &TrajectorySimulator<TNumType, TSimType, TLatticeTypes...>::advanceFuncSimGrad;
+	bindAdvanceFuncGrad();
 	simulatingWithGrad = true;
 	simulateTrajectoryImpl(_saveLatticeStates);
     }
@@ -237,7 +237,7 @@ class TrajectorySimulator {
 	resizeSimLattice(populatePartLattices(sizeCosts));
 	simulationLatticeActiveSize_ = bindFromPartLatticesToSimLattice(_saveLatticeStates);
 	if(sizeCosts > 0) {
-	    size_t optParamSize = stateSim_->state().stateGradNm().sub(0).data().size();
+	    size_t optParamSize = stateSim_->state().stateGradCf().sub(0).data().size();
 	    resizeCosts(optParamSize, simulatingWithGrad);
 	    TNumType* cfPtr     = costs_    .memStartRef();
 	    TNumType* cfGradPtr = gradCosts_.memStartRef();
@@ -249,7 +249,7 @@ class TrajectorySimulator {
 	size_t sizeCosts = 0;
 	populatePartLattices(sizeCosts);
 	if(sizeCosts > 0) {
-	    size_t optParamSize = stateSim_->state().stateGradNm().sub(0).data().size();
+	    size_t optParamSize = stateSim_->state().stateGradCf().sub(0).data().size();
 	    resizeCosts(optParamSize, true);
 	}
     }
@@ -294,7 +294,6 @@ class TrajectorySimulator {
 				if ( simulatingWithGrad ) {
 				    for ( size_t i = 0; i < latticeISize; ++i ) {
 					const auto& latticeI = partLatI.lattice[i];
-// 					partLatI.template evaluate<FuncNr>    ( latticeI.statePtr->state(), i, *stateSim_, _cfPtr );
 					partLatI.template evaluateWithGrad<FuncNr>( latticeI.statePtr->state(), i, latticeI.statePtr->stateGrad(), *stateSim_, _cfPtr, _cfGradPtr, _optParamSize);
 				    }
 				} else {
@@ -319,6 +318,12 @@ class TrajectorySimulator {
 			} 
 		       );
     }
+    
+    private  : template< bool useStateSimNm = TUseStateNm, typename std::enable_if< ( useStateSimNm ) >::type* = nullptr>
+	       void setXNmDot(const TNumType& _arcNow) { stateSim_->setXNmDot ( _arcNow, PfEaG::NEAR_LAST ); }
+    private  : template< bool useStateSimNm = TUseStateNm, typename std::enable_if< ( !useStateSimNm ) >::type* = nullptr>
+	       void setXNmDot(const TNumType& _arcNow) {  }
+    
     size_t bindFromPartLatticesToSimLattice(const bool& _saveLatticeStates = false) {
 	int simLatticeIdx_ = -1; bool first = true;
 	static typename std::vector<LatticePointType>::iterator* itMinPtr;
@@ -339,7 +344,7 @@ class TrajectorySimulator {
 		if ( simulatingWithGrad ) {
 		    stateSim_->setGradXCf( arcNow, PfEaG::NEAR_LAST );
 		    stateSim_->setXCfDot ( arcNow, PfEaG::NEAR_LAST );
-		    stateSim_->setXNmDot ( arcNow, PfEaG::NEAR_LAST );
+		    setXNmDot( arcNow );
 		    copyReqDataFromSimToSimLatticeI(*stateSim_, simLatticeI);
 		    correctStateGradFunc[simLatticeI.latticeIdx](*stateSim_, arcNow, latVecIdx, simLatticeI.statePtr->stateGrad() );
 		} else {
@@ -382,20 +387,38 @@ class TrajectorySimulator {
 		    }
 		}
     
+    private  : template<  typename TSimType2, typename TLatticePointType, bool useStateSimNm = TUseStateNm, typename std::enable_if< ( useStateSimNm ) >::type* = nullptr>
+	       static void copyDataNmFromSimToSimLatticeI(const TSimType2& _sim, TLatticePointType& _latticePtI) { 
+		   auto& latticeState = *_latticePtI.statePtr;
+		   const auto& simState = _sim.state();
+		   latticeState.stateNm    ().data() = simState.stateNm    ().data();
+	    }
+    private  : template< typename TSimType2, typename TLatticePointType,  bool useStateSimNm = TUseStateNm, typename std::enable_if< ( !useStateSimNm ) >::type* = nullptr>
+	       static void copyDataNmFromSimToSimLatticeI(const TSimType2& _sim, TLatticePointType& _latticePtI) {  }
+    private  : template<  typename TSimType2, typename TLatticePointType, bool useStateSimNm = TUseStateNm, typename std::enable_if< ( useStateSimNm ) >::type* = nullptr>
+	       static void copyGradDataNmFromSimToSimLatticeI(const TSimType2& _sim, TLatticePointType& _latticePtI) { 
+		   auto& latticeState = *_latticePtI.statePtr;
+		    const auto& simState = _sim.state();
+		    latticeState.stateGradNm().data() = simState.stateGradNm().data();
+	    }
+    private  : template<  typename TSimType2, typename TLatticePointType, bool useStateSimNm = TUseStateNm, typename std::enable_if< ( !useStateSimNm ) >::type* = nullptr>
+	       static void copyGradDataNmFromSimToSimLatticeI(const TSimType2& _sim, TLatticePointType& _latticePtI) {  }
+    
+    
     private : template< typename TSimType2, typename TLatticePointType>
 		static void copyDataFromSimToSimLatticeI(const TSimType2& _sim, TLatticePointType& _latticePtI) {
 		    auto& latticeState = *_latticePtI.statePtr;
 		    const auto& simState = _sim.state();
 		    latticeState.stateCf    ().data() = simState.stateCf    ().data();
-		    latticeState.stateNm    ().data() = simState.stateNm    ().data();
+		    copyDataNmFromSimToSimLatticeI(_sim, _latticePtI);
 		}
     private : template< typename TSimType2, typename TLatticePointType, bool canComputeStateGrad = CanComputeStateGrad, 
 	                     typename std::enable_if< ( canComputeStateGrad ) >::type* = nullptr >
 		static void copyGradDataFromSimToSimLatticeI(const TSimType2& _sim, TLatticePointType& _latticePtI) {
 		    auto& latticeState = *_latticePtI.statePtr;
 		    const auto& simState = _sim.state();
-		    latticeState.stateGradNm().data() = simState.stateGradNm().data();
 		    latticeState.stateGradCf().data() = simState.stateGradCf().data();
+		    copyGradDataNmFromSimToSimLatticeI(_sim, _latticePtI);
 		}
     private : template< typename TSimType2, typename TLatticePointType, bool canComputeStateGrad = CanComputeStateGrad, 
 	                     typename std::enable_if< (!canComputeStateGrad ) >::type* = nullptr >

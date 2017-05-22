@@ -36,6 +36,7 @@ using StateSimDiffDriveType    = StateWithGradSimVW<NumType, MapDataType, DiscrT
 using StateSimPtr              = std::shared_ptr<StateSimDiffDriveType>;
 using TrajectorySimulatorType  = TrajectorySimulator<NumType, 
                                                      StateSimDiffDriveType, 
+						     true, 
 						     LatticeTypeStateSimBeginEndSim, 
 						     LatticeTypeStateSimEqDtSim, 
 						     LatticeTypeStateSimEqDsSim, 

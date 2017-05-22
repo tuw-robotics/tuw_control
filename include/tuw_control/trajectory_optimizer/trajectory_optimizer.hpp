@@ -53,7 +53,7 @@ class EvaluatedLattice {
     
     
 template<class TNumType>
-bool isSame( const std::vector<TNumType>& _optVar0, const std::vector<TNumType>& _optVar1 ) {
+inline static bool isSame( const std::vector<TNumType>& _optVar0, const std::vector<TNumType>& _optVar1 ) {
     const size_t optVar0Size =  _optVar0.size();
     if ( optVar0Size != _optVar1.size() ) { return false; }
     static constexpr const double eps = 2*FLT_MIN;
