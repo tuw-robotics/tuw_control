@@ -61,11 +61,11 @@ bool isSame( const std::vector<TNumType>& _optVar0, const std::vector<TNumType>&
     return true;
 }
    
-enum class OptCacheType { ITER_START, LAST, ENUM_SIZE };
+enum class OptCacheType { LAST1, LAST2, ITER_START, ENUM_SIZE };
    
 template<class TNumType, class TTrajSim, class TMyParamType, template<class, class> class TOptVarMap>
 class CostsEvaluatorCached : public TTrajSim {
-    public   : CostsEvaluatorCached() : TTrajSim() {
+    public   : CostsEvaluatorCached() : TTrajSim(), idxCacheLast_(0) {
 	for ( size_t i = 0; i < asInt(OptCacheType::ENUM_SIZE); ++i ) {
 	    xCacheConstr_    [i] = std::make_shared<std::vector<TNumType>           >();
 	    xCacheGradConstr_[i] = std::make_shared<std::vector<TNumType>           >();
@@ -77,47 +77,46 @@ class CostsEvaluatorCached : public TTrajSim {
     }
     public   : auto& costs    () { return this->costs_; }
     public   : auto& gradCosts() { return this->gradCostsMap_; }
-    public   : bool evaluateCosts( const std::vector<TNumType> & _x, const OptCacheType& _cacheType = OptCacheType::LAST ) {
-	bool cached = false;
+    public   : bool evaluateCosts( const std::vector<TNumType> & _x, const OptCacheType& _cacheType = OptCacheType::LAST1 ) {
 	for ( size_t i = 0; i < asInt(OptCacheType::ENUM_SIZE); ++i ) {
 	    if ( isSame(_x, *xCacheConstr_[i]) ) { 
 		for(size_t j=0;j<TTrajSim::CostFuncsTypesNr; ++j){ this->costs_.sub(j).data() = *constCache_[i][j]; } 
-		cached = true; return cached; 
+		if ( i < 2 ) { idxCacheLast_ = i; }//we remember which one was used last time
+		return true; 
 	    } 
 	}
-	if ( !cached ) {
-	    std::cout<<"computing it Func!"<<std::endl;
-	    setOptVar(_x);
-	    this->simulateTrajectory();
-	    *xCacheConstr_[asInt(_cacheType)] = _x;
-	    for(size_t j=0;j<TTrajSim::CostFuncsTypesNr; ++j){ 
-		*constCache_  [asInt(_cacheType)][j] = this->costs_.sub(j).data();
-	    }
+	
+// 	std::cout<<"computing it Func!"<<std::endl;
+	size_t idxCache = asInt(_cacheType);
+	if ( _cacheType != OptCacheType::ITER_START ) { idxCache = idxCacheLast_ = !idxCacheLast_; }
+	setOptVar(_x);
+	this->simulateTrajectory();
+	*xCacheConstr_[idxCache] = _x;
+	for(size_t j=0;j<TTrajSim::CostFuncsTypesNr; ++j){ 
+	    *constCache_  [idxCache][j] = this->costs_.sub(j).data();
 	}
-	return cached; 
+	return false; 
     }
-    public   : bool evaluateCostsWithGrad( const std::vector<TNumType> & _x, const OptCacheType& _cacheType = OptCacheType::LAST ) {
-	bool cached = false;
+    public   : bool evaluateCostsWithGrad( const std::vector<TNumType> & _x, const OptCacheType& _cacheType = OptCacheType::LAST1 ) {
 	for ( size_t i = 0; i < asInt(OptCacheType::ENUM_SIZE); ++i ) {
 	    if ( isSame(_x, *xCacheGradConstr_[i]) ) { 
-		for(size_t j=0;j<TTrajSim::CostFuncsTypesNr; ++j) { 
-		    this->costs_.sub(j).data() = *constCache_[i][j]; 
-		    *this->gradCostsMap_[j] = *gradConstrCache_[i][j]; 
-		} 
-		cached = true; return cached; 
+		for(size_t j=0;j<TTrajSim::CostFuncsTypesNr; ++j) { this->costs_.sub(j).data() = *constCache_[i][j]; *this->gradCostsMap_[j] = *gradConstrCache_[i][j]; } 
+		if ( i < 2 ) { idxCacheGradLast_ = i; }
+		return true;
 	    } 
 	}
-	if ( !cached ) {
-	    std::cout<<"computing it Grad!"<<std::endl;
-	    setOptVar(_x);
-	    this->simulateTrajectoryWithGrad();
-	    *xCacheConstr_   [asInt(_cacheType)] = *xCacheGradConstr_[asInt(_cacheType)] = _x;
-	    for(size_t j=0;j<TTrajSim::CostFuncsTypesNr; ++j){ 
-		*constCache_     [asInt(_cacheType)][j] = this->costs_.sub(j).data();
-		*gradConstrCache_[asInt(_cacheType)][j] = *this->gradCostsMap_[j];
-	    }
+// 	std::cout<<"computing it Grad!"<<std::endl;
+	size_t idxCache     = asInt(_cacheType);
+	size_t idxCacheGrad = asInt(_cacheType);
+	if ( _cacheType != OptCacheType::ITER_START ) { idxCache = idxCacheLast_ = !idxCacheLast_; idxCacheGrad = idxCacheGradLast_ = !idxCacheGradLast_; }
+	setOptVar(_x);
+	this->simulateTrajectoryWithGrad();
+	*xCacheConstr_   [idxCache] = *xCacheGradConstr_[idxCacheGrad] = _x;
+	for(size_t j=0;j<TTrajSim::CostFuncsTypesNr; ++j){ 
+	    *constCache_     [idxCache    ][j] = this->costs_.sub(j).data();
+	    *gradConstrCache_[idxCacheGrad][j] = *this->gradCostsMap_[j];
 	}
-	return cached; 
+	return false;
     }
     public   : void getOptVar(       std::vector<TNumType>& _optVarExt ) { TOptVarMap<TNumType, TMyParamType>::getOptVar(_optVarExt, *this->stateSim()->paramStruct.get()); }
     private  : void setOptVar( const std::vector<TNumType>& _optVarExt ) { TOptVarMap<TNumType, TMyParamType>::setOptVar(*this->stateSim()->paramStruct.get(), _optVarExt); }
@@ -125,6 +124,8 @@ class CostsEvaluatorCached : public TTrajSim {
     private  : std::array<std::shared_ptr<std::vector<TNumType>           >, asInt(OptCacheType::ENUM_SIZE)> xCacheGradConstr_;
     private  : std::array<std::array<std::shared_ptr<Eigen::Matrix<TNumType, -1,  1> >, TTrajSim::CostFuncsTypesNr>, asInt(OptCacheType::ENUM_SIZE)> constCache_;
     private  : std::array<std::array<std::shared_ptr<Eigen::Matrix<TNumType, -1, -1> >, TTrajSim::CostFuncsTypesNr>, asInt(OptCacheType::ENUM_SIZE)> gradConstrCache_;
+    private  : size_t idxCacheLast_;
+    private  : size_t idxCacheGradLast_;
     
     template<class TNumType2, class TTrajSimJGH2, class TTrajSimJ2, class TTrajSimG2, class TTrajSimH2, class TMyParamType2, template<class, class> class TOptVarMap2> friend class TrajectoryOptimizer;
 };
