@@ -179,7 +179,8 @@ class CostsArrayLatBase {
     }
     private  : int resizeInitNew() { 
 	int sizeOld = pieceWiseCosts.size();
-	if( !lattKnotPtr_ || (lattKnotPtr_->size() < 2) ) { pieceWiseCosts.clear(); return 0; }
+	if( !lattKnotPtr_ ) {                                pieceWiseCosts.clear(); return 0; }
+	else                { if(lattKnotPtr_->size() < 2) { pieceWiseCosts.clear(); return 0; } }
 	pieceWiseCosts.resize( std::max(0, (int)lattKnotPtr_->size() - 1 ) );
 	int deltaSize = (int)pieceWiseCosts.size() - sizeOld;
 	if ( deltaSize > 0 ) { 

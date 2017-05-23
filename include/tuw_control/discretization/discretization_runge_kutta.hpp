@@ -72,6 +72,7 @@ namespace RungeKutta {
 	_dArc = _arc - _arc0;
 	if( _stateSim.stateNm().valueSize() != StateNmSize ){ throw "Wrong specialization of RungeKutta::discretize called (system state value size != function state value size) !"; }
 	
+	_stateSim.setStateCfNmStep ( _arc0 );
 	State& stateDot = _stateSim.stateNmDot(); const double& b0 = coeff[bjIdx<RKOrder>(0)];
 	
 	for(std::size_t si=0;si<StateNmSize;++si) { x0.value(si)=_stateSim.stateNm().value(si); dX[0].value(si)= stateDot.value(si); deltaX.value(si)=b0*dX[0].value(si);   }
