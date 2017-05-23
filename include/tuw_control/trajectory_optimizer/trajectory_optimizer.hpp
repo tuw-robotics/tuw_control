@@ -36,6 +36,8 @@
 #include <tuw_control/utils.h>
 #include <eigen3/Eigen/Eigen>
 
+#include <float.h>
+
 namespace tuw {
 
     
