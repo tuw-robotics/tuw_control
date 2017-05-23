@@ -452,30 +452,30 @@ class StateSimVWBase : public StateSimBase< StateSimVWBase<TNumType, MapDataType
 
 template<class TNumType,class TParamStructType>
 struct OptVarMapVW {
-    static void setOptVar( TParamStructType& _paramStruct, const std::vector<TNumType>& _optVarExt ) {
+    static void setOptVar( TParamStructType& _paramStruct, const Eigen::Matrix<TNumType, -1, 1>& _optVarExt ) {
 	auto& paramFuncs = _paramStruct.paramFuncs;
 	size_t idxOptVec = 0;
 	for ( size_t i = 0; i < paramFuncs.funcsSize(); ++i ) {
 	    for ( size_t j = 1; j < paramFuncs.funcCtrlPtSize(i); ++j ) {
-		paramFuncs.ctrlPtVal ( i, j, CtrlPtDim::VAL ) = _optVarExt[idxOptVec++];
+		paramFuncs.ctrlPtVal ( i, j, CtrlPtDim::VAL ) = _optVarExt(idxOptVec++);
 	    }
 	}
 	for ( size_t j = 1; j < paramFuncs.funcsArcSize(0); ++j ) {
-	    paramFuncs.funcsArc ( 0, j ) = _optVarExt[idxOptVec++];
+	    paramFuncs.funcsArc ( 0, j ) = _optVarExt(idxOptVec++);
 	}
     }
-    static void getOptVar(std::vector<TNumType>& _optVarExt, const TParamStructType& _paramStruct) {
+    static void getOptVar(Eigen::Matrix<TNumType, -1, 1>& _optVarExt, const TParamStructType& _paramStruct) {
 	auto& paramFuncs = _paramStruct.paramFuncs;
-	size_t newSize = paramFuncs.funcsSize() * (paramFuncs.funcCtrlPtSize(0)-1) + ( paramFuncs.funcsArcSize(0) - 1 );
+	int newSize = paramFuncs.funcsSize() * (paramFuncs.funcCtrlPtSize(0)-1) + ( paramFuncs.funcsArcSize(0) - 1 );
 	if ( newSize != _optVarExt.size() ) { _optVarExt.resize( newSize ); }
 	size_t idxOptVec = 0;
 	for ( size_t i = 0; i < paramFuncs.funcsSize(); ++i ) {
 	    for ( size_t j = 1; j < paramFuncs.funcCtrlPtSize(i); ++j ) {
-		_optVarExt[idxOptVec++] = paramFuncs.ctrlPtVal ( i, j, CtrlPtDim::VAL );
+		_optVarExt(idxOptVec++) = paramFuncs.ctrlPtVal ( i, j, CtrlPtDim::VAL );
 	    }
 	}
 	for ( size_t j = 1; j < paramFuncs.funcsArcSize(0); ++j ) {
-	    _optVarExt[idxOptVec++]  = paramFuncs.funcsArc ( 0, j );
+	    _optVarExt(idxOptVec++)  = paramFuncs.funcsArc ( 0, j );
 	}
     }
 };

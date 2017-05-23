@@ -123,8 +123,6 @@ class LatticeTypeStateSimEqDs : public LatticeTypeBaseCRTP<LatticeTypeStateSimEq
     }
     public   : void computeDArcIdPImpl(const TSimType& _sim, const TNumType _arc, const size_t& _lattIdx, auto& _dstStateGrad ) {
 	if (nrPts_ > 1) { 
-	    static Eigen::Matrix<TNumType,-1,1> dsdp;
-	    static Eigen::Matrix<TNumType,-1,1> stateDotCache;
 	    if(_lattIdx == 0) { 
 		TNumType tEnd = _sim.paramStruct->paramFuncs.funcsArcEnd();
 		auto& simNonConst = const_cast<TSimType&>(_sim);
@@ -155,6 +153,8 @@ class LatticeTypeStateSimEqDs : public LatticeTypeBaseCRTP<LatticeTypeStateSimEq
     public   : void setNrPts(const size_t& _nrPts) { nrPts_ = _nrPts; }
     public   : TNumType ds_;
     private  : int nrPts_;
+    private  : Eigen::Matrix<TNumType,-1,1> dsdp;
+    private  : Eigen::Matrix<TNumType,-1,1> stateDotCache;
 };
 
 

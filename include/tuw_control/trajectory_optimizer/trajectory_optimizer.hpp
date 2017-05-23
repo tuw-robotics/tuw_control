@@ -53,11 +53,11 @@ class EvaluatedLattice {
     
     
 template<class TNumType>
-inline static bool isSame( const std::vector<TNumType>& _optVar0, const std::vector<TNumType>& _optVar1 ) {
-    const size_t optVar0Size =  _optVar0.size();
+inline static bool isSame( const Eigen::Matrix<TNumType,-1,1>& _optVar0, const Eigen::Matrix<TNumType,-1,1>& _optVar1 ) {
+    const int optVar0Size =  _optVar0.size();
     if ( optVar0Size != _optVar1.size() ) { return false; }
     static constexpr const double eps = 2*FLT_MIN;
-    for(size_t i = 0; i < optVar0Size; ++i) { if( fabs(_optVar0[i] - _optVar1[i])  > eps ) { return false; } }
+    for ( int i = 0; i < optVar0Size; ++i ) { if( fabs(_optVar0(i) - _optVar1(i))  > eps ) { return false; } }
     return true;
 }
    
@@ -67,8 +67,8 @@ template<class TNumType, class TTrajSim, class TMyParamType, template<class, cla
 class CostsEvaluatorCached : public TTrajSim {
     public   : CostsEvaluatorCached() : TTrajSim(), idxCacheLast_(0) {
 	for ( size_t i = 0; i < asInt(OptCacheType::ENUM_SIZE); ++i ) {
-	    xCacheConstr_    [i] = std::make_shared<std::vector<TNumType>           >();
-	    xCacheGradConstr_[i] = std::make_shared<std::vector<TNumType>           >();
+	    xCacheConstr_    [i] = std::make_shared<Eigen::Matrix<TNumType,-1,1>           >();
+	    xCacheGradConstr_[i] = std::make_shared<Eigen::Matrix<TNumType,-1,1>           >();
 	    for(size_t j=0;j<TTrajSim::CostFuncsTypesNr; ++j){ 
 		constCache_      [i][j] = std::make_shared<Eigen::Matrix<TNumType, -1,  1> >();
 		gradConstrCache_ [i][j] = std::make_shared<Eigen::Matrix<TNumType, -1, -1> >();
@@ -77,7 +77,7 @@ class CostsEvaluatorCached : public TTrajSim {
     }
     public   : auto& costs    () { return this->costs_; }
     public   : auto& gradCosts() { return this->gradCostsMap_; }
-    public   : bool evaluateCosts( const std::vector<TNumType> & _x, const OptCacheType& _cacheType = OptCacheType::LAST1 ) {
+    public   : bool evaluateCosts( const Eigen::Matrix<TNumType,-1,1> & _x, const OptCacheType& _cacheType = OptCacheType::LAST1 ) {
 	for ( size_t i = 0; i < asInt(OptCacheType::ENUM_SIZE); ++i ) {
 	    if ( isSame(_x, *xCacheConstr_[i]) ) { 
 		for(size_t j=0;j<TTrajSim::CostFuncsTypesNr; ++j){ this->costs_.sub(j).data() = *constCache_[i][j]; } 
@@ -97,7 +97,7 @@ class CostsEvaluatorCached : public TTrajSim {
 	}
 	return false; 
     }
-    public   : bool evaluateCostsWithGrad( const std::vector<TNumType> & _x, const OptCacheType& _cacheType = OptCacheType::LAST1 ) {
+    public   : bool evaluateCostsWithGrad( const Eigen::Matrix<TNumType,-1,1> & _x, const OptCacheType& _cacheType = OptCacheType::LAST1 ) {
 	for ( size_t i = 0; i < asInt(OptCacheType::ENUM_SIZE); ++i ) {
 	    if ( isSame(_x, *xCacheGradConstr_[i]) ) { 
 		for(size_t j=0;j<TTrajSim::CostFuncsTypesNr; ++j) { this->costs_.sub(j).data() = *constCache_[i][j]; *this->gradCostsMap_[j] = *gradConstrCache_[i][j]; } 
@@ -118,10 +118,10 @@ class CostsEvaluatorCached : public TTrajSim {
 	}
 	return false;
     }
-    public   : void getOptVar(       std::vector<TNumType>& _optVarExt ) { TOptVarMap<TNumType, TMyParamType>::getOptVar(_optVarExt, *this->stateSim()->paramStruct.get()); }
-    private  : void setOptVar( const std::vector<TNumType>& _optVarExt ) { TOptVarMap<TNumType, TMyParamType>::setOptVar(*this->stateSim()->paramStruct.get(), _optVarExt); }
-    private  : std::array<std::shared_ptr<std::vector<TNumType>           >, asInt(OptCacheType::ENUM_SIZE)> xCacheConstr_;
-    private  : std::array<std::shared_ptr<std::vector<TNumType>           >, asInt(OptCacheType::ENUM_SIZE)> xCacheGradConstr_;
+    public   : void getOptVar(       Eigen::Matrix<TNumType,-1,1>& _optVarExt ) { TOptVarMap<TNumType, TMyParamType>::getOptVar(_optVarExt, *this->stateSim()->paramStruct.get()); }
+    private  : void setOptVar( const Eigen::Matrix<TNumType,-1,1>& _optVarExt ) { TOptVarMap<TNumType, TMyParamType>::setOptVar(*this->stateSim()->paramStruct.get(), _optVarExt); }
+    private  : std::array<std::shared_ptr<Eigen::Matrix<TNumType,-1,1>           >, asInt(OptCacheType::ENUM_SIZE)> xCacheConstr_;
+    private  : std::array<std::shared_ptr<Eigen::Matrix<TNumType,-1,1>           >, asInt(OptCacheType::ENUM_SIZE)> xCacheGradConstr_;
     private  : std::array<std::array<std::shared_ptr<Eigen::Matrix<TNumType, -1,  1> >, TTrajSim::CostFuncsTypesNr>, asInt(OptCacheType::ENUM_SIZE)> constCache_;
     private  : std::array<std::array<std::shared_ptr<Eigen::Matrix<TNumType, -1, -1> >, TTrajSim::CostFuncsTypesNr>, asInt(OptCacheType::ENUM_SIZE)> gradConstrCache_;
     private  : size_t idxCacheLast_;
