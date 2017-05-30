@@ -45,7 +45,21 @@ namespace DiffDrive {
 // Defining the system state
 
 
-/*!@class StateNmVW
+template<class TNumType, class TLeafType>
+class StateNmLVW : public StateMapArray<TNumType, TLeafType, 4> {
+    public   : using StateMapArray<TNumType, TLeafType, 4>::StateMapArray;
+    public   : auto&       dThetaSqr()       { return this->template sub<0>(); }
+    public   : const auto& dThetaSqr() const { return this->template sub<0>(); }
+    public   : auto&       pDevSqr ()       { return this->template sub<1>(); }
+    public   : const auto& pDevSqr () const { return this->template sub<1>(); }
+    public   : auto&       rhoSqr ()       { return this->template sub<2>(); }
+    public   : const auto& rhoSqr () const { return this->template sub<2>(); }
+    public   : auto&       avSqr  ()       { return this->template sub<3>(); }
+    public   : const auto& avSqr  () const { return this->template sub<3>(); }
+    
+};
+    
+/*!@class StateRobotNmVW
  * @brief Defining the system numerical state variables.
  * 
  * Has to allways be an extended class from @ref StateMapArray, @ref StateMapVector or @ref StateMapTuple
@@ -54,7 +68,7 @@ namespace DiffDrive {
  * @tparam TLeafType The leaf type. This has to be templated as the numerical state jacobian class will use another (non-numerical) leaf type
  */
 template<class TNumType, class TLeafType>
-class StateNmVW : public StateMapArray<TNumType, TLeafType, 2> {
+class StateRobotNmVW : public StateMapArray<TNumType, TLeafType, 2> {
     public   : using StateMapArray<TNumType, TLeafType, 2>::StateMapArray;
     public   : auto&       x    ()       { return this->template sub<0>(); }
     public   : const auto& x    () const { return this->template sub<0>(); }
@@ -62,6 +76,11 @@ class StateNmVW : public StateMapArray<TNumType, TLeafType, 2> {
     public   : const auto& y    () const { return this->template sub<1>(); }
     public   : auto&       state()       { return *this; }
     public   : const auto& state() const { return *this; }
+};
+
+template<class TNumType, class TLeafType>
+class StatePersonsNmVW : public StateMapVector<TNumType, TLeafType> {
+    public   : using StateMapVector<TNumType, TLeafType>::StateMapVector;
 };
 
 /*!@class StateNmWithLVW
@@ -73,24 +92,34 @@ class StateNmVW : public StateMapArray<TNumType, TLeafType, 2> {
  * @tparam TLeafType The leaf type. This has to be templated as the numerical state jacobian class will use another (non-numerical) leaf type
  */
 template<class TNumType, class TLeafType>
-class StateNmWithLVW : public StateMapArray<TNumType, TLeafType, 6> {
-    public   : using StateMapArray<TNumType, TLeafType, 6>::StateMapArray;
-    public   : auto&       dThetaSqr()       { return this->template sub<0>(); }
-    public   : const auto& dThetaSqr() const { return this->template sub<0>(); }
-    public   : auto&       pDevSqr ()       { return this->template sub<1>(); }
-    public   : const auto& pDevSqr () const { return this->template sub<1>(); }
-    public   : auto&       rhoSqr ()       { return this->template sub<2>(); }
-    public   : const auto& rhoSqr () const { return this->template sub<2>(); }
-    public   : auto&       avSqr  ()       { return this->template sub<3>(); }
-    public   : const auto& avSqr  () const { return this->template sub<3>(); }
-    public   : auto&       x      ()       { return this->template sub<4>(); }
-    public   : const auto& x      () const { return this->template sub<4>(); }
-    public   : auto&       y      ()       { return this->template sub<5>(); }
-    public   : const auto& y      () const { return this->template sub<5>(); }
+class StateNmWithLVW : public StateMapTuple<TNumType, StateNmLVW<TNumType, TLeafType>, StateRobotNmVW<TNumType, TLeafType>, StatePersonsNmVW<TNumType, TLeafType>> {
+    public   : using StateMapTuple<TNumType, StateNmLVW<TNumType, TLeafType>, StateRobotNmVW<TNumType, TLeafType>, StatePersonsNmVW<TNumType, TLeafType>>::StateMapTuple;
+    public   : auto&        L      ()       { return this->template sub<0>(); }
+    public   : const auto&  L      () const { return this->template sub<0>(); }
+    public   : auto&       x      ()       { return this->template sub<1>().x(); }
+    public   : const auto& x      () const { return this->template sub<1>().x(); }
+    public   : auto&       y      ()       { return this->template sub<1>().y(); }
+    public   : const auto& y      () const { return this->template sub<1>().y(); }
     public   : auto&       state  ()       { return *this; }
     public   : const auto& state  () const { return *this; }
+    public   : auto& var(size_t i)       { if(i < this->template sub<0>().subSize()) return this->template sub<0>().sub(i);
+                                           else if(i<this->template sub<0>().subSize()+this->template sub<1>().subSize()) return this->template sub<1>().sub(i-this->template sub<0>().subSize());
+                                           else return this->template sub<0>().sub(0); }
+    public   : size_t varSize() const  {return this->template sub<0>().subSize()+this->template sub<1>().subSize(); }   
 };
 
+template<class TNumType, class TLeafType>
+class StateNmVW : public StateMapTuple<TNumType, StateRobotNmVW<TNumType, TLeafType>, StatePersonsNmVW<TNumType, TLeafType>> {
+    public   : using StateMapTuple<TNumType, StateRobotNmVW<TNumType, TLeafType>, StatePersonsNmVW<TNumType, TLeafType>> ::StateMapTuple;
+    public   : auto&       x    ()       { return this->template sub<0>().x(); }
+    public   : const auto& x    () const { return this->template sub<0>().x(); }
+    public   : auto&       y    ()       { return this->template sub<0>().y(); }
+    public   : const auto& y    () const { return this->template sub<0>().y(); }
+    public   : auto&       state()       { return *this; }
+    public   : const auto& state() const { return *this; }
+    public   : auto& var(size_t i)       { return this->template sub<0>().sub(i); }
+    public   : size_t varSize() const  {return this->template sub<0>().subSize(); }   
+};
 /*!@class StateCfVW
  * @brief Defining the system closed-form state variables.
  * 
@@ -116,6 +145,8 @@ class StateCfVW : public StateMapArray<TNumType, TLeafType, 7> {
     public   : const auto& t    () const { return this->template sub<5>(); }
     public   : auto&       s    ()       { return this->template sub<6>(); }
     public   : const auto& s    () const { return this->template sub<6>(); }
+    public   : auto& var(size_t i)       { return this->sub(i); }
+    public   : size_t varSize() const {return this->subSize(); }   
 };
 
 static constexpr const size_t optParamBlockSize = 3;
@@ -237,15 +268,15 @@ class StateSimVWBase : public StateSimBase< StateSimVWBase<TNumType, MapDataType
     public   : void adjustGradXSizeImpl(auto& _gradXNm, auto& _gradXCf) {
 	auto& paramFuncs = this->paramStruct->paramFuncs;
 	int ctrlPtOptNr = paramFuncs.funcCtrlPtSize(0)-1;
-	if ( _gradXNm.sub(0).sub(0).data().size() != ctrlPtOptNr ) {
-	    for(size_t i = 0; i < _gradXNm.subSize(); ++i) {
-		for(size_t j = 0; j < _gradXNm.sub(i).subSize(); ++j) {
-		    _gradXNm.sub(i).sub(j).subResize(ctrlPtOptNr);
+	if ( _gradXNm.var(0).sub(0).data().size() != ctrlPtOptNr ) {
+	    for(size_t i = 0; i < _gradXNm.varSize(); ++i) {
+		for(size_t j = 0; j < _gradXNm.var(i).subSize(); ++j) {
+		    _gradXNm.var(i).sub(j).subResize(ctrlPtOptNr);
 		}
 	    }
-	    for(size_t i = 0; i < _gradXCf.subSize(); ++i) {
-		for(size_t j = 0; j < _gradXCf.sub(i).subSize(); ++j) {
-		    _gradXCf.sub(i).sub(j).subResize(ctrlPtOptNr);
+	    for(size_t i = 0; i < _gradXCf.varSize(); ++i) {
+		for(size_t j = 0; j < _gradXCf.var(i).subSize(); ++j) {
+		    _gradXCf.var(i).sub(j).subResize(ctrlPtOptNr);
 		}
 	    }
 	}
