@@ -36,6 +36,7 @@
 #include <tuw_control/state_sim/state_sim.hpp>
 #include <tuw_control/param_func_new/param_func_spline/param_func_spline0_dist.hpp>
 #include <tuw_control/utils.h>
+#include <grid_map_ros/grid_map_ros.hpp>
 
 namespace tuw {
 
@@ -78,10 +79,27 @@ class StateRobotNmVW : public StateMapArray<TNumType, TLeafType, 2> {
     public   : const auto& state() const { return *this; }
 };
 
+
 template<class TNumType, class TLeafType>
-class StatePersonsNmVW : public StateMapVector<TNumType, TLeafType> {
-    public   : using StateMapVector<TNumType, TLeafType>::StateMapVector;
+class StatePersonNmVW : public StateMapArray<TNumType, TLeafType, 3> {
+    public   : using StateMapArray<TNumType, TLeafType, 3>::StateMapArray;
+    public   : auto&       x    ()       { return this->template sub<0>(); }
+    public   : const auto& x    () const { return this->template sub<0>(); }
+    public   : auto&       y    ()       { return this->template sub<1>(); }
+    public   : const auto& y    () const { return this->template sub<1>(); }
+    public   : auto&       theta()       { return this->template sub<2>(); }
+    public   : const auto& theta() const { return this->template sub<2>(); }
+    public   : auto&       state()       { return *this; }
+    public   : const auto& state() const { return *this; }
 };
+
+template<class TNumType, class TLeafType>
+class StatePersonsNmVW : public StateMapVector<TNumType, StatePersonNmVW<TNumType,TLeafType>> {
+    public   : using StateMapVector<TNumType, StatePersonNmVW<TNumType,TLeafType>>::StateMapVector;
+    public   : auto&       state()       { return *this; }
+    public   : const auto& state() const { return *this; }
+};
+
 
 /*!@class StateNmWithLVW
  * @brief Defining the system numerical state variables, including a scalar objective function L.
@@ -94,31 +112,46 @@ class StatePersonsNmVW : public StateMapVector<TNumType, TLeafType> {
 template<class TNumType, class TLeafType>
 class StateNmWithLVW : public StateMapTuple<TNumType, StateNmLVW<TNumType, TLeafType>, StateRobotNmVW<TNumType, TLeafType>, StatePersonsNmVW<TNumType, TLeafType>> {
     public   : using StateMapTuple<TNumType, StateNmLVW<TNumType, TLeafType>, StateRobotNmVW<TNumType, TLeafType>, StatePersonsNmVW<TNumType, TLeafType>>::StateMapTuple;
-    public   : auto&        L      ()       { return this->template sub<0>(); }
-    public   : const auto&  L      () const { return this->template sub<0>(); }
+    public   : auto&       L      ()       { return this->template sub<0>(); }
+    public   : const auto& L      () const { return this->template sub<0>(); }
     public   : auto&       x      ()       { return this->template sub<1>().x(); }
     public   : const auto& x      () const { return this->template sub<1>().x(); }
     public   : auto&       y      ()       { return this->template sub<1>().y(); }
     public   : const auto& y      () const { return this->template sub<1>().y(); }
+    public   : auto&       persons()       { return this->template sub<2>(); }
+    public   : const auto& persons() const { return this->template sub<2>(); }
     public   : auto&       state  ()       { return *this; }
     public   : const auto& state  () const { return *this; }
-    public   : auto& var(size_t i)       { if(i < this->template sub<0>().subSize()) return this->template sub<0>().sub(i);
-                                           else if(i<this->template sub<0>().subSize()+this->template sub<1>().subSize()) return this->template sub<1>().sub(i-this->template sub<0>().subSize());
-                                           else return this->template sub<0>().sub(0); }
-    public   : size_t varSize() const  {return this->template sub<0>().subSize()+this->template sub<1>().subSize(); }   
+    public   : auto& var  (size_t i)       { if(i < this->template sub<0>().subSize()) 
+                                                return this->template sub<0>().sub(i);
+                                             else if(i<this->template sub<0>().subSize()+this->template sub<1>().subSize()) 
+                                                return this->template sub<1>().sub(i-this->template sub<0>().subSize());
+                                             else { 
+                                                const size_t idx = i-this->template sub<0>().subSize()-this->template sub<1>().subSize();
+                                                return this->template sub<2>().sub(idx/2).sub(idx%2);
+                                             }
+                                           }
+    public   : size_t varSize     () const { return this->template sub<0>().subSize()+this->template sub<1>().subSize()+this->template sub<2>().subSize()*2; }   
 };
 
 template<class TNumType, class TLeafType>
 class StateNmVW : public StateMapTuple<TNumType, StateRobotNmVW<TNumType, TLeafType>, StatePersonsNmVW<TNumType, TLeafType>> {
     public   : using StateMapTuple<TNumType, StateRobotNmVW<TNumType, TLeafType>, StatePersonsNmVW<TNumType, TLeafType>> ::StateMapTuple;
-    public   : auto&       x    ()       { return this->template sub<0>().x(); }
-    public   : const auto& x    () const { return this->template sub<0>().x(); }
-    public   : auto&       y    ()       { return this->template sub<0>().y(); }
-    public   : const auto& y    () const { return this->template sub<0>().y(); }
-    public   : auto&       state()       { return *this; }
-    public   : const auto& state() const { return *this; }
-    public   : auto& var(size_t i)       { return this->template sub<0>().sub(i); }
-    public   : size_t varSize() const  {return this->template sub<0>().subSize(); }   
+    public   : auto&       x      ()       { return this->template sub<0>().x(); }
+    public   : const auto& x      () const { return this->template sub<0>().x(); }
+    public   : auto&       y      ()       { return this->template sub<0>().y(); }
+    public   : const auto& y      () const { return this->template sub<0>().y(); }
+    public   : auto&       persons()       { return this->template sub<1>(); }
+    public   : const auto& persons() const { return this->template sub<1>(); }
+    public   : auto&       state  ()       { return *this; }
+    public   : const auto& state  () const { return *this; }
+    public   : auto& var  (size_t i)       { if(i < this->template sub<0>().subSize()) { return this->template sub<0>().sub(i); }
+                                             else {
+                                                const size_t idx = i-this->template sub<0>().subSize();
+                                                return this->template sub<1>().sub(idx/2).sub(idx%2);
+                                             }
+                                           }
+    public   : size_t varSize     () const { return this->template sub<0>().subSize()+this->template sub<1>().subSize()*2; }   
 };
 /*!@class StateCfVW
  * @brief Defining the system closed-form state variables.
@@ -146,7 +179,7 @@ class StateCfVW : public StateMapArray<TNumType, TLeafType, 7> {
     public   : auto&       s    ()       { return this->template sub<6>(); }
     public   : const auto& s    () const { return this->template sub<6>(); }
     public   : auto& var(size_t i)       { return this->sub(i); }
-    public   : size_t varSize() const {return this->subSize(); }   
+    public   : size_t varSize() const    { return this->subSize(); }   
 };
 
 static constexpr const size_t optParamBlockSize = 3;
@@ -209,12 +242,18 @@ class StateSimVWBase : public StateSimBase< StateSimVWBase<TNumType, MapDataType
     using PFV = typename ParamType<TNumType, MapDataType>::ParamFuncVars;
     
     public   : void adjustXSizeImpl(auto& _XNm, auto& _XCf) {
+        _XNm.persons().subResize(this->paramStruct->state0.stateNm().persons().subSize());
 	this->paramStruct->paramFuncs.precompute();
     }
     public   : void setXNm0Impl(auto& _XNm0) {
 	for(int i = 0; i < _XNm0.data().size(); ++i) { _XNm0.data()(i) = 0; }
 	_XNm0.x() = this->paramStruct->state0.stateNm().x();
 	_XNm0.y() = this->paramStruct->state0.stateNm().y();
+        for(size_t i = 0; i<_XNm0.persons().subSize();i++) {
+            _XNm0.persons().sub(i).x() = this->paramStruct->state0.stateNm().persons().sub(i).x();
+            _XNm0.persons().sub(i).y() = this->paramStruct->state0.stateNm().persons().sub(i).y();
+            _XNm0.persons().sub(i).theta() = this->paramStruct->state0.stateNm().persons().sub(i).theta();
+        }
     }
     //same as before, but all closed-form variables have to be computed
     public  : void setXCfImpl ( auto& _XCf, const TNumType& _arc, const PfEaG& _eAG ) {
@@ -245,8 +284,78 @@ class StateSimVWBase : public StateSimBase< StateSimVWBase<TNumType, MapDataType
 	    sinTheta_ = sin(_stateCf.theta());
 	    arcNmDotCache_ = _arc;
 	}
-	_XNmDot.x()     = _stateCf.v() * cosTheta_;
-	_XNmDot.y()     = _stateCf.v() * sinTheta_;
+        _XNmDot.x()     = _stateCf.v() * cosTheta_;
+        _XNmDot.y()     = _stateCf.v() * sinTheta_;
+        for(size_t i = 0; i<_XNmDot.persons().subSize();i++) {
+            _XNmDot.persons().sub(i).x()     = 0;
+            _XNmDot.persons().sub(i).y()     = 0;
+            _XNmDot.persons().sub(i).theta() = 0;
+            
+            const double v = this->paramStruct->cfData.personVs[i];
+            double weight = 0;
+            double rotation = 0;
+            if(v>0.1) {
+                const double theta = _stateNm.persons().sub(i).theta();
+                _XNmDot.persons().sub(i).x() = v * cos(theta);
+                _XNmDot.persons().sub(i).y() = v * sin(theta);
+                
+                const double x = _stateNm.persons().sub(i).x();
+                const double y = _stateNm.persons().sub(i).y();
+                grid_map::Position best_target;
+                //Using the all_dirs layer as sink
+                auto &map = this->paramStruct->cfData.personHeatmap;
+                //grid_map::SpiralIterator iterator(map, position, map.getResolution()*4);
+                //Ignore center pixel
+                //++iterator;
+                grid_map::Polygon polygon;
+                polygon.setFrameId(map.getFrameId());
+                double theta_lhs = theta-M_PI/2;
+                double theta_rhs = theta+M_PI/2;
+                if(theta_lhs>M_PI) {
+                    theta_lhs -= 2*M_PI;
+                } else if(theta_lhs<-M_PI) {
+                    theta_lhs += 2*M_PI;
+                }
+                if(theta_rhs>M_PI) {
+                    theta_rhs -= 2*M_PI;
+                } else if(theta_rhs<-M_PI) {
+                    theta_rhs += 2*M_PI;
+                }
+                grid_map::Position pos0(x+map.getResolution()*cos(theta), y+map.getResolution()*sin(theta));
+                grid_map::Position pos1(x+map.getResolution()*4*cos(theta_lhs), y+map.getResolution()*4*sin(theta_lhs));
+                grid_map::Position pos2(x+map.getResolution()*4*cos(theta), y+map.getResolution()*4*sin(theta));
+                grid_map::Position pos3(x+map.getResolution()*4*cos(theta_rhs), y+map.getResolution()*4*sin(theta_rhs));
+                
+                //If any of the vertices is outside of the map the polygon iterator can get stuck, so ignore just assume constant velocity for now
+                if(map.isInside(pos0) && map.isInside(pos1) && map.isInside(pos2) && map.isInside(pos3)) {
+                    polygon.addVertex(pos0);
+                    polygon.addVertex(pos1);
+                    polygon.addVertex(pos2);
+                    polygon.addVertex(pos3);
+                    for (grid_map::PolygonIterator iterator(map, polygon); !iterator.isPastEnd(); ++iterator) {
+                        const size_t linIdx = grid_map::getLinearIndexFromIndex(*iterator,this->paramStruct->cfData.personHeatmap.getSize());
+                        double curr_weight = map["all_dirs"](linIdx);
+                        if(curr_weight>weight) {
+                            grid_map::Position target;
+                            grid_map::Size bufferSize = map.getSize();
+                            grid_map::getPositionFromIndex (target, *iterator, map.getLength(), map.getPosition(), map.getResolution(),bufferSize);
+                            const double dx = target[0] - x;
+                            const double dy = target[1] - y;
+                            double curr_rotation = atan2(dy,dx);
+                            if(abs(curr_rotation-theta)<M_PI/2) {
+                                weight=curr_weight;
+                                rotation = curr_rotation-theta;
+                                best_target = target;
+                            }
+                        }
+                    }
+                }
+
+                if(weight>1) {
+                    _XNmDot.persons().sub(i).theta() = rotation;
+                }
+            }
+        }
     }
     
     private : void setXCfNmStep ( auto& _XCf, const TNumType& _arc, const PfEaG& _eAG ) { 
@@ -295,6 +404,8 @@ class StateSimVWBase : public StateSimBase< StateSimVWBase<TNumType, MapDataType
 	static Eigen::Matrix<TNumType,2,1> dfduX;
 	static Eigen::Matrix<TNumType,2,1> dfduY;
 	
+        for(int i=0;i<_gradXNmDot.data().size();i++) { _gradXNmDot.data()(i) = 0; }
+        
 	dfduX(0) = cosTheta_;
 	dfduX(1) = sinTheta_;
 	dfduY(0) = - XCf.v() * sinTheta_;
