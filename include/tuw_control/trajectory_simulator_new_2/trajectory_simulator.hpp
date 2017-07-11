@@ -95,7 +95,7 @@ class LatticeTypeBaseCRTP {
     public   : template<size_t FuncsNr = 0, size_t TupSize = std::tuple_size<std::tuple<TLatticeCostFuncs...>>::value, typename std::enable_if< (TupSize  > 0) >::type* = nullptr > 
 	       void evaluate          (const auto& _x, const size_t& _i, TSimType& _sim, auto& _ansPtr) { 
 		    for_each_tuple( std::get<FuncsNr>(costFuncs_), [this, &_x, &_sim, &_ansPtr, &_i](auto& costFuncI) { 
-			    *_ansPtr = costFuncI.f(_x, _i, _sim, *this); _ansPtr++;
+			    *_ansPtr = costFuncI.f(_x, _i, _sim, this->thisDerived() ); _ansPtr++;
 			}
 		    );
 		}
@@ -104,9 +104,9 @@ class LatticeTypeBaseCRTP {
     public   : template<size_t FuncsNr = 0, size_t TupSize = std::tuple_size<std::tuple<TLatticeCostFuncs...>>::value, typename std::enable_if< (TupSize  > 0) >::type* = nullptr > 
 		void evaluateWithGrad (const auto& _x, const size_t& _i, const auto& _gradX, TSimType& _sim, auto& _ansPtr, auto& _ansGradPtr, const size_t& elSize) { 
 		    for_each_tuple( std::get<FuncsNr>(costFuncs_), [this, &_x, &_gradX, &_sim,  &_ansPtr, &_ansGradPtr, &elSize, &_i](auto& costFuncI) { 
-			    *_ansPtr = costFuncI.f(_x, _i, _sim, *this); _ansPtr++;
+			    *_ansPtr = costFuncI.f(_x, _i, _sim, this->thisDerived() ); _ansPtr++;
 			    Eigen::Map<Eigen::Matrix<TNumType, -1,1>> map(_ansGradPtr, elSize, 1);
-			    costFuncI.gradF(map, _x, _gradX, _i, _sim, *this); _ansGradPtr+=elSize; 
+			    costFuncI.gradF(map, _x, _gradX, _i, _sim, this->thisDerived() ); _ansGradPtr+=elSize; 
 			} 
 		    );
 		}

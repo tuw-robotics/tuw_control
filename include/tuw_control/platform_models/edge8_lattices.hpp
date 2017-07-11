@@ -95,19 +95,9 @@ class LatticeTypeStateSimEqDt : public LatticeTypeBaseCRTP<LatticeTypeStateSimEq
 template<typename TNumType, class TSimType, class... TCostFuncsType>
 class LatticeTypeStateSimEqDs : public LatticeTypeBaseCRTP<LatticeTypeStateSimEqDs<TNumType, TSimType, TCostFuncsType...>, TNumType, TSimType, TCostFuncsType...> {
     public   : using LatticeTypeBaseCRTP<LatticeTypeStateSimEqDs, TNumType, TSimType, TCostFuncsType...>::LatticeTypeBaseCRTP;
+    public   : struct CosSinCache{ TNumType cos; TNumType sin; };
+    public   : std::vector<CosSinCache> cosSinCache_;
     public   : void computeLatticeArcsImpl (TSimType& _sim, std::vector<TNumType>& _latticeArcs ) {
-// 	if ( (ds_ > 0) || (nrPts_ > 1) ) { 
-// 	    auto& paramFuncs = _sim.paramStruct->paramFuncs;
-// 	    if(nrPts_ > 1) {
-// 		paramFuncs.setEvalArc(  paramFuncs.funcsArcEnd()   );
-// 		ds_ =  paramFuncs.computeS() / (TNumType)(nrPts_);
-// 		paramFuncs.setEvalArc(  paramFuncs.funcsArcBegin() );
-// 	    }
-// 	    paramFuncs.computeS2TLattice( 0, ds_, _latticeArcs );
-// 	    _latticeArcs.erase(_latticeArcs.begin());
-// 	} 
-// 	else        { _latticeArcs.clear(); }
-	
 	auto& paramFuncs = _sim.paramStruct->paramFuncs;
 	double sEnd;
 	if(nrPts_ > 1) {
@@ -115,7 +105,7 @@ class LatticeTypeStateSimEqDs : public LatticeTypeBaseCRTP<LatticeTypeStateSimEq
 	    sEnd = paramFuncs.computeS();
 	    ds_  =  sEnd / (TNumType)(nrPts_);
 	    paramFuncs.setEvalArc(  paramFuncs.funcsArcBegin() );
-	    if((int)_latticeArcs.size() != nrPts_) { _latticeArcs.resize( nrPts_ ); }
+	    if((int)_latticeArcs.size() != nrPts_) { _latticeArcs.resize( nrPts_ ); cosSinCache_.resize( nrPts_ ); }
 	    for ( int i = 0; i < nrPts_; ++i ) { _latticeArcs[i] = (i+1) * ds_; }
 	    _latticeArcs.back() = sEnd;
 	    paramFuncs.computeS2TLattice( _latticeArcs, _latticeArcs );
@@ -147,7 +137,13 @@ class LatticeTypeStateSimEqDs : public LatticeTypeBaseCRTP<LatticeTypeStateSimEq
 	    }
 	}
     }
-    public   : virtual void precompute(TSimType& _sim) override {}
+    public   : virtual void precompute(TSimType& _sim) override {
+	for ( size_t i = 0; i < cosSinCache_.size(); ++i ) {
+	    const TNumType& th = this->lattice[i].statePtr->stateNm().theta();
+	    cosSinCache_[i].cos = cos( th );
+	    cosSinCache_[i].sin = sin( th );
+	}
+    }
     public   : const TNumType& dt () { return ds_; }
     public   : void setDs   (const TNumType& _ds) { ds_ = _ds; nrPts_ = -1; }
     public   : void setNrPts(const size_t& _nrPts) { nrPts_ = _nrPts; }
@@ -155,12 +151,38 @@ class LatticeTypeStateSimEqDs : public LatticeTypeBaseCRTP<LatticeTypeStateSimEq
     private  : int nrPts_;
     private  : Eigen::Matrix<TNumType,-1,1> dsdp;
     private  : Eigen::Matrix<TNumType,-1,1> stateDotCache;
+    
 };
 
 
 template<typename TNumType, class TSimType, class... TCostFuncsType>
-class LatticeTypeStateSimCtrlPtKnots : public LatticeTypeBaseCRTP<LatticeTypeStateSimCtrlPtKnots<TNumType, TSimType, TCostFuncsType...>, TNumType, TSimType, TCostFuncsType...> {
-    public   : using LatticeTypeBaseCRTP<LatticeTypeStateSimCtrlPtKnots, TNumType, TSimType, TCostFuncsType...>::LatticeTypeBaseCRTP;
+class LatticeTypeStateSimCtrlPtKnotsP : public LatticeTypeBaseCRTP<LatticeTypeStateSimCtrlPtKnotsP<TNumType, TSimType, TCostFuncsType...>, TNumType, TSimType, TCostFuncsType...> {
+    public   : using LatticeTypeBaseCRTP<LatticeTypeStateSimCtrlPtKnotsP, TNumType, TSimType, TCostFuncsType...>::LatticeTypeBaseCRTP;
+    public   : void computeLatticeArcsImpl (TSimType& _sim, std::vector<TNumType>& _latticeArcs ) const {
+	if(inUse){
+	    _latticeArcs.resize( _sim.paramStruct->paramFuncs.funcsArcSize(1)-2);
+	    auto& paramFuncs = _sim.paramStruct->paramFuncs;
+	    for ( size_t i = 0; i < _latticeArcs.size(); ++i ) { _latticeArcs[i] =  paramFuncs.funcsArc(1, i+1); }
+	} else {
+	    _latticeArcs.clear();
+	}
+    }
+    public   : void computeDArcIdPImpl(const TSimType& _sim, const TNumType _arc, const size_t& _lattIdx, auto& _dstStateGrad ) {
+	if(inUse) {
+	    auto& dstStateGradCf = _dstStateGrad.stateCf();
+	    auto& dstStateGradNm = _dstStateGrad.stateNm();
+	    size_t optParamTIdx = dstStateGradCf.sub(0).optParamV().data().size() + dstStateGradCf.sub(0).optParamP().data().size();
+	    dstStateGradCf.mat().col(optParamTIdx + _lattIdx) += _sim.stateCfDotCache().data();
+	    dstStateGradNm.mat().col(optParamTIdx + _lattIdx) += _sim.stateNmDotCache().data();
+	}
+    }
+    public   : virtual void precompute(TSimType& _sim) override {}
+    public   : bool inUse;
+};
+
+template<typename TNumType, class TSimType, class... TCostFuncsType>
+class LatticeTypeStateSimCtrlPtKnotsV : public LatticeTypeBaseCRTP<LatticeTypeStateSimCtrlPtKnotsV<TNumType, TSimType, TCostFuncsType...>, TNumType, TSimType, TCostFuncsType...> {
+    public   : using LatticeTypeBaseCRTP<LatticeTypeStateSimCtrlPtKnotsV, TNumType, TSimType, TCostFuncsType...>::LatticeTypeBaseCRTP;
     public   : void computeLatticeArcsImpl (TSimType& _sim, std::vector<TNumType>& _latticeArcs ) const {
 	if(inUse){
 	    _latticeArcs.resize( _sim.paramStruct->paramFuncs.funcsArcSize(0)-1);
@@ -174,7 +196,7 @@ class LatticeTypeStateSimCtrlPtKnots : public LatticeTypeBaseCRTP<LatticeTypeSta
 	if(inUse) {
 	    auto& dstStateGradCf = _dstStateGrad.stateCf();
 	    auto& dstStateGradNm = _dstStateGrad.stateNm();
-	    size_t optParamTIdx = dstStateGradCf.sub(0).optParamV().data().size() + dstStateGradCf.sub(0).optParamP().data().size();
+	    size_t optParamTIdx = dstStateGradCf.sub(0).optParamV().data().size() + dstStateGradCf.sub(0).optParamP().data().size() + dstStateGradCf.sub(0).optParamTP().data().size();
 	    dstStateGradCf.mat().col(optParamTIdx + _lattIdx) += _sim.stateCfDotCache().data();
 	    dstStateGradNm.mat().col(optParamTIdx + _lattIdx) += _sim.stateNmDotCache().data();
 	}

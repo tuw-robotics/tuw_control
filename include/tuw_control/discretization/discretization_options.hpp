@@ -114,6 +114,7 @@ public:
 	stepper_base_type( MethodType<Value>::a(), MethodType<Value>::b , MethodType<Value>::c , algebra ) { 
 	
     }
+    public: EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 };
 
 template< size_t HistSize, class TRKType>
