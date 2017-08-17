@@ -47,8 +47,8 @@ namespace DiffDrive {
 
 
 template<class TNumType, class TLeafType>
-class StateNmLVW : public StateMapArray<TNumType, TLeafType, 4> {
-    public   : using StateMapArray<TNumType, TLeafType, 4>::StateMapArray;
+class StateNmLVW : public StateMapArray<TNumType, TLeafType, 5> {
+    public   : using StateMapArray<TNumType, TLeafType, 5>::StateMapArray;
     public   : auto&       dThetaSqr()       { return this->template sub<0>(); }
     public   : const auto& dThetaSqr() const { return this->template sub<0>(); }
     public   : auto&       pDevSqr ()       { return this->template sub<1>(); }
@@ -57,6 +57,8 @@ class StateNmLVW : public StateMapArray<TNumType, TLeafType, 4> {
     public   : const auto& rhoSqr () const { return this->template sub<2>(); }
     public   : auto&       avSqr  ()       { return this->template sub<3>(); }
     public   : const auto& avSqr  () const { return this->template sub<3>(); }
+    public   : auto&       prevPDevSqr ()       { return this->template sub<4>(); }
+    public   : const auto& prevPDevSqr () const { return this->template sub<4>(); }
     
 };
     
@@ -292,8 +294,6 @@ class StateSimVWBase : public StateSimBase< StateSimVWBase<TNumType, MapDataType
             _XNmDot.persons().sub(i).theta() = 0;
             
             const double v = this->paramStruct->cfData.personVs[i];
-            double weight = 0;
-            double rotation = 0;
             if(v>0.1) {
                 const double theta = _stateNm.persons().sub(i).theta();
                 _XNmDot.persons().sub(i).x() = v * cos(theta);
@@ -301,58 +301,28 @@ class StateSimVWBase : public StateSimBase< StateSimVWBase<TNumType, MapDataType
                 
                 const double x = _stateNm.persons().sub(i).x();
                 const double y = _stateNm.persons().sub(i).y();
-                grid_map::Position best_target;
                 //Using the all_dirs layer as sink
                 auto &map = this->paramStruct->cfData.personHeatmap;
-                //grid_map::SpiralIterator iterator(map, position, map.getResolution()*4);
-                //Ignore center pixel
-                //++iterator;
-                grid_map::Polygon polygon;
-                polygon.setFrameId(map.getFrameId());
-                double theta_lhs = theta-M_PI/2;
-                double theta_rhs = theta+M_PI/2;
-                if(theta_lhs>M_PI) {
-                    theta_lhs -= 2*M_PI;
-                } else if(theta_lhs<-M_PI) {
-                    theta_lhs += 2*M_PI;
-                }
-                if(theta_rhs>M_PI) {
-                    theta_rhs -= 2*M_PI;
-                } else if(theta_rhs<-M_PI) {
-                    theta_rhs += 2*M_PI;
-                }
-                grid_map::Position pos0(x+map.getResolution()*cos(theta), y+map.getResolution()*sin(theta));
-                grid_map::Position pos1(x+map.getResolution()*4*cos(theta_lhs), y+map.getResolution()*4*sin(theta_lhs));
-                grid_map::Position pos2(x+map.getResolution()*4*cos(theta), y+map.getResolution()*4*sin(theta));
-                grid_map::Position pos3(x+map.getResolution()*4*cos(theta_rhs), y+map.getResolution()*4*sin(theta_rhs));
-                
-                //If any of the vertices is outside of the map the polygon iterator can get stuck, so ignore just assume constant velocity for now
-                if(map.isInside(pos0) && map.isInside(pos1) && map.isInside(pos2) && map.isInside(pos3)) {
-                    polygon.addVertex(pos0);
-                    polygon.addVertex(pos1);
-                    polygon.addVertex(pos2);
-                    polygon.addVertex(pos3);
-                    for (grid_map::PolygonIterator iterator(map, polygon); !iterator.isPastEnd(); ++iterator) {
-                        const size_t linIdx = grid_map::getLinearIndexFromIndex(*iterator,this->paramStruct->cfData.personHeatmap.getSize());
-                        double curr_weight = map["all_dirs"](linIdx);
-                        if(curr_weight>weight) {
-                            grid_map::Position target;
-                            grid_map::Size bufferSize = map.getSize();
-                            grid_map::getPositionFromIndex (target, *iterator, map.getLength(), map.getPosition(), map.getResolution(),bufferSize);
-                            const double dx = target[0] - x;
-                            const double dy = target[1] - y;
-                            double curr_rotation = atan2(dy,dx);
-                            if(abs(curr_rotation-theta)<M_PI/2) {
-                                weight=curr_weight;
-                                rotation = curr_rotation-theta;
-                                best_target = target;
-                            }
-                        }
+                auto &layers = this->paramStruct->cfData.personHeatmapLayers;
+                grid_map::Index idx;
+                grid_map::Position pos(x,y);
+                if(map.isInside(pos)) {
+                    map.getIndex(pos,idx);
+                    const size_t linIdx = grid_map::getLinearIndexFromIndex(idx,map.getSize());
+                    int direction;
+                    if((theta>=-M_PI && theta<-3*M_PI/4) || (theta<=M_PI && theta>3*M_PI/4)) { direction = 3;}
+                    else if(theta>=-3*M_PI/4 && theta<-M_PI/4) { direction = 2;}
+                    else if(theta>=-M_PI/4 && theta<M_PI/4) { direction = 1;}
+                    else { direction = 0;}
+                    double thetaTar = 0;
+                    if((*layers[direction*2+1])(linIdx) > 0 || (*layers[direction*2])(linIdx) > 0) {
+                        thetaTar = atan2((*layers[direction*2+1])(linIdx),(*layers[direction*2])(linIdx));
+                        double rotation = thetaTar-theta;
+                        if(rotation<-M_PI) {rotation+=2*M_PI;}
+                        else if(rotation>M_PI) {rotation-=2*M_PI;}
+                        _XNmDot.persons().sub(i).theta() = rotation*this->paramStruct->cfData.peoplePredictionP;
                     }
-                }
-
-                if(weight>1) {
-                    _XNmDot.persons().sub(i).theta() = rotation;
+//                     printf("%f: %f %f %f %f %f %f %d\n",_stateCf.t(),x,y,theta,(*layers[direction*2])(linIdx),(*layers[direction*2+1])(linIdx),thetaTar,direction);
                 }
             }
         }
@@ -375,6 +345,7 @@ class StateSimVWBase : public StateSimBase< StateSimVWBase<TNumType, MapDataType
 	for(int i = 0; i < _gradXNm0.data().size(); ++i) { _gradXNm0.data()(i) = 0; }
     }
     public   : void adjustGradXSizeImpl(auto& _gradXNm, auto& _gradXCf) {
+    _gradXNm.persons().subResize(this->paramStruct->state0.stateNm().persons().subSize());
 	auto& paramFuncs = this->paramStruct->paramFuncs;
 	int ctrlPtOptNr = paramFuncs.funcCtrlPtSize(0)-1;
 	if ( _gradXNm.var(0).sub(0).data().size() != ctrlPtOptNr ) {
