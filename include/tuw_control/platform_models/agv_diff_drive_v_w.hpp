@@ -130,10 +130,10 @@ class StateNmWithLVW : public StateMapTuple<TNumType, StateNmLVW<TNumType, TLeaf
                                                 return this->template sub<1>().sub(i-this->template sub<0>().subSize());
                                              else { 
                                                 const size_t idx = i-this->template sub<0>().subSize()-this->template sub<1>().subSize();
-                                                return this->template sub<2>().sub(idx/2).sub(idx%2);
+                                                return this->template sub<2>().sub(idx/3).sub(idx%3);
                                              }
                                            }
-    public   : size_t varSize     () const { return this->template sub<0>().subSize()+this->template sub<1>().subSize()+this->template sub<2>().subSize()*2; }   
+    public   : size_t varSize     () const { return this->template sub<0>().subSize()+this->template sub<1>().subSize()+this->template sub<2>().subSize()*3; }   
 };
 
 template<class TNumType, class TLeafType>
@@ -150,10 +150,10 @@ class StateNmVW : public StateMapTuple<TNumType, StateRobotNmVW<TNumType, TLeafT
     public   : auto& var  (size_t i)       { if(i < this->template sub<0>().subSize()) { return this->template sub<0>().sub(i); }
                                              else {
                                                 const size_t idx = i-this->template sub<0>().subSize();
-                                                return this->template sub<1>().sub(idx/2).sub(idx%2);
+                                                return this->template sub<1>().sub(idx/3).sub(idx%3);
                                              }
                                            }
-    public   : size_t varSize     () const { return this->template sub<0>().subSize()+this->template sub<1>().subSize()*2; }   
+    public   : size_t varSize     () const { return this->template sub<0>().subSize()+this->template sub<1>().subSize()*3; }   
 };
 /*!@class StateCfVW
  * @brief Defining the system closed-form state variables.
@@ -292,7 +292,6 @@ class StateSimVWBase : public StateSimBase< StateSimVWBase<TNumType, MapDataType
             _XNmDot.persons().sub(i).x()     = 0;
             _XNmDot.persons().sub(i).y()     = 0;
             _XNmDot.persons().sub(i).theta() = 0;
-            
             const double v = this->paramStruct->cfData.personVs[i];
             if(v>0.1) {
                 const double theta = _stateNm.persons().sub(i).theta();

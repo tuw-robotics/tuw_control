@@ -66,7 +66,7 @@ class StateGradMapBase : public StateMapBase<TNum, TStateNmByOptVar, TStateCfByO
     public   :       auto& mat ()       { return gradMatMap_; }
     public   : const auto& mat () const { return gradMatMap_; }
     public   : void bindMat(){ 
-	new (&gradMatMap_) Eigen::Map<Eigen::Matrix<TNum,-1,-1, Eigen::RowMajor>>(this->memStartRef(), this->stateNm().subSize()+this->stateCf().subSize(), this->stateNm().var(0).data().size() ); 
+	new (&gradMatMap_) Eigen::Map<Eigen::Matrix<TNum,-1,-1, Eigen::RowMajor>>(this->memStartRef(), this->stateNm().varSize()+this->stateCf().subSize(), this->stateNm().var(0).data().size() ); 
 	this->stateNm().bindMat();
 	this->stateCf().bindMat();
     }
@@ -85,7 +85,7 @@ class StateGradWithMatMap : public TstateGrad {
     public   :       auto& mat ()       { return gradMatMap_; }
     public   : const auto& mat () const { return gradMatMap_; }
     public   : void bindMat(){ 
-	new (&gradMatMap_) Eigen::Map<Eigen::Matrix<TNum,-1,-1, Eigen::RowMajor>>(this->memStartRef(), this->subSize(), this->var(0).data().size() );
+	new (&gradMatMap_) Eigen::Map<Eigen::Matrix<TNum,-1,-1, Eigen::RowMajor>>(this->memStartRef(), this->varSize(), this->var(0).data().size() );
     }
     private  : Eigen::Map<Eigen::Matrix<TNum,-1,-1, Eigen::RowMajor>> gradMatMap_;
 };
