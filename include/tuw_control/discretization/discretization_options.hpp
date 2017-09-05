@@ -114,7 +114,19 @@ public:
 	stepper_base_type( MethodType<Value>::a(), MethodType<Value>::b , MethodType<Value>::c , algebra ) { 
 	
     }
+    public: EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 };
+
+template< size_t HistSize, class TRKType>
+using explicit_adams_bashforth         =        odeint::adams_bashforth        < HistSize,        
+                                                                                 typename TRKType::state_type , 
+										 typename TRKType::value_type, 
+										 typename TRKType::deriv_type , 
+										 typename TRKType::time_type , 
+										 typename TRKType::algebra_type , 
+										 typename TRKType::operations_type , 
+										 typename TRKType::resizer_type,
+										 TRKType >;
 
 }
 

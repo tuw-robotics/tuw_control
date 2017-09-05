@@ -122,6 +122,13 @@ class StateSimBaseVirt {
 
 template<class NumType, class StateWithGradNmNumType, template<class> class  TDiscretizationType>
 class OdeStateSolverRealAlias {
+//     private  : using OdeStateGradSolverRKType   = explicit_generic_rk_impl<  TDiscretizationType, 
+// 	                                                                 StateWithGradNmNumType, 
+// 								         NumType,        
+// 								         StateWithGradNmNumType, 
+// 								         NumType, 
+// 								         odeint::vector_space_algebra >;
+//     private  : using OdeStateGradSolverType = explicit_adams_bashforth<5, OdeStateGradSolverRKType>;
     private  : using OdeStateGradSolverType = explicit_generic_rk_impl<TDiscretizationType, 
 								       StateWithGradNmNumType, 
 								       NumType,        
@@ -163,12 +170,13 @@ class StateSimBase : public StateSimBaseCRTP<StateSimBase<TDerived, TParamType, 
     private  : using StateWithGradNmType    = typename StateMapBaseTraits<typename TStateType::StateMapBaseType>::StateWithGradNmType;
     private  : using StateWithGradCfType    = typename StateMapBaseTraits<typename TStateType::StateMapBaseType>::StateWithGradCfType;
     private  : using StateWithGradNmNumType = typename StateMapBaseTraits<typename TStateType::StateMapBaseType>::StateWithGradNmNumType;
-    private  : using OdeStateSolverType     = explicit_generic_rk_impl<TDiscretizationType, 
-	                                                               StateNmNumType, 
-								       NumType,        
-								       StateNmNumType, 
-								       NumType, 
-								       odeint::vector_space_algebra>;
+    private  : using OdeStateSolverType/*OdeStateSolverRKType*/   = explicit_generic_rk_impl<  TDiscretizationType, 
+	                                                                 StateNmNumType, 
+								         NumType,        
+								         StateNmNumType, 
+								         NumType, 
+								         odeint::vector_space_algebra >;
+//     private  : using OdeStateSolverType     = explicit_adams_bashforth<5, OdeStateSolverRKType>;
     public   : static constexpr const bool hasStateGrad = !std::is_same<EmptyGradType, StateWithGradNmType>::value;
     public   : using StateNumSimType = typename std::conditional<hasStateGrad, StateWithGradNmType, StateNmType>::type;
     
@@ -236,7 +244,6 @@ class StateSimBase : public StateSimBaseCRTP<StateSimBase<TDerived, TParamType, 
 	                 typename std::enable_if< ( !stateGradientRepresentation ) >::type* = nullptr > 
 		void toState0ImplCRTP () {
 		    adjustXSize();
-		    rk_.adjust_size(state_.stateNm().data().size());
 		    
 		    setXNm0();
 		    stateWithGradNmDotCache_ = state_.stateNm();
@@ -244,14 +251,15 @@ class StateSimBase : public StateSimBaseCRTP<StateSimBase<TDerived, TParamType, 
 		    setXCf   (0, PfEaG::AT_BEGIN);
 		    setXNmDot(0, PfEaG::AT_BEGIN);
 		    arcOld_ = 0;
+		    
+		    rk_.adjust_size(state_.stateNm().data().size());
+// 		    rk_.reset();
 		}
     private :  template< bool stateGradientRepresentation = hasStateGrad, 
 	                 typename std::enable_if< (  stateGradientRepresentation ) >::type* = nullptr > 
 		void toState0ImplCRTP () {
 		    adjustXSize();
 		    adjustGradXSize();
-		    rk_          .adjust_size(state_.stateNm        ().data().size());
-		    this->rkGrad_.adjust_size(state_.stateWithGradNm().data().size());
 		    
 		    setXNm0();
 		    setGradXNm0();
@@ -262,6 +270,12 @@ class StateSimBase : public StateSimBaseCRTP<StateSimBase<TDerived, TParamType, 
 		    setXNmDot    (0, PfEaG::AT_BEGIN);
 		    setGradXNmDot(0, PfEaG::AT_BEGIN);
 		    arcOld_ = 0;
+		    
+		    
+		    rk_          .adjust_size(state_.stateNm        ().data().size());
+		    this->rkGrad_.adjust_size(state_.stateWithGradNm().data().size());
+// 		    rk_.reset();
+// 		    this->rkGrad_.reset();
 		}
     private : void simToTImplCRTP ( const NumType& _tEnd, const NumType& _dt ) {
 	toState0();
