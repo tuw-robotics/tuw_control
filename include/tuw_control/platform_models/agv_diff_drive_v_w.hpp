@@ -73,23 +73,24 @@ class StateNmVW : public StateMapArray<TNumType, TLeafType, 2> {
  * @tparam TLeafType The leaf type. This has to be templated as the numerical state jacobian class will use another (non-numerical) leaf type
  */
 template<class TNumType, class TLeafType>
-class StateNmWithLVW : public StateMapArray<TNumType, TLeafType, 6> {
-    public   : using StateMapArray<TNumType, TLeafType, 6>::StateMapArray;
-    public   : auto&       dThetaSqr()       { return this->template sub<0>(); }
-    public   : const auto& dThetaSqr() const { return this->template sub<0>(); }
-    public   : auto&       pDevSqr  ()       { return this->template sub<1>(); }
-    public   : const auto& pDevSqr  () const { return this->template sub<1>(); }
-    public   : auto&       rhoSqr   ()       { return this->template sub<2>(); }
-    public   : const auto& rhoSqr   () const { return this->template sub<2>(); }
-    public   : auto&       avSqr    ()       { return this->template sub<3>(); }
-    public   : const auto& avSqr    () const { return this->template sub<3>(); }
-    public   : auto&       x        ()       { return this->template sub<4>(); }
-    public   : const auto& x        () const { return this->template sub<4>(); }
-    public   : auto&       y        ()       { return this->template sub<5>(); }
-    public   : const auto& y        () const { return this->template sub<5>(); }
+class StateNmWithLVW : public StateMapArray<TNumType, TLeafType, 4> {
+    public   : using StateMapArray<TNumType, TLeafType, 4>::StateMapArray;
+//     public   : auto&       dThetaSqr()       { return this->template sub<0>(); }
+//     public   : const auto& dThetaSqr() const { return this->template sub<0>(); }
+//     public   : auto&       pDevSqr  ()       { return this->template sub<1>(); }
+//     public   : const auto& pDevSqr  () const { return this->template sub<1>(); }
+    public   : auto&       rhoSqr   ()       { return this->template sub<0>(); }
+    public   : const auto& rhoSqr   () const { return this->template sub<0>(); }
+    public   : auto&       avSqr    ()       { return this->template sub<1>(); }
+    public   : const auto& avSqr    () const { return this->template sub<1>(); }
+    public   : auto&       x        ()       { return this->template sub<2>(); }
+    public   : const auto& x        () const { return this->template sub<2>(); }
+    public   : auto&       y        ()       { return this->template sub<3>(); }
+    public   : const auto& y        () const { return this->template sub<3>(); }
     public   : auto&       state    ()       { return *this; }
     public   : const auto& state    () const { return *this; }
 };
+
 
 /*!@class StateCfVW
  * @brief Defining the system closed-form state variables.

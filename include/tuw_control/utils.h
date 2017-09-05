@@ -84,7 +84,7 @@ template<std::intmax_t Num, std::intmax_t Denom = 1 >
 struct RatioEval { 
     static constexpr const std::intmax_t num   = Num; 
     static constexpr const std::intmax_t denom = Denom; 
-    static constexpr const double        val   = (double)(Num) / (double)(Denom); 
+    static constexpr const double        val   = (Num) / (const double)(Denom); 
 }; 
 
 
