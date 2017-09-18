@@ -50,8 +50,8 @@ class LatticeTypeStateSimBeginEnd : public LatticeTypeBaseCRTP<LatticeTypeStateS
 	auto& dstStateGradCf = _dstStateGrad.stateCf();
 	auto& dstStateGradNm = _dstStateGrad.stateNm();
 	size_t optParamTBackIdx = dstStateGradCf.sub(0).data().size()-1;
-	dstStateGradCf.mat().col(optParamTBackIdx) += _sim.stateCfDotCache().data();
-	dstStateGradNm.mat().col(optParamTBackIdx) += _sim.stateNmDotCache().data();
+        dstStateGradCf.mat().col(optParamTBackIdx).noalias() += _sim.stateCfDotCache().data();
+        dstStateGradNm.mat().col(optParamTBackIdx).noalias() += _sim.stateNmDotCache().data();
     }
     public   : virtual void precompute(TSimType& _sim) override {}
 };
@@ -80,8 +80,8 @@ class LatticeTypeStateSimEqDt : public LatticeTypeBaseCRTP<LatticeTypeStateSimEq
 	    const TNumType dtIdpEnd = (TNumType)(_lattIdx+1) / (TNumType)(this->lattice.size()/*-1*/);
 	    size_t optParamTBackIdx = dstStateGradCf.sub(0).data().size()-1;
 	    
-	    dstStateGradCf.mat().col(optParamTBackIdx) += _sim.stateCfDotCache().data() * dtIdpEnd;
-	    dstStateGradNm.mat().col(optParamTBackIdx) += _sim.stateNmDotCache().data() * dtIdpEnd;
+            dstStateGradCf.mat().col(optParamTBackIdx).noalias() += _sim.stateCfDotCache().data() * dtIdpEnd;
+            dstStateGradNm.mat().col(optParamTBackIdx).noalias() += _sim.stateNmDotCache().data() * dtIdpEnd;
 // 	}
     }
     public   : virtual void precompute(TSimType& _sim) override {}
@@ -138,8 +138,8 @@ class LatticeTypeStateSimEqDs : public LatticeTypeBaseCRTP<LatticeTypeStateSimEq
 		simNonConst.setXCfDot  (  _arc, PfEaG::NEAR_LAST );
 		stateDotCache.resize(_sim.stateNmDotCache().data().size()+ _sim.stateCfDotCache().data().size());
 	    }
-	    stateDotCache.block(                                   0, 0, _sim.stateNmDotCache().data().size(), 1) =  _sim.stateNmDotCache().data();
-	    stateDotCache.block(_sim.stateNmDotCache().data().size(), 0, _sim.stateCfDotCache().data().size(), 1) =  _sim.stateCfDotCache().data();
+	    stateDotCache.block(                                   0, 0, _sim.stateNmDotCache().data().size(), 1).noalias() =  _sim.stateNmDotCache().data();
+            stateDotCache.block(_sim.stateNmDotCache().data().size(), 0, _sim.stateCfDotCache().data().size(), 1).noalias() =  _sim.stateCfDotCache().data();
 	    auto& v = _sim.state().stateCf().v();
 	    if(fabs(v) > 1e-4) {///@todo would be nicer to do linear interp between singularity
 		TNumType iByNS = (TNumType)(_lattIdx+1) / (TNumType)(this->lattice.size()/*-1*/)/*_sim.state().stateCf().s() / (ds_*nrPts_)*/;
@@ -175,8 +175,8 @@ class LatticeTypeStateSimCtrlPtKnots : public LatticeTypeBaseCRTP<LatticeTypeSta
 	    auto& dstStateGradCf = _dstStateGrad.stateCf();
 	    auto& dstStateGradNm = _dstStateGrad.stateNm();
 	    size_t optParamTIdx = dstStateGradCf.sub(0).optParamV().data().size() + dstStateGradCf.sub(0).optParamW().data().size();
-	    dstStateGradCf.mat().col(optParamTIdx + _lattIdx) += _sim.stateCfDotCache().data();
-	    dstStateGradNm.mat().col(optParamTIdx + _lattIdx) += _sim.stateNmDotCache().data();
+            dstStateGradCf.mat().col(optParamTIdx + _lattIdx).noalias() += _sim.stateCfDotCache().data();
+            dstStateGradNm.mat().col(optParamTIdx + _lattIdx).noalias() += _sim.stateNmDotCache().data();
 	}
     }
     public   : virtual void precompute(TSimType& _sim) override {}
