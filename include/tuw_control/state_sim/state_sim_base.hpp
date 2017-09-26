@@ -244,6 +244,8 @@ class StateSimBase : public StateSimBaseCRTP<StateSimBase<TDerived, TParamType, 
 	                 typename std::enable_if< ( !stateGradientRepresentation ) >::type* = nullptr > 
 		void toState0ImplCRTP () {
 		    adjustXSize();
+                    
+                    for_each_tuple(funcs_, [this](auto& funcI) { funcI.precompute(*this); } );
 		    
 		    setXNm0();
 		    stateWithGradNmDotCache_ = state_.stateNm();
@@ -260,6 +262,8 @@ class StateSimBase : public StateSimBaseCRTP<StateSimBase<TDerived, TParamType, 
 		void toState0ImplCRTP () {
 		    adjustXSize();
 		    adjustGradXSize();
+                    
+                    for_each_tuple(funcs_, [this](auto& funcI) { funcI.precompute(*this); } );
 		    
 		    setXNm0();
 		    setGradXNm0();

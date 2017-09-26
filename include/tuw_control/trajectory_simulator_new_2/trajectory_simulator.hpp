@@ -105,7 +105,7 @@ class LatticeTypeBaseCRTP {
 		void evaluateWithGrad (const auto& _x, const size_t& _i, const auto& _gradX, TSimType& _sim, auto& _ansPtr, auto& _ansGradPtr, const size_t& elSize) { 
 		    for_each_tuple( std::get<FuncsNr>(costFuncs_), [this, &_x, &_gradX, &_sim,  &_ansPtr, &_ansGradPtr, &elSize, &_i](auto& costFuncI) { 
 			    *_ansPtr = costFuncI.f(_x, _i, _sim, this->thisDerived() ); _ansPtr++;
-			    Eigen::Map<Eigen::Matrix<TNumType, -1,1>> map(_ansGradPtr, elSize, 1);
+                            Eigen::Map<Eigen::Matrix<TNumType, -1,1>, MapAlignment> map(_ansGradPtr, elSize, 1);
 			    costFuncI.gradF(map, _x, _gradX, _i, _sim, this->thisDerived() ); _ansGradPtr+=elSize; 
 			} 
 		    );
@@ -168,11 +168,11 @@ class TrajectorySimulator {
     
     public   : TrajectorySimulator           () : stateSim_(std::make_shared<TSimType>()) { 
 	for_each_tuple_class( partialLattices_, correctStateGradFunc ); 
-	for(size_t i = 0; i < gradCostsMap_.size(); ++i){ gradCostsMap_[i] = std::make_shared<Eigen::Map<Eigen::Matrix<TNumType,-1,-1, Eigen::RowMajor>>>(nullptr,0,0); } 
+        for(size_t i = 0; i < gradCostsMap_.size(); ++i){ gradCostsMap_[i] = std::make_shared<Eigen::Map<Eigen::Matrix<TNumType,-1,-1, Eigen::RowMajor>, MapAlignment>>(nullptr,0,0); } 
     }
     public   : TrajectorySimulator           ( StateSimSPtr& _stateSim ) : stateSim_(_stateSim) { 
 	for_each_tuple_class( partialLattices_, correctStateGradFunc ); 
-	for(size_t i = 0; i < gradCostsMap_.size(); ++i){ gradCostsMap_[i] = std::make_shared<Eigen::Map<Eigen::Matrix<TNumType,-1,-1, Eigen::RowMajor>>>(nullptr,0,0); } 
+        for(size_t i = 0; i < gradCostsMap_.size(); ++i){ gradCostsMap_[i] = std::make_shared<Eigen::Map<Eigen::Matrix<TNumType,-1,-1, Eigen::RowMajor>, MapAlignment>>(nullptr,0,0); } 
     }
     
     
@@ -281,7 +281,7 @@ class TrajectorySimulator {
 	    for ( size_t i = 0; i < gradCosts_.subSize(); ++i ) { 
 		auto& gradCostsI = gradCosts_.sub(i);
 		for ( size_t j = 0; j < gradCostsI.subSize(); ++j ) { 
-		    new (gradCostsMap_[i].get()) Eigen::Map<Eigen::Matrix<TNumType,-1,-1, Eigen::RowMajor>>(gradCostsI.memStartRef(), sizeCostsPerType_[i], _optParamSize );
+                    new (gradCostsMap_[i].get()) Eigen::Map<Eigen::Matrix<TNumType,-1,-1, Eigen::RowMajor>, MapAlignment>(gradCostsI.memStartRef(), sizeCostsPerType_[i], _optParamSize );
 		}
 	    }
 	}
@@ -453,7 +453,7 @@ class TrajectorySimulator {
 					      
     public   : StateMapArray<TNumType, StateMapVector<TNumType, TNumType>                            , CostFuncsTypesNr>  costs_;
     public   : StateMapArray<TNumType, StateMapVector<TNumType, StateMapVector<TNumType, TNumType>>  , CostFuncsTypesNr>  gradCosts_;
-    public   : std::array<std::shared_ptr<Eigen::Map<Eigen::Matrix<TNumType,-1,-1, Eigen::RowMajor>>>, CostFuncsTypesNr>  gradCostsMap_;
+    public   : std::array<std::shared_ptr<Eigen::Map<Eigen::Matrix<TNumType,-1,-1, Eigen::RowMajor>, MapAlignment>>, CostFuncsTypesNr>  gradCostsMap_;
     private  : std::array<size_t, sizeof...(TLatticeTypes)> sizeCosts_;
     private  : std::array<size_t, sizeof...(TLatticeTypes)> sizeCostsPerPartLattice_;
     private  : std::array<size_t, CostFuncsTypesNr        > sizeCostsPerType_;

@@ -40,9 +40,12 @@
 #include <memory>
 #include <eigen3/Eigen/Eigen>
 #include <stdexcept>
+#include <boost/align/aligned_allocator.hpp>
 
 namespace tuw {
 
+constexpr const int MapAlignment = Eigen::Aligned16;
+    
 namespace {
     
 template<class TDerived>
@@ -104,7 +107,7 @@ struct LeafTypeContClass{
 
 template<class TNumericType>
 class DataBufferVector {
-    public   : using ContainerType = std::vector<TNumericType>;
+    public   : using ContainerType = std::vector<TNumericType, boost::alignment::aligned_allocator<TNumericType, MapAlignment> >;
     
     //special class member functions
     public   : DataBufferVector(std::shared_ptr< ContainerType > _dataBuffer): dataBuffer_(_dataBuffer) {}
@@ -185,7 +188,7 @@ class StateMapBaseCRTP {
     private  : using RootType                        = typename StateMapBaseCRTPTraits<TDerived>::RootType;
     public   : static constexpr const int  MapSize   = getMapSize<StateMapBaseCRTPTraits<TDerived>>();
     public   : using MatrixTypeCRTP                  = Eigen::Matrix<NumericType, MapSize, 1>;
-    public   : using MapTypeCRTP                     = Eigen::Map<MatrixTypeCRTP >;
+    public   : using MapTypeCRTP                     = Eigen::Map<MatrixTypeCRTP, MapAlignment >;
     private  : static constexpr const bool IsDynamic = StateMapBaseCRTPTraits<TDerived>::isDynamic;
     
     
@@ -240,7 +243,7 @@ constexpr const int  StateMapBaseCRTP<TDerived>::MapSize;
 
 template<class TNumericType>
 class StateMapBaseVirt {
-    private  : using MapTypeVirt          = Eigen::Map<Eigen::Matrix<TNumericType, Eigen::Dynamic, 1> >;
+    private  : using MapTypeVirt          = Eigen::Map<Eigen::Matrix<TNumericType, Eigen::Dynamic, 1>, MapAlignment >;
     private  : using StateBaseVirtualType = StateMapBaseVirt<TNumericType>;
     
     //special class member functions

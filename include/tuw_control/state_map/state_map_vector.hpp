@@ -48,7 +48,7 @@ template<class TLeafType>
 class ContainerSubStateMapVector {
     protected: ContainerSubStateMapVector() : subs_() {}
     protected: ContainerSubStateMapVector(size_t _size, const TLeafType& _vals) : subs_(_size, _vals) {}
-    protected: std::vector<TLeafType> subs_;
+    protected: std::vector<TLeafType, boost::alignment::aligned_allocator<TLeafType, MapAlignment> > subs_;
 };
 class ContainerSubStateMapVectorEmpty {};
 
