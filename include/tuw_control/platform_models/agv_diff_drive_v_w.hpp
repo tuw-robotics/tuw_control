@@ -133,7 +133,7 @@ class StateNmWithLVW : public StateMapTuple<TNumType, StateNmLVW<TNumType, TLeaf
                                                 return this->template sub<2>().sub(idx/3).sub(idx%3);
                                              }
                                            }
-    public   : size_t varSize     () const { return this->template sub<0>().subSize()+this->template sub<1>().subSize()+this->template sub<2>().subSize()*3; }   
+    public   : size_t varSize     () const { return this->template sub<0>().subSize()+this->template sub<1>().subSize()+this->template sub<2>().subSize()*3; } 
 };
 
 template<class TNumType, class TLeafType>
@@ -153,7 +153,7 @@ class StateNmVW : public StateMapTuple<TNumType, StateRobotNmVW<TNumType, TLeafT
                                                 return this->template sub<1>().sub(idx/3).sub(idx%3);
                                              }
                                            }
-    public   : size_t varSize     () const { return this->template sub<0>().subSize()+this->template sub<1>().subSize()*3; }   
+    public   : size_t varSize     () const { return this->template sub<0>().subSize()+this->template sub<1>().subSize()*3; }  
 };
 /*!@class StateCfVW
  * @brief Defining the system closed-form state variables.
@@ -292,7 +292,7 @@ class StateSimVWBase : public StateSimBase< StateSimVWBase<TNumType, MapDataType
             _XNmDot.persons().sub(i).x()     = 0;
             _XNmDot.persons().sub(i).y()     = 0;
             _XNmDot.persons().sub(i).theta() = 0;
-            const double v = this->paramStruct->cfData.personVs[i];
+            const double v = 1; //this->paramStruct->cfData.personVs[i];
             if(v>0.1) {
                 const double theta = _stateNm.persons().sub(i).theta();
                 _XNmDot.persons().sub(i).x() = v * cos(theta);
@@ -314,14 +314,17 @@ class StateSimVWBase : public StateSimBase< StateSimVWBase<TNumType, MapDataType
                     else if(theta>=-M_PI/4 && theta<M_PI/4) { direction = 1;}
                     else { direction = 0;}
                     double thetaTar = 0;
-                    if((*layers[direction*2+1])(linIdx) > 0 || (*layers[direction*2])(linIdx) > 0) {
+                    double rotation = 0;
+                    if(fabs((*layers[direction*2+1])(linIdx)) > 0 || fabs((*layers[direction*2])(linIdx)) > 0) {
                         thetaTar = atan2((*layers[direction*2+1])(linIdx),(*layers[direction*2])(linIdx));
-                        double rotation = thetaTar-theta;
+                        rotation = thetaTar-theta;
                         if(rotation<-M_PI) {rotation+=2*M_PI;}
                         else if(rotation>M_PI) {rotation-=2*M_PI;}
                         _XNmDot.persons().sub(i).theta() = rotation*this->paramStruct->cfData.peoplePredictionP;
                     }
-//                     printf("%f: %f %f %f %f %f %f %d\n",_stateCf.t(),x,y,theta,(*layers[direction*2])(linIdx),(*layers[direction*2+1])(linIdx),thetaTar,direction);
+                } else {
+                    _XNmDot.persons().sub(i).x()     = 0;
+                    _XNmDot.persons().sub(i).y()     = 0;
                 }
             }
         }
