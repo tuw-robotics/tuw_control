@@ -45,6 +45,7 @@
 namespace tuw {
 
 constexpr const int MapAlignment = Eigen::Aligned16;
+template <typename T, size_t N> struct __attribute__((aligned(16))) aligned_array : public std::array<T,N> {};
     
 namespace {
     
@@ -132,7 +133,8 @@ class DataBufferVector {
 };
 template<class TNumericType, int TMapSize>
 class DataBufferArray {
-    private  : using ContainerType = std::array<TNumericType, TMapSize>;
+    
+    private  : using ContainerType = aligned_array<TNumericType, TMapSize>;
     
     //special class member functions
     public   : DataBufferArray(std::shared_ptr< ContainerType > _dataBuffer): dataBuffer_(_dataBuffer) {}
