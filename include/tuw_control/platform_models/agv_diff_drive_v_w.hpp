@@ -347,10 +347,11 @@ class StateSimVWBase : public StateSimBase< StateSimVWBase<TNumType, MapDataType
 	for(int i = 0; i < _gradXNm0.data().size(); ++i) { _gradXNm0.data()(i) = 0; }
     }
     public   : void adjustGradXSizeImpl(auto& _gradXNm, auto& _gradXCf) {
-    _gradXNm.persons().subResize(this->paramStruct->state0.stateNm().persons().subSize());
+        const bool personSizeChanged = _gradXNm.persons().subSize() != this->paramStruct->state0.stateNm().persons().subSize();
 	auto& paramFuncs = this->paramStruct->paramFuncs;
 	int ctrlPtOptNr = paramFuncs.funcCtrlPtSize(0)-1;
-	if ( _gradXNm.var(0).sub(0).data().size() != ctrlPtOptNr ) {
+	if ( _gradXNm.var(0).sub(0).data().size() != ctrlPtOptNr || personSizeChanged) {
+            _gradXNm.persons().subResize(this->paramStruct->state0.stateNm().persons().subSize());
 	    for(size_t i = 0; i < _gradXNm.varSize(); ++i) {
 		for(size_t j = 0; j < _gradXNm.var(i).subSize(); ++j) {
 		    _gradXNm.var(i).sub(j).subResize(ctrlPtOptNr);
