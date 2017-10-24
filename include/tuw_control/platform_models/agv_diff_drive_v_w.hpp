@@ -36,6 +36,7 @@
 #include <tuw_control/state_sim/state_sim.hpp>
 #include <tuw_control/param_func_new/param_func_spline/param_func_spline0_dist.hpp>
 #include <tuw_control/utils.h>
+#include <grid_map_ros/grid_map_ros.hpp>
 
 namespace tuw {
 
@@ -44,6 +45,54 @@ namespace DiffDrive {
     
 // Defining the system state
 
+/*!@class StateRobotNmVW
+ * @brief Defining the system numerical state variables.
+ * 
+ * Has to allways be an extended class from @ref StateMapArray, @ref StateMapVector or @ref StateMapTuple
+ * 
+ * @tparam TNumType Numerical type used internally
+ * @tparam TLeafType The leaf type. This has to be templated as the numerical state jacobian class will use another (non-numerical) leaf type
+ */
+template<class TNumType, class TLeafType>
+class StateRobotNmVW : public StateMapArray<TNumType, TLeafType, 2> {
+    public   : using StateMapArray<TNumType, TLeafType, 2>::StateMapArray;
+    public   : auto&       x    ()       { return this->template sub<0>(); }
+    public   : const auto& x    () const { return this->template sub<0>(); }
+    public   : auto&       y    ()       { return this->template sub<1>(); }
+    public   : const auto& y    () const { return this->template sub<1>(); }
+    public   : auto&       state()       { return *this; }
+    public   : const auto& state() const { return *this; }
+};
+
+template<class TNumType, class TLeafType>
+class StateNmLVW : public StateMapArray<TNumType, TLeafType, 2> {
+    public   : using StateMapArray<TNumType, TLeafType, 2>::StateMapArray;
+    public   : auto&       JPow     ()       { return this->template sub<0>(); }
+    public   : const auto& JPow     () const { return this->template sub<0>(); }
+    public   : auto&       JInt     ()       { return this->template sub<1>(); }
+    public   : const auto& JInt     () const { return this->template sub<1>(); }
+    
+};
+
+template<class TNumType, class TLeafType>
+class StatePersonNmVW : public StateMapArray<TNumType, TLeafType, 3> {
+    public   : using StateMapArray<TNumType, TLeafType, 3>::StateMapArray;
+    public   : auto&       x    ()       { return this->template sub<0>(); }
+    public   : const auto& x    () const { return this->template sub<0>(); }
+    public   : auto&       y    ()       { return this->template sub<1>(); }
+    public   : const auto& y    () const { return this->template sub<1>(); }
+    public   : auto&       theta()       { return this->template sub<2>(); }
+    public   : const auto& theta() const { return this->template sub<2>(); }
+    public   : auto&       state()       { return *this; }
+    public   : const auto& state() const { return *this; }
+};
+
+template<class TNumType, class TLeafType>
+class StatePersonsNmVW : public StateMapVector<TNumType, StatePersonNmVW<TNumType,TLeafType>> {
+    public   : using StateMapVector<TNumType, StatePersonNmVW<TNumType,TLeafType>>::StateMapVector;
+    public   : auto&       state()       { return *this; }
+    public   : const auto& state() const { return *this; }
+};
 
 /*!@class StateNmVW
  * @brief Defining the system numerical state variables.
@@ -54,14 +103,23 @@ namespace DiffDrive {
  * @tparam TLeafType The leaf type. This has to be templated as the numerical state jacobian class will use another (non-numerical) leaf type
  */
 template<class TNumType, class TLeafType>
-class StateNmVW : public StateMapArray<TNumType, TLeafType, 2> {
-    public   : using StateMapArray<TNumType, TLeafType, 2>::StateMapArray;
-    public   : auto&       x    ()       { return this->template sub<0>(); }
-    public   : const auto& x    () const { return this->template sub<0>(); }
-    public   : auto&       y    ()       { return this->template sub<1>(); }
-    public   : const auto& y    () const { return this->template sub<1>(); }
-    public   : auto&       state()       { return *this; }
-    public   : const auto& state() const { return *this; }
+class StateNmVW : public StateMapTuple<TNumType, StateRobotNmVW<TNumType, TLeafType>, StatePersonsNmVW<TNumType, TLeafType>> {
+    public   : using StateMapTuple<TNumType, StateRobotNmVW<TNumType, TLeafType>, StatePersonsNmVW<TNumType, TLeafType>> ::StateMapTuple;
+    public   : auto&       x      ()       { return this->template sub<0>().x(); }
+    public   : const auto& x      () const { return this->template sub<0>().x(); }
+    public   : auto&       y      ()       { return this->template sub<0>().y(); }
+    public   : const auto& y      () const { return this->template sub<0>().y(); }
+    public   : auto&       persons()       { return this->template sub<1>(); }
+    public   : const auto& persons() const { return this->template sub<1>(); }
+    public   : auto&       state  ()       { return *this; }
+    public   : const auto& state  () const { return *this; }
+    public   : auto& var  (size_t i)       { if(i < this->template sub<0>().subSize()) { return this->template sub<0>().sub(i); }
+                                             else {
+                                                const size_t idx = i-this->template sub<0>().subSize();
+                                                return this->template sub<1>().sub(idx/3).sub(idx%3);
+                                             }
+                                           }
+    public   : size_t varSize     () const { return this->template sub<0>().subSize()+this->template sub<1>().subSize()*3; }  
 };
 
 /*!@class StateNmWithLVW
@@ -73,18 +131,28 @@ class StateNmVW : public StateMapArray<TNumType, TLeafType, 2> {
  * @tparam TLeafType The leaf type. This has to be templated as the numerical state jacobian class will use another (non-numerical) leaf type
  */
 template<class TNumType, class TLeafType>
-class StateNmWithLVW : public StateMapArray<TNumType, TLeafType, 4> {
-    public   : using StateMapArray<TNumType, TLeafType, 4>::StateMapArray;
-    public   : auto&       JPow     ()       { return this->template sub<0>(); }
-    public   : const auto& JPow     () const { return this->template sub<0>(); }
-    public   : auto&       JInt     ()       { return this->template sub<1>(); }
-    public   : const auto& JInt     () const { return this->template sub<1>(); }
-    public   : auto&       x        ()       { return this->template sub<2>(); }
-    public   : const auto& x        () const { return this->template sub<2>(); }
-    public   : auto&       y        ()       { return this->template sub<3>(); }
-    public   : const auto& y        () const { return this->template sub<3>(); }
-    public   : auto&       state    ()       { return *this; }
-    public   : const auto& state    () const { return *this; }
+class StateNmWithLVW : public StateMapTuple<TNumType, StateNmLVW<TNumType, TLeafType>, StateRobotNmVW<TNumType, TLeafType>, StatePersonsNmVW<TNumType, TLeafType>> {
+    public   : using StateMapTuple<TNumType, StateNmLVW<TNumType, TLeafType>, StateRobotNmVW<TNumType, TLeafType>, StatePersonsNmVW<TNumType, TLeafType>>::StateMapTuple;
+    public   : auto&       L      ()       { return this->template sub<0>(); }
+    public   : const auto& L      () const { return this->template sub<0>(); }
+    public   : auto&       x      ()       { return this->template sub<1>().x(); }
+    public   : const auto& x      () const { return this->template sub<1>().x(); }
+    public   : auto&       y      ()       { return this->template sub<1>().y(); }
+    public   : const auto& y      () const { return this->template sub<1>().y(); }
+    public   : auto&       persons()       { return this->template sub<2>(); }
+    public   : const auto& persons() const { return this->template sub<2>(); }
+    public   : auto&       state  ()       { return *this; }
+    public   : const auto& state  () const { return *this; }
+    public   : auto& var  (size_t i)       { if(i < this->template sub<0>().subSize()) 
+                                                return this->template sub<0>().sub(i);
+                                             else if(i<this->template sub<0>().subSize()+this->template sub<1>().subSize()) 
+                                                return this->template sub<1>().sub(i-this->template sub<0>().subSize());
+                                             else { 
+                                                const size_t idx = i-this->template sub<0>().subSize()-this->template sub<1>().subSize();
+                                                return this->template sub<2>().sub(idx/3).sub(idx%3);
+                                             }
+                                           }
+    public   : size_t varSize     () const { return this->template sub<0>().subSize()+this->template sub<1>().subSize()+this->template sub<2>().subSize()*3; } 
 };
 
 
@@ -113,6 +181,8 @@ class StateCfVW : public StateMapArray<TNumType, TLeafType, 7> {
     public   : const auto& t    () const { return this->template sub<5>(); }
     public   : auto&       s    ()       { return this->template sub<6>(); }
     public   : const auto& s    () const { return this->template sub<6>(); }
+    public   : auto& var(size_t i)       { return this->sub(i); }
+    public   : size_t varSize() const    { return this->subSize(); }   
 };
 
 static constexpr const size_t optParamBlockSize = 3;
@@ -181,6 +251,11 @@ class StateSimVWBase : public StateSimBase< StateSimVWBase<TNumType, MapDataType
 	for(int i = 0; i < _XNm0.data().size(); ++i) { _XNm0.data()(i) = 0; }
 	_XNm0.x() = this->paramStruct->state0.stateNm().x();
 	_XNm0.y() = this->paramStruct->state0.stateNm().y();
+        for(size_t i = 0; i<_XNm0.persons().subSize();i++) {
+            _XNm0.persons().sub(i).x() = this->paramStruct->state0.stateNm().persons().sub(i).x();
+            _XNm0.persons().sub(i).y() = this->paramStruct->state0.stateNm().persons().sub(i).y();
+            _XNm0.persons().sub(i).theta() = this->paramStruct->state0.stateNm().persons().sub(i).theta();
+        }
     }
     //same as before, but all closed-form variables have to be computed
     public  : void setXCfImpl ( auto& _XCf, const TNumType& _arc, const PfEaG& _eAG ) {
@@ -212,7 +287,49 @@ class StateSimVWBase : public StateSimBase< StateSimVWBase<TNumType, MapDataType
 	    arcNmDotCache_ = _arc;
 	}
 	_XNmDot.x()     = _stateCf.v() * cosTheta_;
-	_XNmDot.y()     = _stateCf.v() * sinTheta_;
+	_XNmDot.y()     = _stateCf.v() * sinTheta_; 
+        
+        //Human prediction
+        for(size_t i = 0; i<_XNmDot.persons().subSize();i++) {
+            _XNmDot.persons().sub(i).x()     = 0;
+            _XNmDot.persons().sub(i).y()     = 0;
+            _XNmDot.persons().sub(i).theta() = 0;
+            const double v = 1; //this->paramStruct->cfData.personVs[i];
+            if(v>0.1) {
+                const double theta = _stateNm.persons().sub(i).theta();
+                _XNmDot.persons().sub(i).x() = v * cos(theta);
+                _XNmDot.persons().sub(i).y() = v * sin(theta);
+                
+                const double x = _stateNm.persons().sub(i).x();
+                const double y = _stateNm.persons().sub(i).y();
+                //Using the all_dirs layer as sink
+                auto &map = this->paramStruct->cfData.personHeatmap;
+                auto &layers = this->paramStruct->cfData.personHeatmapLayers;
+                grid_map::Index idx;
+                grid_map::Position pos(x,y);
+                if(map.isInside(pos)) {
+                    map.getIndex(pos,idx);
+                    const size_t linIdx = grid_map::getLinearIndexFromIndex(idx,map.getSize());
+                    int direction;
+                    if((theta>=-M_PI && theta<-3*M_PI/4) || (theta<=M_PI && theta>3*M_PI/4)) { direction = 3;}
+                    else if(theta>=-3*M_PI/4 && theta<-M_PI/4) { direction = 2;}
+                    else if(theta>=-M_PI/4 && theta<M_PI/4) { direction = 1;}
+                    else { direction = 0;}
+                    double thetaTar = 0;
+                    double rotation = 0;
+                    if(fabs((*layers[direction*2+1])(linIdx)) > 0 || fabs((*layers[direction*2])(linIdx)) > 0) {
+                        thetaTar = atan2((*layers[direction*2+1])(linIdx),(*layers[direction*2])(linIdx));
+                        rotation = thetaTar-theta;
+                        if(rotation<-M_PI) {rotation+=2*M_PI;}
+                        else if(rotation>M_PI) {rotation-=2*M_PI;}
+                        _XNmDot.persons().sub(i).theta() = rotation*this->paramStruct->cfData.peoplePredictionP;
+                    }
+                } else {
+                    _XNmDot.persons().sub(i).x()     = 0;
+                    _XNmDot.persons().sub(i).y()     = 0;
+                }
+            }
+        }
     }
     
     private : void setXCfNmStep ( auto& _XCf, const TNumType& _arc, const PfEaG& _eAG ) { 
@@ -232,17 +349,19 @@ class StateSimVWBase : public StateSimBase< StateSimVWBase<TNumType, MapDataType
 	for(int i = 0; i < _gradXNm0.data().size(); ++i) { _gradXNm0.data()(i) = 0; }
     }
     public   : void adjustGradXSizeImpl(auto& _gradXNm, auto& _gradXCf) {
+        const bool personSizeChanged = _gradXNm.persons().subSize() != this->paramStruct->state0.stateNm().persons().subSize();
 	auto& paramFuncs = this->paramStruct->paramFuncs;
 	int ctrlPtOptNr = paramFuncs.funcCtrlPtSize(0)-1;
-	if ( _gradXNm.sub(0).sub(0).data().size() != ctrlPtOptNr ) {
-	    for(size_t i = 0; i < _gradXNm.subSize(); ++i) {
-		for(size_t j = 0; j < _gradXNm.sub(i).subSize(); ++j) {
-		    _gradXNm.sub(i).sub(j).subResize(ctrlPtOptNr);
+	if ( _gradXNm.var(0).sub(0).data().size() != ctrlPtOptNr || personSizeChanged) {
+            _gradXNm.persons().subResize(this->paramStruct->state0.stateNm().persons().subSize());
+	    for(size_t i = 0; i < _gradXNm.varSize(); ++i) {
+		for(size_t j = 0; j < _gradXNm.var(i).subSize(); ++j) {
+		    _gradXNm.var(i).sub(j).subResize(ctrlPtOptNr);
 		}
 	    }
-	    for(size_t i = 0; i < _gradXCf.subSize(); ++i) {
-		for(size_t j = 0; j < _gradXCf.sub(i).subSize(); ++j) {
-		    _gradXCf.sub(i).sub(j).subResize(ctrlPtOptNr);
+	    for(size_t i = 0; i < _gradXCf.varSize(); ++i) {
+		for(size_t j = 0; j < _gradXCf.var(i).subSize(); ++j) {
+		    _gradXCf.var(i).sub(j).subResize(ctrlPtOptNr);
 		}
 	    }
 	}
@@ -261,6 +380,8 @@ class StateSimVWBase : public StateSimBase< StateSimVWBase<TNumType, MapDataType
 	static Eigen::Matrix<TNumType,2,1> dfduX;
 	static Eigen::Matrix<TNumType,2,1> dfduY;
 	
+        for(int i=0;i<_gradXNmDot.data().size();i++) { _gradXNmDot.data()(i) = 0; }
+        
 	dfduX(0) = cosTheta_;
 	dfduX(1) = sinTheta_;
 	dfduY(0) = - XCf.v() * sinTheta_;
