@@ -74,6 +74,13 @@ class StateNmLVW : public StateMapArray<TNumType, TLeafType, 2> {
     
 };
 
+/*!@class StatePersonNmVW
+ * @brief Defining a person's numerical state variables
+ * 
+ * @tparam TNumType Numerical type used internally
+ * @tparam TLeafType The leaf type. This has to be templated as the numerical state jacobian class will use another (non-numerical) leaf type
+ * 
+ */
 template<class TNumType, class TLeafType>
 class StatePersonNmVW : public StateMapArray<TNumType, TLeafType, 3> {
     public   : using StateMapArray<TNumType, TLeafType, 3>::StateMapArray;
@@ -87,6 +94,13 @@ class StatePersonNmVW : public StateMapArray<TNumType, TLeafType, 3> {
     public   : const auto& state() const { return *this; }
 };
 
+/*!@class StatePersonsNmVW
+ * @brief Defining a vector of multiple persons.
+ * 
+ * @tparam TNumType Numerical type used internally
+ * @tparam TLeafType The leaf type. This has to be templated as the numerical state jacobian class will use another (non-numerical) leaf type
+ * 
+ */
 template<class TNumType, class TLeafType>
 class StatePersonsNmVW : public StateMapVector<TNumType, StatePersonNmVW<TNumType,TLeafType>> {
     public   : using StateMapVector<TNumType, StatePersonNmVW<TNumType,TLeafType>>::StateMapVector;
@@ -245,6 +259,7 @@ class StateSimVWBase : public StateSimBase< StateSimVWBase<TNumType, MapDataType
     using PFV = typename ParamType<TNumType, MapDataType>::ParamFuncVars;
     
     public   : void adjustXSizeImpl(auto& _XNm, auto& _XCf) {
+        _XNm.persons().subResize(this->paramStruct->state0.stateNm().persons().subSize());
 	this->paramStruct->paramFuncs.precompute();
     }
     public   : void setXNm0Impl(auto& _XNm0) {
@@ -294,35 +309,93 @@ class StateSimVWBase : public StateSimBase< StateSimVWBase<TNumType, MapDataType
             _XNmDot.persons().sub(i).x()     = 0;
             _XNmDot.persons().sub(i).y()     = 0;
             _XNmDot.persons().sub(i).theta() = 0;
-            const double v = 1; //this->paramStruct->cfData.personVs[i];
+            //Only predict moving persons, for efficiency
+            //TODO: reconfigure parameter
+            const double v = this->paramStruct->cfData.personVs[i];
             if(v>0.1) {
-                const double theta = _stateNm.persons().sub(i).theta();
+                const double theta = normalizeRad(_stateNm.persons().sub(i).theta());
                 _XNmDot.persons().sub(i).x() = v * cos(theta);
                 _XNmDot.persons().sub(i).y() = v * sin(theta);
                 
                 const double x = _stateNm.persons().sub(i).x();
                 const double y = _stateNm.persons().sub(i).y();
-                //Using the all_dirs layer as sink
+                //The vector fields in the heatmap bag are used to compute theta'
                 auto &map = this->paramStruct->cfData.personHeatmap;
                 auto &layers = this->paramStruct->cfData.personHeatmapLayers;
                 grid_map::Index idx;
                 grid_map::Position pos(x,y);
-                if(map.isInside(pos)) {
-                    map.getIndex(pos,idx);
+                //If position is inside map, getIndex returns true
+                if(map.getIndex(pos,idx)) {
                     const size_t linIdx = grid_map::getLinearIndexFromIndex(idx,map.getSize());
-                    int direction;
-                    if((theta>=-M_PI && theta<-3*M_PI/4) || (theta<=M_PI && theta>3*M_PI/4)) { direction = 3;}
-                    else if(theta>=-3*M_PI/4 && theta<-M_PI/4) { direction = 2;}
-                    else if(theta>=-M_PI/4 && theta<M_PI/4) { direction = 1;}
-                    else { direction = 0;}
-                    double thetaTar = 0;
-                    double rotation = 0;
-                    if(fabs((*layers[direction*2+1])(linIdx)) > 0 || fabs((*layers[direction*2])(linIdx)) > 0) {
-                        thetaTar = atan2((*layers[direction*2+1])(linIdx),(*layers[direction*2])(linIdx));
-                        rotation = thetaTar-theta;
-                        if(rotation<-M_PI) {rotation+=2*M_PI;}
-                        else if(rotation>M_PI) {rotation-=2*M_PI;}
+//Old approach, taking the closest of the 4 directions
+//                     int direction;
+//                     if((theta>=-M_PI && theta<-3*M_PI/4) || (theta<=M_PI && theta>3*M_PI/4)) { direction = 3;}
+//                     else if(theta>=-3*M_PI/4 && theta<-M_PI/4) { direction = 2;}
+//                     else if(theta>=-M_PI/4 && theta<M_PI/4) { direction = 1;}
+//                     else { direction = 0;}
+//                     double thetaTar = 0;
+//                     double rotation = 0;
+//                     if(fabs((*layers[direction*2+1])(linIdx)) > 0 || fabs((*layers[direction*2])(linIdx)) > 0) {
+//                         thetaTar = atan2((*layers[direction*2+1])(linIdx),(*layers[direction*2])(linIdx));
+//                         rotation = normalizeRad(thetaTar-theta);
+//                         _XNmDot.persons().sub(i).theta() = rotation*this->paramStruct->cfData.peoplePredictionP;
+//                     }
+                    //New approach, combining the two enclosing directions proportionally
+                    double dx = 0;
+                    double dy = 0;
+                    int dir1 = 0;
+                    int dir2 = 0;
+                    double dir1Factor = 0;
+                    double dir2Factor = 0;
+                    //Check Quadrant
+                    if(theta>=0 && theta < M_PI/2) {
+                        //1st Quadrant
+                        dir1 = 0; //north
+                        dir2 = 1; //east
+                        dir1Factor = theta/(M_PI/2);
+                        dir2Factor = ((M_PI/2)-theta)/(M_PI/2);
+                    } else if(theta >= M_PI/2 && theta <= M_PI) {
+                        //2nd Quadrant
+                        dir1 = 0; //north
+                        dir2 = 3; //west
+                        dir1Factor = (M_PI-theta)/(M_PI/2);
+                        dir2Factor = (theta-(M_PI/2))/(M_PI/2);
+                    } else if(theta < -M_PI/2 && theta >= -M_PI) {
+                        //3rd Quadrant
+                        dir1 = 3; //west
+                        dir2 = 2; //south
+                        dir1Factor = -(theta+(M_PI/2))/(M_PI/2);
+                        dir2Factor = (theta+M_PI)/(M_PI/2);
+                    } else {
+                        //4th Quadrant
+                        dir1 = 2; //south
+                        dir2 = 1; //east
+                        dir1Factor = (-theta)/(M_PI/2);
+                        dir2Factor = (theta+(M_PI/2))/(M_PI/2);
+                    }
+                    if(fabs((*layers[dir1*2+1])(linIdx)) > 0 || fabs((*layers[dir1*2])(linIdx)) > 0) {
+                        const double dx1 = (*layers[dir1*2])(linIdx);
+                        const double dy1 = (*layers[dir1*2+1])(linIdx);
+                        const double dir1Len = sqrt(dx1*dx1+dy1*dy1);
+                        dx = (dx1/dir1Len)*dir1Factor;
+                        dy = (dy1/dir1Len)*dir1Factor;
+                    }
+                    if(fabs((*layers[dir2*2+1])(linIdx)) > 0 || fabs((*layers[dir2*2])(linIdx)) > 0) {
+                        const double dx2 = (*layers[dir2*2])(linIdx);
+                        const double dy2 = (*layers[dir2*2+1])(linIdx);
+                        const double dir2Len = sqrt(dx2*dx2+dy2*dy2);
+                        dx += (dx2/dir2Len)*dir2Factor;
+                        dy += (dy2/dir2Len)*dir2Factor;
+                    }
+                    if(dx!=0 || dy != 0) {
+                        double thetaTar = atan2(dy,dx);
+                        double rotation = normalizeRad(thetaTar-theta);
                         _XNmDot.persons().sub(i).theta() = rotation*this->paramStruct->cfData.peoplePredictionP;
+                        //In the first 0.5 seconds the direction change is limited, increasing from 50% to 100%
+                        //TODO: reconfigure parameter
+                        if(_stateCf.t()<0.5) {
+                            _XNmDot.persons().sub(i).theta() *= (_stateCf.t()+0.5);
+                        }
                     }
                 } else {
                     _XNmDot.persons().sub(i).x()     = 0;
@@ -352,6 +425,8 @@ class StateSimVWBase : public StateSimBase< StateSimVWBase<TNumType, MapDataType
         const bool personSizeChanged = _gradXNm.persons().subSize() != this->paramStruct->state0.stateNm().persons().subSize();
 	auto& paramFuncs = this->paramStruct->paramFuncs;
 	int ctrlPtOptNr = paramFuncs.funcCtrlPtSize(0)-1;
+        //Either when the number of control points or the number of detected persons changes, the structure needs to be resized
+        //First the persons vector needs to be changed, and then the array inside every person's state variables need to be adapted
 	if ( _gradXNm.var(0).sub(0).data().size() != ctrlPtOptNr || personSizeChanged) {
             _gradXNm.persons().subResize(this->paramStruct->state0.stateNm().persons().subSize());
 	    for(size_t i = 0; i < _gradXNm.varSize(); ++i) {
