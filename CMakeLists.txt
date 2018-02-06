@@ -56,6 +56,7 @@ catkin_package(
   include
   
   LIBRARIES 
+  tuw_control_param_func
   tuw_control_param_func_spline
   tuw_trajectory_evaluator
   tuw_trajectory_simulator
@@ -72,6 +73,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   PATTERN ".svn" EXCLUDE
 )
+
 
 _generate_find_package() # must be after add_subdirectory
 _uninstall()    
