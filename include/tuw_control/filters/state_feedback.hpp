@@ -38,8 +38,8 @@
 
 #include <tuw_control/state/state.h>
 
-namespace tuw {
-
+namespace tuw
+{
 /*!@class StateFeedback
  * @brief Interface for a filter that outputs a desired %state given an observed %state and a desired %state.
  * @tparam InputObsStateType Class defining the current observed state of the afferent system
@@ -48,39 +48,64 @@ namespace tuw {
  * @tparam ParamType       Class defining the filter parameters
  */
 template <typename InputObsStateType, typename InputDesStateType, typename OutputStateType, typename ParamType>
-class StateFeedback {
-    
-    //special class member functions
-    public   : StateFeedback           (std::shared_ptr<ParamType> _params) : params_(_params) {}
-    public   : virtual ~StateFeedback  ()                     = default;
-    public   : StateFeedback           (const StateFeedback&) = default;
-    public   : StateFeedback& operator=(const StateFeedback&) = default;
-    public   : StateFeedback           (StateFeedback&&)      = default;
-    public   : StateFeedback& operator=(StateFeedback&&)      = default;
-    
-    //pure virtual functions
-    /** @brief Computes the output %state at the specified time instant given the observed %state and the desired state.
-     *  @param _xObs Observed %state
-     *  @param _xDes Desired %state
-     *  @param _t Temporal evaluation point
-     *  @return computed output %state
-     */
-    public   : virtual std::shared_ptr<OutputStateType>& compute     ( std::shared_ptr<InputObsStateType>& _xObs, std::shared_ptr<InputDesStateType>& _xDes, const double& _t ) = 0;
-    /** @brief Reloads class parameters.
-     *  To be called when parameters that influence the class variables are changed.
-     */
-    public   : virtual void                              reloadParam ()  = 0;
-    /** @brief Access to the last computed output %state.
-     */
-    public   : std::shared_ptr<OutputStateType>&         output      () { return output_; }
-    /** @brief Access to the last parameters object pointer.
-     */
-    public   : std::shared_ptr<ParamType>&               params      () { return params_; }
-    
-    protected: std::shared_ptr<ParamType>        params_;///< Pointer to the class parameters object
-    protected: std::shared_ptr<OutputStateType>  output_;///< Last computet output %state
-};
+class StateFeedback
+{
+  // special class member functions
+public:
+  StateFeedback(std::shared_ptr<ParamType> _params) : params_(_params)
+  {
+  }
 
+public:
+  virtual ~StateFeedback() = default;
+
+public:
+  StateFeedback(const StateFeedback&) = default;
+
+public:
+  StateFeedback& operator=(const StateFeedback&) = default;
+
+public:
+  StateFeedback(StateFeedback&&) = default;
+
+public:
+  StateFeedback& operator=(StateFeedback&&) = default;
+
+  // pure virtual functions
+  /** @brief Computes the output %state at the specified time instant given the observed %state and the desired state.
+   *  @param _xObs Observed %state
+   *  @param _xDes Desired %state
+   *  @param _t Temporal evaluation point
+   *  @return computed output %state
+   */
+public:
+  virtual std::shared_ptr<OutputStateType>& compute(std::shared_ptr<InputObsStateType>& _xObs,
+                                                    std::shared_ptr<InputDesStateType>& _xDes, const double& _t) = 0;
+  /** @brief Reloads class parameters.
+   *  To be called when parameters that influence the class variables are changed.
+   */
+public:
+  virtual void reloadParam() = 0;
+  /** @brief Access to the last computed output %state.
+   */
+public:
+  std::shared_ptr<OutputStateType>& output()
+  {
+    return output_;
+  }
+  /** @brief Access to the last parameters object pointer.
+   */
+public:
+  std::shared_ptr<ParamType>& params()
+  {
+    return params_;
+  }
+
+protected:
+  std::shared_ptr<ParamType> params_;  ///< Pointer to the class parameters object
+protected:
+  std::shared_ptr<OutputStateType> output_;  ///< Last computet output %state
+};
 }
 
-#endif // STATE_FEEDBACK_HPP
+#endif  // STATE_FEEDBACK_HPP

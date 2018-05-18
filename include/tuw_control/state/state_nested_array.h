@@ -33,108 +33,221 @@
 #ifndef STATE_NESTED_ARRAY_H
 #define STATE_NESTED_ARRAY_H
 
-
 #include <float.h>
 #include <memory>
 
 #include <tuw_control/state/state.h>
 #include <tuw_control/utils.h>
 
-namespace tuw {
-
+namespace tuw
+{
 /*!@class StateNestedArray
  * @brief Implementation of @ref State being formed by an array of substates.
  * @tparam SubState Type of state defining the sub-states of the object.
  * @tparam N Size of sub-states.
  */
-template<typename SubState, size_t N>
+template <typename SubState, size_t N>
 class StateNestedArray;
-template<typename SubState, size_t N>
-using StateNestedArraySPtr      = std::shared_ptr< StateNestedArray<SubState, N> >;
-template<typename SubState, size_t N>
-using StateNestedArrayConstSPtr = std::shared_ptr< StateNestedArray<SubState, N> const>;
-template<typename SubState, size_t N>
-using StateNestedArrayUPtr      = std::unique_ptr< StateNestedArray<SubState, N> >;
-template<typename SubState, size_t N>
-using StateNestedArrayConstUPtr = std::unique_ptr< StateNestedArray<SubState, N> const>;
-template<typename SubState, size_t N>
-class StateNestedArray : public State {
-    public   : StateNestedArray           (State* _parent) : State(_parent) { 
-	for(size_t i = 0; i < N; ++i) { states_[i] = std::make_shared< SubState >(this); statesBase_[i] = states_[i]; } 
-	this->callRootUpdateSize (); 
+template <typename SubState, size_t N>
+using StateNestedArraySPtr = std::shared_ptr<StateNestedArray<SubState, N>>;
+template <typename SubState, size_t N>
+using StateNestedArrayConstSPtr = std::shared_ptr<StateNestedArray<SubState, N> const>;
+template <typename SubState, size_t N>
+using StateNestedArrayUPtr = std::unique_ptr<StateNestedArray<SubState, N>>;
+template <typename SubState, size_t N>
+using StateNestedArrayConstUPtr = std::unique_ptr<StateNestedArray<SubState, N> const>;
+template <typename SubState, size_t N>
+class StateNestedArray : public State
+{
+public:
+  StateNestedArray(State* _parent) : State(_parent)
+  {
+    for (size_t i = 0; i < N; ++i)
+    {
+      states_[i] = std::make_shared<SubState>(this);
+      statesBase_[i] = states_[i];
     }
-    public   : StateNestedArray           ()               : State()        { 
-	for(size_t i = 0; i < N; ++i) { states_[i] = std::make_shared< SubState >(this); statesBase_[i] = states_[i]; } 
-	this->callRootUpdateSize ();
+    this->callRootUpdateSize();
+  }
+
+public:
+  StateNestedArray() : State()
+  {
+    for (size_t i = 0; i < N; ++i)
+    {
+      states_[i] = std::make_shared<SubState>(this);
+      statesBase_[i] = states_[i];
     }
-    public   : virtual ~StateNestedArray  ()                        = default;
-    public   : StateNestedArray           (const StateNestedArray&) = default;
-    public   : StateNestedArray& operator=(const StateNestedArray&) = default;
-    public   : StateNestedArray           (StateNestedArray&&)      = default;
-    public   : StateNestedArray& operator=(StateNestedArray&&)      = default;
-    
-    
-    public   : virtual StateSPtr              cloneState       () const override { return std::make_shared< StateNestedArray<SubState, N> >(*this); }
-    public   : size_t        stateSize  ()                        const override { return N;               }
-    public   : size_t        valueSize  ()                        const override { return valueSize_;      }
-    public   : double&       value      ( const std::size_t& _i )       override { return *values_[_i];    }
-    public   : const double& value      ( const std::size_t& _i ) const override { return *values_[_i];    }
-    public   : StateSPtr&    state      ( const std::size_t& _i )       override { return statesBase_[_i]; }
-    public   : std::shared_ptr<SubState>& stateScoped ( const size_t& _i )       { return this->states_[_i]; }
-    
-    public   : void updateSize () override { 
-	valueSize_ = 0; 
-	for(auto& stateI : states_){ stateI->updateSize(); valueSize_ += stateI->valueSize(); } 
-	values_.resize(valueSize_);
-	size_t valueSizeI, valueSizeSum = 0;
-	for(auto& stateI : states_){ 
-	    valueSizeI = stateI->valueSize();
-	    for(size_t i = 0; i < valueSizeI; ++i){ values_[valueSizeSum + i] = &(stateI->value(i)); } 
-	    valueSizeSum += valueSizeI;
-	}
+    this->callRootUpdateSize();
+  }
+
+public:
+  virtual ~StateNestedArray() = default;
+
+public:
+  StateNestedArray(const StateNestedArray&) = default;
+
+public:
+  StateNestedArray& operator=(const StateNestedArray&) = default;
+
+public:
+  StateNestedArray(StateNestedArray&&) = default;
+
+public:
+  StateNestedArray& operator=(StateNestedArray&&) = default;
+
+public:
+  virtual StateSPtr cloneState() const override
+  {
+    return std::make_shared<StateNestedArray<SubState, N>>(*this);
+  }
+
+public:
+  size_t stateSize() const override
+  {
+    return N;
+  }
+
+public:
+  size_t valueSize() const override
+  {
+    return valueSize_;
+  }
+
+public:
+  double& value(const std::size_t& _i) override
+  {
+    return *values_[_i];
+  }
+
+public:
+  const double& value(const std::size_t& _i) const override
+  {
+    return *values_[_i];
+  }
+
+public:
+  StateSPtr& state(const std::size_t& _i) override
+  {
+    return statesBase_[_i];
+  }
+
+public:
+  std::shared_ptr<SubState>& stateScoped(const size_t& _i)
+  {
+    return this->states_[_i];
+  }
+
+public:
+  void updateSize() override
+  {
+    valueSize_ = 0;
+    for (auto& stateI : states_)
+    {
+      stateI->updateSize();
+      valueSize_ += stateI->valueSize();
     }
-    
-    protected: size_t valueSize_;
-    protected: size_t statesSize_ ;
-    
-    protected: std::array< std::shared_ptr<SubState>, N> states_;
-    protected: std::array< StateSPtr,                 N> statesBase_;
-    protected: std::vector< double*                    > values_;
+    values_.resize(valueSize_);
+    size_t valueSizeI, valueSizeSum = 0;
+    for (auto& stateI : states_)
+    {
+      valueSizeI = stateI->valueSize();
+      for (size_t i = 0; i < valueSizeI; ++i)
+      {
+        values_[valueSizeSum + i] = &(stateI->value(i));
+      }
+      valueSizeSum += valueSizeI;
+    }
+  }
+
+protected:
+  size_t valueSize_;
+
+protected:
+  size_t statesSize_;
+
+protected:
+  std::array<std::shared_ptr<SubState>, N> states_;
+
+protected:
+  std::array<StateSPtr, N> statesBase_;
+
+protected:
+  std::vector<double*> values_;
 };
 
 /*!@class StateNestedArrayScoped
  * @brief Extension of @ref StateNestedArray providing sub-state access based on a scoped enumeration (compile-time).
- * @tparam EnumStateVals Scoped enumeration that defines semantic access to the values of the state array. Has to have ENUM_SIZE representing the number of enum values.
+ * @tparam EnumStateVals Scoped enumeration that defines semantic access to the values of the state array. Has to have
+ * ENUM_SIZE representing the number of enum values.
  * @tparam SubState Type of state defining the sub-states of the object.
  */
-template<typename EnumStateVals, typename SubState>
-class StateNestedArrayScoped : public StateNestedArray<SubState, asInt(EnumStateVals::ENUM_SIZE)> {
-    
-    //special class member functions
-    public   : StateNestedArrayScoped           (State* _parent) : StateNestedArray<SubState, asInt(EnumStateVals::ENUM_SIZE)>(_parent) {}
-    public   : StateNestedArrayScoped           ()               : StateNestedArray<SubState, asInt(EnumStateVals::ENUM_SIZE)>()        {}
-    public   : virtual ~StateNestedArrayScoped  ()                        = default;
-    public   : StateNestedArrayScoped           (const StateNestedArrayScoped&) = default;
-    public   : StateNestedArrayScoped& operator=(const StateNestedArrayScoped&) = default;
-    public   : StateNestedArrayScoped           (StateNestedArrayScoped&&)      = default;
-    public   : StateNestedArrayScoped& operator=(StateNestedArrayScoped&&)      = default;
-    
-    //implementation of virtual functions
-    public   : virtual StateSPtr                                                cloneState    () const  override { return std::make_shared< StateNestedArrayScoped<EnumStateVals, SubState> >(*this); }
-    ///@brief Clone-to-this-class-ptr function.
-    public   : std::shared_ptr<StateNestedArrayScoped<EnumStateVals, SubState>> cloneStateExt () const           { return std::make_shared< StateNestedArrayScoped<EnumStateVals, SubState> >(*this); }
-    //public   : template<EnumStateVals _i>       double& value ()       { return StateNestedArray<SubState, asInt(EnumStateVals::ENUM_SIZE)>::value(asInt(_i)); }
-    //public   : template<EnumStateVals _i> const double& value () const { return StateNestedArray<SubState, asInt(EnumStateVals::ENUM_SIZE)>::value(asInt(_i)); }
-    ///@brief Scoped access (compile-time) to the sub-states of the state object.
-    public   : template<EnumStateVals _i> typename std::shared_ptr<SubState>& state () { return this->states_[asInt(_i)]; }
-    public   : using StateNestedArray<SubState, asInt(EnumStateVals::ENUM_SIZE)>::value;
-    public   : using StateNestedArray<SubState, asInt(EnumStateVals::ENUM_SIZE)>::state;
+template <typename EnumStateVals, typename SubState>
+class StateNestedArrayScoped : public StateNestedArray<SubState, asInt(EnumStateVals::ENUM_SIZE)>
+{
+  // special class member functions
+public:
+  StateNestedArrayScoped(State* _parent) : StateNestedArray<SubState, asInt(EnumStateVals::ENUM_SIZE)>(_parent)
+  {
+  }
 
-    template<                         typename... NestedStates1> friend class StateNestedSet;
-    template<typename EnumStateVals1, typename... NestedStates1> friend class StateNestedSetScoped;
-    template<typename SubState1                                > friend class StateNestedVector;
+public:
+  StateNestedArrayScoped() : StateNestedArray<SubState, asInt(EnumStateVals::ENUM_SIZE)>()
+  {
+  }
+
+public:
+  virtual ~StateNestedArrayScoped() = default;
+
+public:
+  StateNestedArrayScoped(const StateNestedArrayScoped&) = default;
+
+public:
+  StateNestedArrayScoped& operator=(const StateNestedArrayScoped&) = default;
+
+public:
+  StateNestedArrayScoped(StateNestedArrayScoped&&) = default;
+
+public:
+  StateNestedArrayScoped& operator=(StateNestedArrayScoped&&) = default;
+
+  // implementation of virtual functions
+public:
+  virtual StateSPtr cloneState() const override
+  {
+    return std::make_shared<StateNestedArrayScoped<EnumStateVals, SubState>>(*this);
+  }
+  ///@brief Clone-to-this-class-ptr function.
+public:
+  std::shared_ptr<StateNestedArrayScoped<EnumStateVals, SubState>> cloneStateExt() const
+  {
+    return std::make_shared<StateNestedArrayScoped<EnumStateVals, SubState>>(*this);
+  }
+  // public   : template<EnumStateVals _i>       double& value ()       { return StateNestedArray<SubState,
+  // asInt(EnumStateVals::ENUM_SIZE)>::value(asInt(_i)); }
+  // public   : template<EnumStateVals _i> const double& value () const { return StateNestedArray<SubState,
+  // asInt(EnumStateVals::ENUM_SIZE)>::value(asInt(_i)); }
+  ///@brief Scoped access (compile-time) to the sub-states of the state object.
+public:
+  template <EnumStateVals _i>
+  typename std::shared_ptr<SubState>& state()
+  {
+    return this->states_[asInt(_i)];
+  }
+
+public:
+  using StateNestedArray<SubState, asInt(EnumStateVals::ENUM_SIZE)>::value;
+
+public:
+  using StateNestedArray<SubState, asInt(EnumStateVals::ENUM_SIZE)>::state;
+
+  template <typename... NestedStates1>
+  friend class StateNestedSet;
+  template <typename EnumStateVals1, typename... NestedStates1>
+  friend class StateNestedSetScoped;
+  template <typename SubState1>
+  friend class StateNestedVector;
 };
-
 }
 
-#endif // STATE_NESTED_ARRAY_H
+#endif  // STATE_NESTED_ARRAY_H

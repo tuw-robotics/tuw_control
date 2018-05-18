@@ -33,7 +33,6 @@
 #ifndef STATE_VECTOR_H
 #define STATE_VECTOR_H
 
-
 #include <float.h>
 #include <memory>
 #include <array>
@@ -41,42 +40,94 @@
 #include <tuw_control/utils.h>
 #include <tuw_control/state/state.h>
 
-namespace tuw {
-
+namespace tuw
+{
 /*!@class StateVector
  * @brief Implementation of @ref State for a dynamic size vector of double values.
  */
 class StateVector;
-using StateVectorSPtr      = std::shared_ptr<StateVector >;
+using StateVectorSPtr = std::shared_ptr<StateVector>;
 using StateVectorConstSPtr = std::shared_ptr<StateVector const>;
-using StateVectorUPtr      = std::unique_ptr<StateVector >;
+using StateVectorUPtr = std::unique_ptr<StateVector>;
 using StateVectorConstUPtr = std::unique_ptr<StateVector const>;
 
-class StateVector : public State {
-    
-    //special class member functions
-    public   : StateVector           (State* _parent) : State(_parent) { callRootUpdateSize(); }
-    public   : StateVector           ()               : State()        { callRootUpdateSize(); }
-    public   : virtual ~StateVector  ()                   = default;
-    public   : StateVector           (const StateVector&) = default;
-    public   : StateVector& operator=(const StateVector&) = default;
-    public   : StateVector           (StateVector&&)      = default;
-    public   : StateVector& operator=(StateVector&&)      = default;
-    
-    //implementation of virtual functions
-    public   : virtual StateSPtr     cloneState      ()                        const override { return std::make_shared< StateVector >(*this); }
-    public   : virtual double&       value           ( const std::size_t& _i )       override { return values_[_i]; }
-    public   : virtual const double& value           ( const std::size_t& _i ) const override { return values_[_i]; }
-    public   : virtual size_t        valueSize       ()                        const override { return values_.size(); }
-    public   : virtual void          resize          ( const std::size_t& _i )       override { values_.resize(_i); }
-    
-    ///@brief Reference to the state variables array.
-    public   :       std::vector<double>& valuesVector ()       { return values_; }
-    ///@brief Const reference to the variables array.
-    public   : const std::vector<double>& valuesVector () const { return values_; }
-    protected: std::vector<double> values_;///< State array container
-};
+class StateVector : public State
+{
+  // special class member functions
+public:
+  StateVector(State* _parent) : State(_parent)
+  {
+    callRootUpdateSize();
+  }
 
+public:
+  StateVector() : State()
+  {
+    callRootUpdateSize();
+  }
+
+public:
+  virtual ~StateVector() = default;
+
+public:
+  StateVector(const StateVector&) = default;
+
+public:
+  StateVector& operator=(const StateVector&) = default;
+
+public:
+  StateVector(StateVector&&) = default;
+
+public:
+  StateVector& operator=(StateVector&&) = default;
+
+  // implementation of virtual functions
+public:
+  virtual StateSPtr cloneState() const override
+  {
+    return std::make_shared<StateVector>(*this);
+  }
+
+public:
+  virtual double& value(const std::size_t& _i) override
+  {
+    return values_[_i];
+  }
+
+public:
+  virtual const double& value(const std::size_t& _i) const override
+  {
+    return values_[_i];
+  }
+
+public:
+  virtual size_t valueSize() const override
+  {
+    return values_.size();
+  }
+
+public:
+  virtual void resize(const std::size_t& _i) override
+  {
+    values_.resize(_i);
+  }
+
+  ///@brief Reference to the state variables array.
+public:
+  std::vector<double>& valuesVector()
+  {
+    return values_;
+  }
+  ///@brief Const reference to the variables array.
+public:
+  const std::vector<double>& valuesVector() const
+  {
+    return values_;
+  }
+
+protected:
+  std::vector<double> values_;  ///< State array container
+};
 }
 
-#endif // STATE_VECTOR_H
+#endif  // STATE_VECTOR_H

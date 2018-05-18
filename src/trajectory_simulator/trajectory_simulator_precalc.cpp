@@ -41,84 +41,130 @@ using namespace tuw;
 
 using BSLT = TrajectorySimulator::BaseSimLatticeType;
 
-TrajectorySimulatorPrecalc::TrajectorySimulatorPrecalc (StateSimPtr _stateSim) : 
-    TrajectorySimulator(_stateSim) {
+TrajectorySimulatorPrecalc::TrajectorySimulatorPrecalc(StateSimPtr _stateSim) : TrajectorySimulator(_stateSim)
+{
 }
-TrajectorySimulatorPrecalc::TrajectorySimulatorPrecalc ( StateSimPtr _stateSim, unique_ptr< CostsEvaluatorClass > _costsEvaluator ) : 
-    TrajectorySimulator ( _stateSim, std::move(_costsEvaluator) ) {
-
-}
-
-
-void TrajectorySimulatorPrecalc::simulateTrajectory( double _lastValidArc ) {  
-    computeScaleDtDs();
-    updateUserDefLattice();
-    
-    //resize equal dt lattice
-    const double arcParamMax    = stateSim_->paramFuncs()->funcsArcEnd();
-    size_t simLatticeSize = max( 0, (int)( ceil( arcParamMax / dt() ) + 1  ) ); 
-    partLattices_[lattTypeIdx(asInt(BSLT::LATTICE_ARC_EQ_DT))]->resize(simLatticeSize, LatticePoint(FLT_MAX) );
-    
-    //set the dist-extended sim lattice points on the last lattice entries
-    if ( canComputeDistLattice_ && ( ds() > 0 ) ) {
-        static vector<double> dsLattice;
-	auto& partLatticeDs = partLattices_[lattTypeIdx(asInt(BSLT::LATTICE_ARC_EQ_DS))]; 
-	if(scaleDs_ || scaleDt_) {
-	    stateSim_->paramFuncsDist()->computeS2TLattice( 0, ds(), dsLattice ); 
-	    partLatticeDs->resize( dsLattice.size() ); for ( size_t i = 0; i < dsLattice.size(); ++i ) { partLatticeDs->at(i).arc = dsLattice[i]; }
-	} else {
-	    stateSim_->paramFuncsDist()->computeS2TLattice( _lastValidArc, ds(), dsLattice ); 
-	    const double& firstDsLattice = dsLattice[0]; 
-	    size_t idxFirstInvalidDs = max(0, (int)partLatticeDs->size() - 2);
-	    for ( size_t i = 1; i < partLatticeDs->size(); ++i ) { if ( partLatticeDs->at(i).arc > firstDsLattice + 1e-3 ) { idxFirstInvalidDs = --i; break; } }
-	    partLatticeDs->resize( idxFirstInvalidDs + dsLattice.size() ); for ( size_t i = 0; i < dsLattice.size(); ++i ) { partLatticeDs->at(i+idxFirstInvalidDs).arc = dsLattice[i]; }
-	}
-    } else {
-	partLattices_[lattTypeIdx(asInt(BSLT::LATTICE_ARC_EQ_DS))]->clear();
-    }
-    
-    size_t firstLaticeInvalidIdx = 0;
-    if ( initSimLatticeState0(_lastValidArc, firstLaticeInvalidIdx) ) {
-	populateTrajSimPartLattice( firstLaticeInvalidIdx ); 
-	if ( costsEvaluator_ ) { costsEvaluator_->evaluateAllCosts(); } 
-    }
+TrajectorySimulatorPrecalc::TrajectorySimulatorPrecalc(StateSimPtr _stateSim,
+                                                       unique_ptr<CostsEvaluatorClass> _costsEvaluator)
+  : TrajectorySimulator(_stateSim, std::move(_costsEvaluator))
+{
 }
 
-void TrajectorySimulatorPrecalc::populatePartSimLatticesGeneral( size_t _firstLaticeInvalidIdx, double _arcParamMax, double _minArcLatticeVal ) {
-    setBeginEndArcsToLattices(0, _arcParamMax);
-    initExtLatticeCache(_minArcLatticeVal);
-    
-    size_t arcParamLatticeIdx = max( 0, (int)( _minArcLatticeVal / dt() ) );
-    size_t minArcLatCacheIdx = getMinArcLatCacheIdx();//find lattice type index of next smallest required simulation lattice value
-    while ( ( _minArcLatticeVal = partLattices_[minArcLatCacheIdx]->at(partLatIdxCache_[minArcLatCacheIdx]).arc ) < _arcParamMax ) {
-        const size_t deltaArcParamLattice = max( 0, (int)( _minArcLatticeVal / dt() ) - (int)arcParamLatticeIdx);
-        const size_t simLatticeInjectEnd = ++_firstLaticeInvalidIdx + deltaArcParamLattice;
+void TrajectorySimulatorPrecalc::simulateTrajectory(double _lastValidArc)
+{
+  computeScaleDtDs();
+  updateUserDefLattice();
 
-        for ( ; _firstLaticeInvalidIdx < simLatticeInjectEnd; ++_firstLaticeInvalidIdx ) { //push_back the equal time lattice points before the extended one first
-            simAppendToSimPartLat ( ++arcParamLatticeIdx * dt(), asInt(BSLT::LATTICE_ARC_EQ_DT), arcParamLatticeIdx);
-        } 
-        simAppendToSimPartLat ( _minArcLatticeVal, (int)minArcLatCacheIdx - asInt(BSLT::LATTICE_ENUM_SIZE), partLatIdxCache_[minArcLatCacheIdx] ); //push back extended lattice point
-        
-        int& idxMinLatticePt = partLatIdxCache_[minArcLatCacheIdx]; 
-        if ( idxMinLatticePt + 1 < (int)partLattices_[minArcLatCacheIdx]->size() ) { ++idxMinLatticePt; }
-        minArcLatCacheIdx = getMinArcLatCacheIdx();//update the minimum extended lattice point
+  // resize equal dt lattice
+  const double arcParamMax = stateSim_->paramFuncs()->funcsArcEnd();
+  size_t simLatticeSize = max(0, (int)(ceil(arcParamMax / dt()) + 1));
+  partLattices_[lattTypeIdx(asInt(BSLT::LATTICE_ARC_EQ_DT))]->resize(simLatticeSize, LatticePoint(FLT_MAX));
+
+  // set the dist-extended sim lattice points on the last lattice entries
+  if (canComputeDistLattice_ && (ds() > 0))
+  {
+    static vector<double> dsLattice;
+    auto& partLatticeDs = partLattices_[lattTypeIdx(asInt(BSLT::LATTICE_ARC_EQ_DS))];
+    if (scaleDs_ || scaleDt_)
+    {
+      stateSim_->paramFuncsDist()->computeS2TLattice(0, ds(), dsLattice);
+      partLatticeDs->resize(dsLattice.size());
+      for (size_t i = 0; i < dsLattice.size(); ++i)
+      {
+        partLatticeDs->at(i).arc = dsLattice[i];
+      }
     }
-    const double simLatticeInjectEnd = _arcParamMax / dt(); ++arcParamLatticeIdx;
-    for (; arcParamLatticeIdx < simLatticeInjectEnd; ++arcParamLatticeIdx ) { 
-        simAppendToSimPartLat ( arcParamLatticeIdx * dt(), asInt(BSLT::LATTICE_ARC_EQ_DT), arcParamLatticeIdx);
-    } 
-    
-    setEndStateToLattices(_arcParamMax);
+    else
+    {
+      stateSim_->paramFuncsDist()->computeS2TLattice(_lastValidArc, ds(), dsLattice);
+      const double& firstDsLattice = dsLattice[0];
+      size_t idxFirstInvalidDs = max(0, (int)partLatticeDs->size() - 2);
+      for (size_t i = 1; i < partLatticeDs->size(); ++i)
+      {
+        if (partLatticeDs->at(i).arc > firstDsLattice + 1e-3)
+        {
+          idxFirstInvalidDs = --i;
+          break;
+        }
+      }
+      partLatticeDs->resize(idxFirstInvalidDs + dsLattice.size());
+      for (size_t i = 0; i < dsLattice.size(); ++i)
+      {
+        partLatticeDs->at(i + idxFirstInvalidDs).arc = dsLattice[i];
+      }
+    }
+  }
+  else
+  {
+    partLattices_[lattTypeIdx(asInt(BSLT::LATTICE_ARC_EQ_DS))]->clear();
+  }
+
+  size_t firstLaticeInvalidIdx = 0;
+  if (initSimLatticeState0(_lastValidArc, firstLaticeInvalidIdx))
+  {
+    populateTrajSimPartLattice(firstLaticeInvalidIdx);
+    if (costsEvaluator_)
+    {
+      costsEvaluator_->evaluateAllCosts();
+    }
+  }
 }
 
+void TrajectorySimulatorPrecalc::populatePartSimLatticesGeneral(size_t _firstLaticeInvalidIdx, double _arcParamMax,
+                                                                double _minArcLatticeVal)
+{
+  setBeginEndArcsToLattices(0, _arcParamMax);
+  initExtLatticeCache(_minArcLatticeVal);
 
-size_t TrajectorySimulatorPrecalc::getMinArcLatCacheIdx () const {
-    size_t idxMin = 0;
-    double minArc = FLT_MAX;
-    for (  size_t iPart = extArcLatIdxBegin; iPart < partLattices_.size(); ++iPart ) {
-	if( partLattices_[iPart]->empty() ) { continue; }
-	const double& arcI = partLattices_[iPart]->at(partLatIdxCache_[iPart]).arc;
-	if( minArc > arcI ){ minArc = arcI; idxMin = iPart;  }
+  size_t arcParamLatticeIdx = max(0, (int)(_minArcLatticeVal / dt()));
+  size_t minArcLatCacheIdx =
+      getMinArcLatCacheIdx();  // find lattice type index of next smallest required simulation lattice value
+  while ((_minArcLatticeVal = partLattices_[minArcLatCacheIdx]->at(partLatIdxCache_[minArcLatCacheIdx]).arc) <
+         _arcParamMax)
+  {
+    const size_t deltaArcParamLattice = max(0, (int)(_minArcLatticeVal / dt()) - (int)arcParamLatticeIdx);
+    const size_t simLatticeInjectEnd = ++_firstLaticeInvalidIdx + deltaArcParamLattice;
+
+    for (; _firstLaticeInvalidIdx < simLatticeInjectEnd; ++_firstLaticeInvalidIdx)
+    {  // push_back the equal time lattice points before the extended one first
+      simAppendToSimPartLat(++arcParamLatticeIdx * dt(), asInt(BSLT::LATTICE_ARC_EQ_DT), arcParamLatticeIdx);
     }
-    return idxMin;
+    simAppendToSimPartLat(_minArcLatticeVal, (int)minArcLatCacheIdx - asInt(BSLT::LATTICE_ENUM_SIZE),
+                          partLatIdxCache_[minArcLatCacheIdx]);  // push back extended lattice point
+
+    int& idxMinLatticePt = partLatIdxCache_[minArcLatCacheIdx];
+    if (idxMinLatticePt + 1 < (int)partLattices_[minArcLatCacheIdx]->size())
+    {
+      ++idxMinLatticePt;
+    }
+    minArcLatCacheIdx = getMinArcLatCacheIdx();  // update the minimum extended lattice point
+  }
+  const double simLatticeInjectEnd = _arcParamMax / dt();
+  ++arcParamLatticeIdx;
+  for (; arcParamLatticeIdx < simLatticeInjectEnd; ++arcParamLatticeIdx)
+  {
+    simAppendToSimPartLat(arcParamLatticeIdx * dt(), asInt(BSLT::LATTICE_ARC_EQ_DT), arcParamLatticeIdx);
+  }
+
+  setEndStateToLattices(_arcParamMax);
+}
+
+size_t TrajectorySimulatorPrecalc::getMinArcLatCacheIdx() const
+{
+  size_t idxMin = 0;
+  double minArc = FLT_MAX;
+  for (size_t iPart = extArcLatIdxBegin; iPart < partLattices_.size(); ++iPart)
+  {
+    if (partLattices_[iPart]->empty())
+    {
+      continue;
+    }
+    const double& arcI = partLattices_[iPart]->at(partLatIdxCache_[iPart]).arc;
+    if (minArc > arcI)
+    {
+      minArc = arcI;
+      idxMin = iPart;
+    }
+  }
+  return idxMin;
 }

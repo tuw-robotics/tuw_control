@@ -36,8 +36,8 @@
 #include <float.h>
 #include <memory>
 
-namespace tuw {
-
+namespace tuw
+{
 /*!@class StateMapping
  * @brief Interface for a filter that performs a (nonlinear) mapping from the input %state to an output %state.
  * @tparam InputStateType  Class defining the current state of the afferent system
@@ -45,37 +45,55 @@ namespace tuw {
  * @tparam ParamType       Class defining the filter parameters
  */
 template <typename InputStateType, typename OutputStateType, typename ParamType>
-class StateMapping {
-    
-    //special class member functions
-    public   : StateMapping           (std::shared_ptr<ParamType>& _params) : params_(_params) {}
-    public   : virtual ~StateMapping  ()                    = default;
-    public   : StateMapping           (const StateMapping&) = default;
-    public   : StateMapping& operator=(const StateMapping&) = default;
-    public   : StateMapping           (StateMapping&&)      = default;
-    public   : StateMapping& operator=(StateMapping&&)      = default;
-    
-    //pure virtual functions
-    /** @brief Computes the output %state after a (nonlinear) %state mapping.
-     *  @param _x Input %state
-     *  @param _t Actual temporal evaluation point
-     *  @return Output %state
-     */
-    public   : virtual std::shared_ptr<OutputStateType>& compute ( std::shared_ptr<InputStateType>& _x, const double& _t  ) = 0;
-    /** @brief Reloads class parameters.
-     *  To be called when parameters that influence the class variables are changed.
-     */
-    public   : virtual void reloadParam                          ()  = 0;
-    /** @brief Access to the last computed output %state.
-     */
-    public   : std::shared_ptr<OutputStateType>&         output  () { return output_; }
-    
-    protected: std::shared_ptr<ParamType>       params_;///< Pointer to the class parameters object
-    protected: std::shared_ptr<OutputStateType> output_;///< Last computet output %state
+class StateMapping
+{
+  // special class member functions
+public:
+  StateMapping(std::shared_ptr<ParamType>& _params) : params_(_params)
+  {
+  }
+
+public:
+  virtual ~StateMapping() = default;
+
+public:
+  StateMapping(const StateMapping&) = default;
+
+public:
+  StateMapping& operator=(const StateMapping&) = default;
+
+public:
+  StateMapping(StateMapping&&) = default;
+
+public:
+  StateMapping& operator=(StateMapping&&) = default;
+
+  // pure virtual functions
+  /** @brief Computes the output %state after a (nonlinear) %state mapping.
+   *  @param _x Input %state
+   *  @param _t Actual temporal evaluation point
+   *  @return Output %state
+   */
+public:
+  virtual std::shared_ptr<OutputStateType>& compute(std::shared_ptr<InputStateType>& _x, const double& _t) = 0;
+  /** @brief Reloads class parameters.
+   *  To be called when parameters that influence the class variables are changed.
+   */
+public:
+  virtual void reloadParam() = 0;
+  /** @brief Access to the last computed output %state.
+   */
+public:
+  std::shared_ptr<OutputStateType>& output()
+  {
+    return output_;
+  }
+
+protected:
+  std::shared_ptr<ParamType> params_;  ///< Pointer to the class parameters object
+protected:
+  std::shared_ptr<OutputStateType> output_;  ///< Last computet output %state
 };
-
-
-
 }
 
-#endif // STATE_MAPPING_HPP
+#endif  // STATE_MAPPING_HPP

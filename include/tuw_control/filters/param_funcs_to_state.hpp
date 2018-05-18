@@ -38,65 +38,89 @@
 
 #include <tuw_control/state/state.h>
 
-namespace tuw {
-
+namespace tuw
+{
 /*!@class ParamFuncs2StateBase
  */
-class ParamFuncs2StateBase { 
-    
-    
-    /** @brief Reloads class parameters.
-     *  To be called when parameters that influence the class variables are changed.
-     */
-    public   : virtual void reloadParam ()  = 0;
-    /** @brief Returns wether the parametric functions evaluation has reached the end of the parametric functions domain definition.
-     *  @return True if evaluation is outside/on the border of the domain definition of the parametric functions.
-     */
-    public   : virtual bool finished    () const = 0;
-    /** @brief Resets class structures/variables.
-     */
-    public   : virtual void reset       () = 0;
+class ParamFuncs2StateBase
+{
+  /** @brief Reloads class parameters.
+   *  To be called when parameters that influence the class variables are changed.
+   */
+public:
+  virtual void reloadParam() = 0;
+  /** @brief Returns wether the parametric functions evaluation has reached the end of the parametric functions domain
+   * definition.
+   *  @return True if evaluation is outside/on the border of the domain definition of the parametric functions.
+   */
+public:
+  virtual bool finished() const = 0;
+  /** @brief Resets class structures/variables.
+   */
+public:
+  virtual void reset() = 0;
 };
 
 /*!@class ParamFuncs2State
- * @brief Interface for a filter that outputs a desired %state given an observed %state and a parametric functions structure.
+ * @brief Interface for a filter that outputs a desired %state given an observed %state and a parametric functions
+ * structure.
  * @tparam InputStateType Class defining the current (observed) state of the afferent system
  * @tparam ParamFuncsType Class defining the parametric functions structure to be evaluated (e.g. multivariate splines)
  * @tparam OutputStateType Class defining the computed state of the filter
  * @tparam ParamType       Class defining the filter parameters
  */
 template <typename InputStateType, typename ParamFuncsType, typename OutputStateType, typename ParamType>
-class ParamFuncs2State: public ParamFuncs2StateBase {
-    
-    //special class member functions
-    public   : ParamFuncs2State           (std::shared_ptr<ParamType> _params) : ParamFuncs2StateBase(), params_(_params) {}
-    public   : virtual ~ParamFuncs2State  ()                        = default;
-    public   : ParamFuncs2State           (const ParamFuncs2State&) = default;
-    public   : ParamFuncs2State& operator=(const ParamFuncs2State&) = default;
-    public   : ParamFuncs2State           (ParamFuncs2State&&)      = default;
-    public   : ParamFuncs2State& operator=(ParamFuncs2State&&)      = default;
-    
-    public   : using ParamFuncType = ParamFuncsType;///< Parametric functions class type
-    
-    //pure virtual functions
-    /** @brief Computes the desired %state at the specified time instant given the observed %state and a parametric functions structure.
-     *  @param _x Observed %state
-     *  @param _funcs Parametric functions structure
-     *  @param _t Temporal evaluation point
-     *  @return computed output %state
-     */
-    public   : virtual std::shared_ptr<OutputStateType>& compute ( std::shared_ptr<InputStateType>& _x, std::shared_ptr<ParamFuncsType>& _funcs, const double& _t ) = 0;
-   
-    /** @brief Access to the last computed output %state.
-     */
-    public   : std::shared_ptr<OutputStateType>& output  () { return output_; }
-    
-    protected: std::shared_ptr<ParamType>        params_;///< Pointer to the class parameters object
-    protected: std::shared_ptr<OutputStateType>  output_;///< Last computet output %state
+class ParamFuncs2State : public ParamFuncs2StateBase
+{
+  // special class member functions
+public:
+  ParamFuncs2State(std::shared_ptr<ParamType> _params) : ParamFuncs2StateBase(), params_(_params)
+  {
+  }
+
+public:
+  virtual ~ParamFuncs2State() = default;
+
+public:
+  ParamFuncs2State(const ParamFuncs2State&) = default;
+
+public:
+  ParamFuncs2State& operator=(const ParamFuncs2State&) = default;
+
+public:
+  ParamFuncs2State(ParamFuncs2State&&) = default;
+
+public:
+  ParamFuncs2State& operator=(ParamFuncs2State&&) = default;
+
+public:
+  using ParamFuncType = ParamFuncsType;  ///< Parametric functions class type
+
+  // pure virtual functions
+  /** @brief Computes the desired %state at the specified time instant given the observed %state and a parametric
+   * functions structure.
+   *  @param _x Observed %state
+   *  @param _funcs Parametric functions structure
+   *  @param _t Temporal evaluation point
+   *  @return computed output %state
+   */
+public:
+  virtual std::shared_ptr<OutputStateType>& compute(std::shared_ptr<InputStateType>& _x,
+                                                    std::shared_ptr<ParamFuncsType>& _funcs, const double& _t) = 0;
+
+  /** @brief Access to the last computed output %state.
+   */
+public:
+  std::shared_ptr<OutputStateType>& output()
+  {
+    return output_;
+  }
+
+protected:
+  std::shared_ptr<ParamType> params_;  ///< Pointer to the class parameters object
+protected:
+  std::shared_ptr<OutputStateType> output_;  ///< Last computet output %state
 };
-
-
-
 }
 
-#endif // PARAM_FUNCS_2_STATE_HPP
+#endif  // PARAM_FUNCS_2_STATE_HPP

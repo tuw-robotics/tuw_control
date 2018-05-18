@@ -39,58 +39,82 @@
 #include <tuw_control/utils.h>
 #include <tuw_control/param_func/param_func.h>
 
-namespace tuw {
-
-    
-/*!@class ParamFuncsDist 
+namespace tuw
+{
+/*!@class ParamFuncsDist
  * @brief Extends manipulation of parametric functions collection with closed-form arc length (distance) computation
- * 
+ *
  */
 class ParamFuncsDist;
-using ParamFuncsDistPtr      = std::shared_ptr<ParamFuncsDist>;
+using ParamFuncsDistPtr = std::shared_ptr<ParamFuncsDist>;
 using ParamFuncsDistConstPtr = std::shared_ptr<ParamFuncsDist const>;
-class ParamFuncsDist : public ParamFuncs {
-    
-    //enums
-    ///@brief Required type of traveled distance computation relative to the parametric function.
-    public   : enum class TraveledDistCfMode { 
-	NONE, ///<no closed-form distance computation mode
-	V   ,///<agent base center linear velocity is parametric function
-	AV   ///<agent base center linear acceleration is parametric function
-    }; 
-    
-    //special class member functions
-    public   : ParamFuncsDist           ()                      = default;
-    public   : virtual ~ParamFuncsDist  ()                      = default;
-    public   : ParamFuncsDist           (const ParamFuncsDist& _other) = default;
-    public   : ParamFuncsDist& operator=(const ParamFuncsDist& _other) = default;
-    public   : ParamFuncsDist           (ParamFuncsDist&&)      = delete;
-    public   : ParamFuncsDist& operator=(ParamFuncsDist&&)      = delete;
-    
-    //pure virtual functions
-    ///@brief Initializer of the Closed form distance computation mode
-    public   : virtual void setDistCfMode ( TraveledDistCfMode _distCfMode, const std::vector<std::size_t>& _distRelFuncIdx ) = 0;
-    ///@brief Moves to evaluation arc at which the traveled distance @ref _funcsDistEval is achieved.
-    public   : virtual void   setEvalDist      ( const double& _funcsDistEval, const ParamFuncs::EvalArcGuarantee& _evalArcGuarantee = ParamFuncs::EvalArcGuarantee::NONE ) = 0;
-    ///Solves the equation \f$ \int_{0}^{evalArc\_}{ |v(\mathbf{p}, t)| } dt  = \_s \f$ for @ref \_deltaS (evalArc\_: time, _s: traveled distance, v: body linear velocity,\f$ \mathbf{p} \f$: parametrized control points).
-    public   : virtual double computeS () const = 0;
-    ///Solves the equation \f$ \int_{0}^{\_deltaT}{ |v(\mathbf{p}, t)| } dt  = \_s \f$ for @ref \_s (evalArc\_: time, _s: traveled distance, v: body linear velocity,\f$ \mathbf{p} \f$: parametrized control points).
-    public   : virtual double computeT ( const double& _s, const ParamFuncs::EvalArcGuarantee& _evalArcGuarantee = ParamFuncs::EvalArcGuarantee::NONE ) = 0;
-    /** @brief Computes arc parametrization lattice given a distance-parametrized lattice.
-     *  @param _sLattice Distance-parametrized input lattice. It is assumed that the vector is monotonically increasing.
-     *  @param _tLattice Arc-parametrized output lattice.
-     */
-    public   : virtual void   computeS2TLattice ( const std::vector<double>& _sLattice, std::vector<double>& _tLattice ) = 0;
-    /** @brief Computes arc parametrization lattice given an inital arc and distance parametrized sampling interval.
-     * 
-     *  The function computes the temporal lattice starting with s(_arc0) and ending with the maximum value of the arc parametrization.
-     * 
-     *  @param _sLattice Distance-parametrized input lattice. It is assumed that the vector values are monotonically increasing.
-     *  @param _tLattice Arc-parametrized output lattice.
-     */
-    public   : virtual void   computeS2TLattice ( const double& _arc0, const double& _ds, std::vector<double>& _tLattice ) = 0;
-};
+class ParamFuncsDist : public ParamFuncs
+{
+  // enums
+  ///@brief Required type of traveled distance computation relative to the parametric function.
+public:
+  enum class TraveledDistCfMode
+  {
+    NONE,  ///<no closed-form distance computation mode
+    V,     ///<agent base center linear velocity is parametric function
+    AV     ///<agent base center linear acceleration is parametric function
+  };
 
+  // special class member functions
+public:
+  ParamFuncsDist() = default;
+
+public:
+  virtual ~ParamFuncsDist() = default;
+
+public:
+  ParamFuncsDist(const ParamFuncsDist& _other) = default;
+
+public:
+  ParamFuncsDist& operator=(const ParamFuncsDist& _other) = default;
+
+public:
+  ParamFuncsDist(ParamFuncsDist&&) = delete;
+
+public:
+  ParamFuncsDist& operator=(ParamFuncsDist&&) = delete;
+
+  // pure virtual functions
+  ///@brief Initializer of the Closed form distance computation mode
+public:
+  virtual void setDistCfMode(TraveledDistCfMode _distCfMode, const std::vector<std::size_t>& _distRelFuncIdx) = 0;
+  ///@brief Moves to evaluation arc at which the traveled distance @ref _funcsDistEval is achieved.
+public:
+  virtual void
+  setEvalDist(const double& _funcsDistEval,
+              const ParamFuncs::EvalArcGuarantee& _evalArcGuarantee = ParamFuncs::EvalArcGuarantee::NONE) = 0;
+  /// Solves the equation \f$ \int_{0}^{evalArc\_}{ |v(\mathbf{p}, t)| } dt  = \_s \f$ for @ref \_deltaS (evalArc\_:
+  /// time, _s: traveled distance, v: body linear velocity,\f$ \mathbf{p} \f$: parametrized control points).
+public:
+  virtual double computeS() const = 0;
+  /// Solves the equation \f$ \int_{0}^{\_deltaT}{ |v(\mathbf{p}, t)| } dt  = \_s \f$ for @ref \_s (evalArc\_: time, _s:
+  /// traveled distance, v: body linear velocity,\f$ \mathbf{p} \f$: parametrized control points).
+public:
+  virtual double computeT(
+      const double& _s, const ParamFuncs::EvalArcGuarantee& _evalArcGuarantee = ParamFuncs::EvalArcGuarantee::NONE) = 0;
+  /** @brief Computes arc parametrization lattice given a distance-parametrized lattice.
+   *  @param _sLattice Distance-parametrized input lattice. It is assumed that the vector is monotonically increasing.
+   *  @param _tLattice Arc-parametrized output lattice.
+   */
+public:
+  virtual void computeS2TLattice(const std::vector<double>& _sLattice, std::vector<double>& _tLattice) = 0;
+  /** @brief Computes arc parametrization lattice given an inital arc and distance parametrized sampling interval.
+   *
+   *  The function computes the temporal lattice starting with s(_arc0) and ending with the maximum value of the arc
+   *parametrization.
+   *
+   *  @param _sLattice Distance-parametrized input lattice. It is assumed that the vector values are monotonically
+   *increasing.
+   *  @param _tLattice Arc-parametrized output lattice.
+   */
+public:
+  virtual void computeS2TLattice(const double& _arc0, const double& _ds, std::vector<double>& _tLattice) = 0;
+};
 }
 
-#endif // PARAM_FUNC_DIST_H
+#endif  // PARAM_FUNC_DIST_H

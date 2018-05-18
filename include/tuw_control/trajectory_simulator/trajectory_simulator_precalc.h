@@ -37,27 +37,43 @@
 
 #include <functional>
 
-namespace tuw {
+namespace tuw
+{
+class TrajectorySimulatorPrecalc : public TrajectorySimulator
+{
+  // special class member functions
+public:
+  TrajectorySimulatorPrecalc(StateSimPtr _stateSim);
 
-class TrajectorySimulatorPrecalc : public TrajectorySimulator {
-    
-    //special class member functions
-    public   : TrajectorySimulatorPrecalc           ( StateSimPtr _stateSim );
-    public   : TrajectorySimulatorPrecalc           ( StateSimPtr _stateSim, std::unique_ptr<CostsEvaluatorClass> _costsEvaluator );
-    public   : virtual ~TrajectorySimulatorPrecalc  ()                                  = default;
-    public   : TrajectorySimulatorPrecalc           (const TrajectorySimulatorPrecalc&) = default;
-    public   : TrajectorySimulatorPrecalc& operator=(const TrajectorySimulatorPrecalc&) = default;
-    public   : TrajectorySimulatorPrecalc           (TrajectorySimulatorPrecalc&&)      = default;
-    public   : TrajectorySimulatorPrecalc& operator=(TrajectorySimulatorPrecalc&&)      = default;
-    
-    public   : void   simulateTrajectory             ( double _lastValidArc = 0 ) override;
-    
-    private  : void populatePartSimLatticesGeneral ( size_t  _firstLaticeInvalidIdx, double _arcParamMax, double _minArcLatticeVal ) override;    
-    
-    ///@brief Returns the partial lattice cached index that has the smallest arc.
-    private  : size_t getMinArcLatCacheIdx           () const ;
+public:
+  TrajectorySimulatorPrecalc(StateSimPtr _stateSim, std::unique_ptr<CostsEvaluatorClass> _costsEvaluator);
+
+public:
+  virtual ~TrajectorySimulatorPrecalc() = default;
+
+public:
+  TrajectorySimulatorPrecalc(const TrajectorySimulatorPrecalc&) = default;
+
+public:
+  TrajectorySimulatorPrecalc& operator=(const TrajectorySimulatorPrecalc&) = default;
+
+public:
+  TrajectorySimulatorPrecalc(TrajectorySimulatorPrecalc&&) = default;
+
+public:
+  TrajectorySimulatorPrecalc& operator=(TrajectorySimulatorPrecalc&&) = default;
+
+public:
+  void simulateTrajectory(double _lastValidArc = 0) override;
+
+private:
+  void populatePartSimLatticesGeneral(size_t _firstLaticeInvalidIdx, double _arcParamMax,
+                                      double _minArcLatticeVal) override;
+
+  ///@brief Returns the partial lattice cached index that has the smallest arc.
+private:
+  size_t getMinArcLatCacheIdx() const;
 };
-
 }
 
-#endif // TRAJECTORY_SIMULATOR_PRECALC_H
+#endif  // TRAJECTORY_SIMULATOR_PRECALC_H

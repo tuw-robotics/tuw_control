@@ -41,43 +41,70 @@
 #include <functional>
 #include <memory>
 
-namespace tuw {
-
-    
+namespace tuw
+{
 class TrajectorySimGrade;
-using TrajectorySimGradeSPtr      = std::shared_ptr<TrajectorySimGrade>;
+using TrajectorySimGradeSPtr = std::shared_ptr<TrajectorySimGrade>;
 using TrajectorySimGradeConstSPtr = std::shared_ptr<TrajectorySimGrade const>;
-using TrajectorySimGradeUPtr      = std::unique_ptr<TrajectorySimGrade>;
+using TrajectorySimGradeUPtr = std::unique_ptr<TrajectorySimGrade>;
 using TrajectorySimGradeConstUPtr = std::unique_ptr<TrajectorySimGrade const>;
 
-class TrajectorySimGrade {
-    
-    //special class member functions
-    public   : TrajectorySimGrade           ( StateSimPtr& _stateSim );
-    public   : TrajectorySimGrade           ( StateSimPtr& _stateSim, std::unique_ptr<TrajectorySimulator::CostsEvaluatorClass> _costsEvaluator );
-    public   : ~TrajectorySimGrade          ()                          = default;
-    public   : TrajectorySimGrade           (const TrajectorySimGrade&) = default;
-    public   : TrajectorySimGrade& operator=(const TrajectorySimGrade&) = default;
-    public   : TrajectorySimGrade           (TrajectorySimGrade&&)      = default;
-    public   : TrajectorySimGrade& operator=(TrajectorySimGrade&&)      = default;
-    
-    public   : void initCostsEvaluator();
-    public   : void evaluateTrajectory( const double& _arcBegin = 0 );
-    public   : void setSimMode( const TrajectorySimulator::SimMode& _simMode );
-    public   : const TrajectorySimulator::SimMode& simMode() const;
-    public   : TrajectorySimulatorSPtr& trajSim();
-    
-    private  : void modifyTrajSimMode();
-    
-    private  : TrajectorySimulatorSPtr trajSim_;
-    private  : StateSimPtr stateSim_;
-    private  : TrajectorySimulator::SimMode simMode_;
-    private  : std::vector< std::vector< double* > > userPartLattices_;
-    
-    
-//     public   : std::unique_ptr<CostsEvaluatorClass> costsEvaluator_;
-};
+class TrajectorySimGrade
+{
+  // special class member functions
+public:
+  TrajectorySimGrade(StateSimPtr& _stateSim);
 
+public:
+  TrajectorySimGrade(StateSimPtr& _stateSim, std::unique_ptr<TrajectorySimulator::CostsEvaluatorClass> _costsEvaluator);
+
+public:
+  ~TrajectorySimGrade() = default;
+
+public:
+  TrajectorySimGrade(const TrajectorySimGrade&) = default;
+
+public:
+  TrajectorySimGrade& operator=(const TrajectorySimGrade&) = default;
+
+public:
+  TrajectorySimGrade(TrajectorySimGrade&&) = default;
+
+public:
+  TrajectorySimGrade& operator=(TrajectorySimGrade&&) = default;
+
+public:
+  void initCostsEvaluator();
+
+public:
+  void evaluateTrajectory(const double& _arcBegin = 0);
+
+public:
+  void setSimMode(const TrajectorySimulator::SimMode& _simMode);
+
+public:
+  const TrajectorySimulator::SimMode& simMode() const;
+
+public:
+  TrajectorySimulatorSPtr& trajSim();
+
+private:
+  void modifyTrajSimMode();
+
+private:
+  TrajectorySimulatorSPtr trajSim_;
+
+private:
+  StateSimPtr stateSim_;
+
+private:
+  TrajectorySimulator::SimMode simMode_;
+
+private:
+  std::vector<std::vector<double*> > userPartLattices_;
+
+  //     public   : std::unique_ptr<CostsEvaluatorClass> costsEvaluator_;
+};
 }
 
-#endif // TRAJECTORY_SIM_GRADE_H
+#endif  // TRAJECTORY_SIM_GRADE_H
