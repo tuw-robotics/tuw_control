@@ -95,7 +95,7 @@ using StateWhInpPtrType = std::shared_ptr<StateWhInpType>;
 int main(int argc, char **argv)
 {
   std::cout << "iws utils test" << std::endl;
-  StateWhInpPtrType tuw_i2ws_wheel_state = std::make_shared<StateWhInpType>();
+  StateWhInpPtrType tuw_i2ws_wheel_state = std::shared_ptr<StateWhInpType>(new StateWhInpType);
   tuw_i2ws_wheel_state->resize(2);
   tuw_i2ws_wheel_state->wheel(0).steer() = 10;
   tuw_i2ws_wheel_state->wheel(0).revol() = 11;

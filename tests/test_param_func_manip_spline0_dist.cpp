@@ -23,7 +23,7 @@ protected:
 
   ParamFuncManipSplineDistTest()
   {
-    funcs = std::make_shared<ParamFuncsExtType>();
+    funcs = std::shared_ptr<ParamFuncsExtType>(new ParamFuncsExtType);
   }
 
   virtual ~ParamFuncManipSplineDistTest()
@@ -128,7 +128,7 @@ TEST_F(ParamFuncManipSplineDistTest, Initialization0)
 
 TEST_F(ParamFuncManipSplineDistTest, Initialization0FuncStatic)
 {
-  funcs = std::make_shared<ParamFuncsSpline0Dist<double, 3, -1>>();
+  funcs = std::shared_ptr<ParamFuncsSpline0Dist<double, 3, -1>>(new ParamFuncsSpline0Dist<double, 3, -1>);
 
   using PFS = ParamFuncsStructure;
   using PfCpD = CtrlPtDim;
@@ -205,7 +205,7 @@ TEST_F(ParamFuncManipSplineDistTest, Initialization0FuncStatic)
 
 TEST_F(ParamFuncManipSplineDistTest, Initialization0FuncAllStatic)
 {
-  funcs = std::make_shared<ParamFuncsSpline0Dist<double, 3, 2>>();
+  funcs = std::shared_ptr<ParamFuncsSpline0Dist<double, 3, 2>>(new ParamFuncsSpline0Dist<double, 3, 2>);
 
   using PFS = ParamFuncsStructure;
   using PfCpD = CtrlPtDim;

@@ -91,7 +91,7 @@ public:
 public:
   virtual StateSPtr cloneState() const override
   {
-    return std::make_shared<StateArray<N>>(*this);
+    return  std::shared_ptr<StateArray<N>>(new StateArray<N>(*this));
   }
 
 public:
@@ -167,13 +167,13 @@ public:
 public:
   virtual StateSPtr cloneState() const override
   {
-    return std::make_shared<StateArrayScoped<EnumStateVals>>(*this);
+    return std::shared_ptr<StateArrayScoped<EnumStateVals>>(new StateArrayScoped<EnumStateVals>(*this));
   }
   ///@brief Clone-to-this-class-ptr function.
 public:
   std::shared_ptr<StateArrayScoped<EnumStateVals>> cloneStateExt() const
   {
-    return std::make_shared<StateArrayScoped<EnumStateVals>>(*this);
+    return std::shared_ptr<StateArrayScoped<EnumStateVals>>(new StateArrayScoped<EnumStateVals>(*this));
   }
   ///@brief Scoped access (compile-time) to the values of the state object.
 public:

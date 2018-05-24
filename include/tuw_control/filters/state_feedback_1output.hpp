@@ -75,7 +75,7 @@ public:
   StateFeedback1Output(std::shared_ptr<ParamsType> _params)
     : StateFeedback<InputStateType, InputStateType, double, ParamsType>(_params), reloadParamInternal_(false)
   {
-    this->output_ = std::make_shared<double>();
+    this->output_ = std::shared_ptr<double>(new double);
   }
 
 public:

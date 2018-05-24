@@ -102,12 +102,12 @@ public:
   {
     for (size_t i = 0; i < asInt(OptCacheType::ENUM_SIZE); ++i)
     {
-      xCacheConstr_[i] = std::make_shared<Eigen::Matrix<TNumType, -1, 1> >();
-      xCacheGradConstr_[i] = std::make_shared<Eigen::Matrix<TNumType, -1, 1> >();
+      xCacheConstr_[i] = std::shared_ptr<Eigen::Matrix<TNumType, -1, 1> >(new Eigen::Matrix<TNumType, -1, 1>);
+      xCacheGradConstr_[i] = std::shared_ptr<Eigen::Matrix<TNumType, -1, 1> >( new Eigen::Matrix<TNumType, -1, 1>);
       for (size_t j = 0; j < TTrajSim::CostFuncsTypesNr; ++j)
       {
-        constCache_[i][j] = std::make_shared<Eigen::Matrix<TNumType, -1, 1> >();
-        gradConstrCache_[i][j] = std::make_shared<Eigen::Matrix<TNumType, -1, -1> >();
+        constCache_[i][j] = std::shared_ptr<Eigen::Matrix<TNumType, -1, 1> >( new Eigen::Matrix<TNumType, -1, 1>);
+        gradConstrCache_[i][j] = std::shared_ptr<Eigen::Matrix<TNumType, -1, -1> >(new Eigen::Matrix<TNumType, -1, -1>);
       }
     }
   }

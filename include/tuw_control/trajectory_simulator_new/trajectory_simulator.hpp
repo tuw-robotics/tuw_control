@@ -93,7 +93,7 @@ public:
     LatticePoint(TNumType _arc, StateSPtr& _statePtr) : arc(_arc), statePtr(_statePtr)
     {
     }
-    LatticePoint(bool _makePtrShared) : arc(-1), statePtr(std::make_shared<StateType>())
+    LatticePoint(bool _makePtrShared) : arc(-1), statePtr(std::shared_ptr<StateType>(new StateType))
     {
     }
     virtual ~LatticePoint()
@@ -140,7 +140,7 @@ public:
   {
     for (size_t i = 0; i < partLattices_.size(); ++i)
     {
-      partLattices_[i] = std::make_shared<LatticeVec>();
+      partLattices_[i] = std::shared_ptr<LatticeVec>(new LatticeVec);
     }
     *(partLattices_[lattTypeIdx(asInt(BaseSimLatticeType::ARC_BG_BK))]) = { LatticePoint(), LatticePoint() };
     simulationLatticeActiveSize_ = 0;
@@ -225,7 +225,7 @@ public:
     partLattices_.resize(asInt(BaseSimLatticeType::LATTICE_ENUM_SIZE) + _userDefLattices.size());
     for (size_t i = asInt(BaseSimLatticeType::LATTICE_ENUM_SIZE); i < partLattices_.size(); ++i)
     {
-      partLattices_[i] = std::make_shared<LatticeVec>();
+      partLattices_[i] = std::shared_ptr<LatticeVec>(new LatticeVec);
     }
     partLatIdxCache_.resize(partLattices_.size());
     for (size_t i = 0; i < _userDefLattices.size(); ++i)

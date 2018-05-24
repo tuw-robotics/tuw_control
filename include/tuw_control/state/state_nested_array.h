@@ -64,7 +64,7 @@ public:
   {
     for (size_t i = 0; i < N; ++i)
     {
-      states_[i] = std::make_shared<SubState>(this);
+      states_[i] = std::shared_ptr<SubState>(new SubState(this));
       statesBase_[i] = states_[i];
     }
     this->callRootUpdateSize();
@@ -75,7 +75,7 @@ public:
   {
     for (size_t i = 0; i < N; ++i)
     {
-      states_[i] = std::make_shared<SubState>(this);
+      states_[i] = std::shared_ptr<SubState>(new SubState(this));
       statesBase_[i] = states_[i];
     }
     this->callRootUpdateSize();
@@ -99,7 +99,7 @@ public:
 public:
   virtual StateSPtr cloneState() const override
   {
-    return std::make_shared<StateNestedArray<SubState, N>>(*this);
+    return std::shared_ptr<StateNestedArray<SubState, N>>(new StateNestedArray<SubState, N>(*this));
   }
 
 public:
@@ -215,13 +215,13 @@ public:
 public:
   virtual StateSPtr cloneState() const override
   {
-    return std::make_shared<StateNestedArrayScoped<EnumStateVals, SubState>>(*this);
+    return std::shared_ptr<StateNestedArrayScoped<EnumStateVals, SubState>>(new StateNestedArrayScoped<EnumStateVals, SubState>(*this));
   }
   ///@brief Clone-to-this-class-ptr function.
 public:
   std::shared_ptr<StateNestedArrayScoped<EnumStateVals, SubState>> cloneStateExt() const
   {
-    return std::make_shared<StateNestedArrayScoped<EnumStateVals, SubState>>(*this);
+    return std::shared_ptr<StateNestedArrayScoped<EnumStateVals, SubState>>(new StateNestedArrayScoped<EnumStateVals, SubState>(*this));
   }
   // public   : template<EnumStateVals _i>       double& value ()       { return StateNestedArray<SubState,
   // asInt(EnumStateVals::ENUM_SIZE)>::value(asInt(_i)); }

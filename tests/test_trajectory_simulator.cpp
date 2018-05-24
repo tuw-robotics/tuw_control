@@ -41,7 +41,7 @@ using EaG = EvalArcGuarantee;
 //     TrajectorySimulatorTest() {
 //
 // 	//construct stateSim object and initalize the parametric functions object
-// 	sp = std::make_shared<StateSimDiffDriveVWHeunType>();
+// 	sp = std::shared_ptr<StateSimDiffDriveVWHeunType>(new StateSimDiffDriveVWHeunType);
 // // 	sp->setDiscrType( RungeKutta::DiscretizationType::EULER );
 //
 // 	vector<PFS> pf( 2 , PFS() );
@@ -58,7 +58,7 @@ using EaG = EvalArcGuarantee;
 //
 //
 // 	//construct trajectory simulator object
-// 	trajSim       = std::make_shared<TrajectorySimulatorType>(sp);
+// 	trajSim       = std::shared_ptr<TrajectorySimulatorType>(new TrajectorySimulatorType(sp));
 //     }
 //
 //     virtual ~TrajectorySimulatorTest() {
@@ -270,11 +270,11 @@ using EaG = EvalArcGuarantee;
 // 	trajStatesRef[i].statePtr->data() = trajSim->simLatticeI(i).statePtr->data();
 //     }
 //     TrajectorySimulatorType::LatticeVecSPtrVec partLatRef; partLatRef.resize(trajSim->partLattices_.size() );
-//     for(auto& latRefI : partLatRef) { latRefI = make_shared<TrajectorySimulatorType::LatticeVec>();}
+//     for(auto& latRefI : partLatRef) { latRefI = shared_ptr<TrajectorySimulatorType::LatticeVec>(new TrajectorySimulatorType::LatticeVec);}
 //     for(size_t i = 0; i < trajSim->partLattices_.size(); ++i){
 // 	partLatRef[i]->resize(trajSim->partLattices_[i]->size() );
 // 	for(size_t j = 0; j < trajSim->partLattices_[i]->size(); ++j){
-// 	    partLatRef[i]->at(j).statePtr = std::make_shared<TrajectorySimulatorType::StateType>();
+// 	    partLatRef[i]->at(j).statePtr = std::shared_ptr<TrajectorySimulatorType::StateType>(new TrajectorySimulatorType::StateType);
 // 	    partLatRef[i]->at(j).arc = trajSim->partLattices_[i]->at(j).arc;
 // 	    partLatRef[i]->at(j).statePtr->data() = trajSim->partLattices_[i]->at(j).statePtr->data();
 // 	}

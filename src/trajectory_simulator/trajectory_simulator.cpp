@@ -54,7 +54,7 @@ TrajectorySimulator::TrajectorySimulator(StateSimPtr _stateSim)
 {
   for (size_t i = 0; i < partLattices_.size(); ++i)
   {
-    partLattices_[i] = make_shared<LatticeVec>();
+    partLattices_[i] = shared_ptr<LatticeVec>(new LatticeVec);
   }
   *(partLattices_[lattTypeIdx(asInt(BaseSimLatticeType::ARC_BG_BK))]) = { LatticePoint(), LatticePoint() };
 }
@@ -73,7 +73,7 @@ void TrajectorySimulator::setUserDefLattice(const vector<vector<double*> >& _use
   partLattices_.resize(asInt(BaseSimLatticeType::LATTICE_ENUM_SIZE) + _userDefLattices.size());
   for (size_t i = asInt(BaseSimLatticeType::LATTICE_ENUM_SIZE); i < partLattices_.size(); ++i)
   {
-    partLattices_[i] = make_shared<LatticeVec>();
+    partLattices_[i] = shared_ptr<LatticeVec>(new LatticeVec);
   }
   partLatIdxCache_.resize(partLattices_.size());
   for (size_t i = 0; i < _userDefLattices.size(); ++i)

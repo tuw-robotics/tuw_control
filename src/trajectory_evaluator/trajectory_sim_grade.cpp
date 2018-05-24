@@ -43,14 +43,14 @@ using namespace tuw;
 TrajectorySimGrade::TrajectorySimGrade(StateSimPtr& _stateSim)
   : stateSim_(_stateSim), simMode_(TrajectorySimulator::SimMode::ONLINE)
 {
-  trajSim_ = make_shared<TrajectorySimulatorOnline>(stateSim_);
+  trajSim_ = shared_ptr<TrajectorySimulatorOnline>(new TrajectorySimulatorOnline(stateSim_));
 }
 
 TrajectorySimGrade::TrajectorySimGrade(StateSimPtr& _stateSim,
                                        unique_ptr<TrajectorySimulator::CostsEvaluatorClass> _costsEvaluator)
   : stateSim_(_stateSim), simMode_(TrajectorySimulator::SimMode::ONLINE)
 {
-  trajSim_ = make_shared<TrajectorySimulatorOnline>(stateSim_, std::move(_costsEvaluator));
+  trajSim_ = shared_ptr<TrajectorySimulatorOnline>(new TrajectorySimulatorOnline(stateSim_, std::move(_costsEvaluator)));
 }
 
 void TrajectorySimGrade::modifyTrajSimMode()
@@ -70,11 +70,11 @@ void TrajectorySimGrade::modifyTrajSimMode()
   }
   if (simMode_ == TrajectorySimulator::SimMode::ONLINE)
   {
-    trajSim_ = make_shared<TrajectorySimulatorOnline>(trajSim_->stateSim(), std::move(trajSim_->costsEvaluator_));
+    trajSim_ = shared_ptr<TrajectorySimulatorOnline>(new TrajectorySimulatorOnline(trajSim_->stateSim(), std::move(trajSim_->costsEvaluator_)));
   }
   else if (simMode_ == TrajectorySimulator::SimMode::PRECALC)
   {
-    trajSim_ = make_shared<TrajectorySimulatorPrecalc>(trajSim_->stateSim(), std::move(trajSim_->costsEvaluator_));
+    trajSim_ = shared_ptr<TrajectorySimulatorPrecalc>(new TrajectorySimulatorPrecalc(trajSim_->stateSim(), std::move(trajSim_->costsEvaluator_)));
   }
   if (copy)
   {

@@ -62,8 +62,8 @@ class StateNestedSet : public State
 public:
   StateNestedSet(State* _parent) : State(_parent), isInit_(false)
   {
-    states_ = std::make_tuple(std::make_shared<NestedStates>(this)...);
-    statesBase_ = std::initializer_list<StateSPtr>{ std::make_shared<NestedStates>(this)... };
+    states_ = std::make_tuple(std::shared_ptr<NestedStates>(new NestedStates(this))...);
+    statesBase_ = std::initializer_list<StateSPtr>{ std::shared_ptr<NestedStates>(new NestedStates(this))... };
     isInit_ = true;
     callRootUpdateSize();
   }
@@ -71,8 +71,8 @@ public:
 public:
   StateNestedSet() : State(), isInit_(false)
   {
-    states_ = std::make_tuple(std::make_shared<NestedStates>(this)...);
-    statesBase_ = std::initializer_list<StateSPtr>{ std::make_shared<NestedStates>(this)... };
+    states_ = std::make_tuple(std::shared_ptr<NestedStates>(new NestedStates(this))...);
+    statesBase_ = std::initializer_list<StateSPtr>{ std::shared_ptr<NestedStates>(new NestedStates(this))... };
     isInit_ = true;
     callRootUpdateSize();
   }
@@ -95,7 +95,7 @@ public:
 public:
   virtual StateSPtr cloneState() const override
   {
-    return std::make_shared<StateNestedSet<NestedStates...> >(*this);
+    return std::shared_ptr<StateNestedSet<NestedStates...> >( new StateNestedSet<NestedStates...>(*this));
   }
 
 public:

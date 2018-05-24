@@ -187,7 +187,7 @@ protected:
 
   TrajSimGradeTest()
   {
-    dummyMapData = make_shared<double>(0);
+    dummyMapData = shared_ptr<double>(new double(0));
 
     // initialize parametric functions structure
     using PFS = ParamFuncs::ParamFuncsStructure;
@@ -204,7 +204,7 @@ protected:
     pf[0].evalReq[asInt(FeM::INT2)] = false;
 
     // construct stateSim object and initalize the parametric functions object
-    stateSimPtr = std::make_shared<StateSimTest>();
+    stateSimPtr = std::shared_ptr<StateSimTest>(new StateSimTest);
     stateSimPtr->paramFuncs()->init(pf);
     stateSimPtr->paramFuncsDist()->setDistCfMode(ParamFuncsDist::TraveledDistCfMode::V, vector<size_t>(1, 0));
 
@@ -252,7 +252,7 @@ public:
   template <typename CostEvalType>
   void multiCheckCostFunc(const double& _dt, const double& _ds, std::function<double(double, double)> costExpFunc)
   {
-    trajSimGrade = make_shared<TrajectorySimGrade>(stateSimPtr, std::make_unique<CostEvalType>(dummyMapData));
+    trajSimGrade = shared_ptr<TrajectorySimGrade>(new TrajectorySimGrade(stateSimPtr, std::make_unique<CostEvalType>(dummyMapData)));
     trajSimGrade->trajSim()->stateSim()->setDiscrType(RungeKutta::DiscretizationType::HEUN);
     trajSimGrade->setSimMode(TrajectorySimulator::SimMode::PRECALC);
 
@@ -294,14 +294,14 @@ public:
   void multiCheckCostFuncArray(const double& _dt, const double& _ds,
                                function<shared_ptr<vector<double>>(double, double)> costExpFunc)
   {
-    trajSimGrade = make_shared<TrajectorySimGrade>(stateSimPtr, std::make_unique<CostEvalType>(dummyMapData));
+    trajSimGrade = shared_ptr<TrajectorySimGrade>(new TrajectorySimGrade(stateSimPtr, std::make_unique<CostEvalType>(dummyMapData)));
     trajSimGrade->trajSim()->stateSim()->setDiscrType(RungeKutta::DiscretizationType::HEUN);
     trajSimGrade->setSimMode(TrajectorySimulator::SimMode::PRECALC);
 
     trajSimGrade->trajSim()->dtBase() = _dt;
     trajSimGrade->evaluateTrajectory();
 
-    shared_ptr<vector<double>> ans = make_shared<vector<double>>();
+    shared_ptr<vector<double>> ans = shared_ptr<vector<double>>(new vector<double>);
     shared_ptr<vector<double>> exp;
     ans->resize(trajSimGrade->trajSim()->costsEvaluator_->h.size());
     for (size_t i = 0; i < ans->size(); ++i)
@@ -381,7 +381,7 @@ public:
   template <typename CostEvalType>
   void multiCheckCostFuncArrayKnot(const double& _dt, const double& _ds, bool checkEqCostsNr)
   {
-    trajSimGrade = make_shared<TrajectorySimGrade>(stateSimPtr, std::make_unique<CostEvalType>(dummyMapData));
+    trajSimGrade = shared_ptr<TrajectorySimGrade>(new TrajectorySimGrade(stateSimPtr, std::make_unique<CostEvalType>(dummyMapData)));
     trajSimGrade->trajSim()->stateSim()->setDiscrType(RungeKutta::DiscretizationType::HEUN);
 
     ParamFuncs* funcs = trajSimGrade->trajSim()->stateSim()->paramFuncs();
@@ -397,7 +397,7 @@ public:
     trajSimGrade->trajSim()->dtBase() = _dt;
     trajSimGrade->evaluateTrajectory();
     trajSimGrade->trajSim()->dsBase() = -1;
-    shared_ptr<vector<double>> expPreEq = make_shared<vector<double>>();
+    shared_ptr<vector<double>> expPreEq = shared_ptr<vector<double>>(new vector<double>);
     expPreEq->resize(trajSimGrade->trajSim()->costsEvaluator_->h.size());
     for (size_t i = 0; i < expPreEq->size(); ++i)
     {
@@ -408,7 +408,7 @@ public:
     trajSimGrade->trajSim()->dtBase() = _dt / 10.;
     trajSimGrade->trajSim()->dsBase() = _ds;
     trajSimGrade->evaluateTrajectory();
-    shared_ptr<vector<double>> expPreSm = make_shared<vector<double>>();
+    shared_ptr<vector<double>> expPreSm = shared_ptr<vector<double>>(new vector<double>);
     expPreSm->resize(trajSimGrade->trajSim()->costsEvaluator_->h.size());
     for (size_t i = 0; i < expPreSm->size(); ++i)
     {
@@ -419,7 +419,7 @@ public:
     trajSimGrade->trajSim()->dtBase() = _dt * 10.;
     trajSimGrade->trajSim()->dsBase() = -1;
     trajSimGrade->evaluateTrajectory();
-    shared_ptr<vector<double>> expPreGr = make_shared<vector<double>>();
+    shared_ptr<vector<double>> expPreGr = shared_ptr<vector<double>>(new vector<double>);
     expPreGr->resize(trajSimGrade->trajSim()->costsEvaluator_->h.size());
     for (size_t i = 0; i < expPreGr->size(); ++i)
     {
@@ -429,7 +429,7 @@ public:
 
     ///////////////////////////////////////////////////////////////////////////////
     trajSimGrade->setSimMode(TrajectorySimulator::SimMode::ONLINE);
-    shared_ptr<vector<double>> ansOnline = make_shared<vector<double>>();
+    shared_ptr<vector<double>> ansOnline = shared_ptr<vector<double>>(new vector<double>);
 
     for (size_t i = 0; i < funcKnotsLattice[0].size(); ++i)
     {
@@ -531,13 +531,13 @@ public:
   template <typename CostEvalType>
   void multiCheckCostFuncArrayKnotOnlyDt(const double& _dt)
   {
-    trajSimGrade = make_shared<TrajectorySimGrade>(stateSimPtr, std::make_unique<CostEvalType>(dummyMapData));
+    trajSimGrade = shared_ptr<TrajectorySimGrade>(new TrajectorySimGrade(stateSimPtr, std::make_unique<CostEvalType>(dummyMapData)));
     trajSimGrade->trajSim()->stateSim()->setDiscrType(RungeKutta::DiscretizationType::HEUN);
     trajSimGrade->setSimMode(TrajectorySimulator::SimMode::PRECALC);
 
     trajSimGrade->trajSim()->dtBase() = _dt;
     trajSimGrade->evaluateTrajectory();
-    shared_ptr<vector<double>> expPreEq = make_shared<vector<double>>();
+    shared_ptr<vector<double>> expPreEq = shared_ptr<vector<double>>(new vector<double>);
     expPreEq->resize(trajSimGrade->trajSim()->costsEvaluator_->h.size());
     for (size_t i = 0; i < expPreEq->size(); ++i)
     {
@@ -547,7 +547,7 @@ public:
 
     trajSimGrade->trajSim()->dtBase() = _dt / 10.;
     trajSimGrade->evaluateTrajectory();
-    shared_ptr<vector<double>> expPreSm = make_shared<vector<double>>();
+    shared_ptr<vector<double>> expPreSm = shared_ptr<vector<double>>(new vector<double>);
     expPreSm->resize(trajSimGrade->trajSim()->costsEvaluator_->h.size());
     for (size_t i = 0; i < expPreSm->size(); ++i)
     {
@@ -557,7 +557,7 @@ public:
 
     trajSimGrade->trajSim()->dtBase() = _dt * 10.;
     trajSimGrade->evaluateTrajectory();
-    shared_ptr<vector<double>> expPreGr = make_shared<vector<double>>();
+    shared_ptr<vector<double>> expPreGr = shared_ptr<vector<double>>(new vector<double>);
     expPreGr->resize(trajSimGrade->trajSim()->costsEvaluator_->h.size());
     for (size_t i = 0; i < expPreGr->size(); ++i)
     {
@@ -567,7 +567,7 @@ public:
 
     ///////////////////////////////////////////////////////////////////////////////
     trajSimGrade->setSimMode(TrajectorySimulator::SimMode::ONLINE);
-    shared_ptr<vector<double>> ansOnline = make_shared<vector<double>>();
+    shared_ptr<vector<double>> ansOnline = shared_ptr<vector<double>>(new vector<double>);
 
     trajSimGrade->trajSim()->dtBase() = _dt;
     trajSimGrade->evaluateTrajectory();
@@ -935,7 +935,7 @@ TEST_F(TrajSimGradeTest, CostFuncsArrayOnTOnTLat)
     auto sumeEndExpFunc = [this](double dt, double ds)
     {
       shared_ptr<vector<double>> costsExp =
-          make_shared<vector<double>>(trajSimGrade->trajSim()->stateSim()->paramFuncs()->funcsArcEnd() / (double)dt);
+          shared_ptr<vector<double>>(new vector<double>(trajSimGrade->trajSim()->stateSim()->paramFuncs()->funcsArcEnd() / (double)dt));
       for (size_t i = 1; i <= 1. / trajSimGrade->trajSim()->dt(); ++i)
       {
         costsExp->at(i - 1) = (double)i * dt;
@@ -961,7 +961,7 @@ TEST_F(TrajSimGradeTest, CostFuncsArrayOnTOnTLat)
     auto sumeEndExpFunc = [this](double dt, double ds)
     {
       shared_ptr<vector<double>> costsExp =
-          make_shared<vector<double>>(trajSimGrade->trajSim()->stateSim()->paramFuncs()->funcsArcEnd() / (double)dt);
+          shared_ptr<vector<double>>(new vector<double>(trajSimGrade->trajSim()->stateSim()->paramFuncs()->funcsArcEnd() / (double)dt));
       for (size_t i = 1; i <= 1. / trajSimGrade->trajSim()->dt(); ++i)
       {
         costsExp->at(i - 1) = (double)i * dt / (i * dt - (i - 1) * dt);
@@ -987,7 +987,7 @@ TEST_F(TrajSimGradeTest, CostFuncsArrayOnTOnTLat)
     auto sumeEndExpFunc = [this](double dt, double ds)
     {
       shared_ptr<vector<double>> costsExp =
-          make_shared<vector<double>>(trajSimGrade->trajSim()->stateSim()->paramFuncs()->funcsArcEnd() / (double)dt);
+          shared_ptr<vector<double>>(new vector<double>(trajSimGrade->trajSim()->stateSim()->paramFuncs()->funcsArcEnd() / (double)dt));
       for (size_t i = 1; i <= 1. / trajSimGrade->trajSim()->dt(); ++i)
       {
         double ii = i;
@@ -1453,13 +1453,13 @@ public:
 
 TEST_F(TrajSimGradeTest, CostFuncsArrayOnTOnBELatPrecalc)
 {
-  trajSimGrade = make_shared<TrajectorySimGrade>(stateSimPtr, std::make_unique<TestCostsEvaluatorT7C1>(dummyMapData));
+  trajSimGrade = shared_ptr<TrajectorySimGrade>(new TrajectorySimGrade(stateSimPtr, std::make_unique<TestCostsEvaluatorT7C1>(dummyMapData)));
   trajSimGrade->trajSim()->stateSim()->setDiscrType(RungeKutta::DiscretizationType::HEUN);
   trajSimGrade->setSimMode(TrajectorySimulator::SimMode::PRECALC);
 
   trajSimGrade->trajSim()->dtBase() = 0.1;
   trajSimGrade->evaluateTrajectory();
-  shared_ptr<vector<double>> expPreEq = make_shared<vector<double>>();
+  shared_ptr<vector<double>> expPreEq = shared_ptr<vector<double>>(new vector<double>);
   expPreEq->resize(trajSimGrade->trajSim()->costsEvaluator_->h.size());
   for (size_t i = 0; i < expPreEq->size(); ++i)
   {

@@ -49,7 +49,7 @@ struct LatticePoint
 {
   using StateSPtr = std::shared_ptr<TStateType>;
 
-  LatticePoint() : arc(-1), statePtr(std::make_shared<TStateType>())
+  LatticePoint() : arc(-1), statePtr(std::shared_ptr<TStateType>(new TStateType))
   {
   }
   LatticePoint(StateSPtr _statePtr) : arc(-1), statePtr(_statePtr)
@@ -291,13 +291,13 @@ public:
       std::tuple_element<0, std::tuple<TLatticeTypes<TNumType, TSimType>...>>::type::costFuncsTypesNr();
 
 public:
-  TrajectorySimulator() : stateSim_(std::make_shared<TSimType>())
+  TrajectorySimulator() : stateSim_(std::shared_ptr<TSimType>(new TSimType))
   {
     for_each_tuple_class(partialLattices_, correctStateGradFunc);
     for (size_t i = 0; i < gradCostsMap_.size(); ++i)
     {
       gradCostsMap_[i] =
-          std::make_shared<Eigen::Map<Eigen::Matrix<TNumType, -1, -1, Eigen::RowMajor>, MapAlignment>>(nullptr, 0, 0);
+          std::shared_ptr<Eigen::Map<Eigen::Matrix<TNumType, -1, -1, Eigen::RowMajor>, MapAlignment>>(new Eigen::Map<Eigen::Matrix<TNumType, -1, -1, Eigen::RowMajor>, MapAlignment>(nullptr, 0, 0));
     }
   }
 
@@ -308,7 +308,7 @@ public:
     for (size_t i = 0; i < gradCostsMap_.size(); ++i)
     {
       gradCostsMap_[i] =
-          std::make_shared<Eigen::Map<Eigen::Matrix<TNumType, -1, -1, Eigen::RowMajor>, MapAlignment>>(nullptr, 0, 0);
+          std::shared_ptr<Eigen::Map<Eigen::Matrix<TNumType, -1, -1, Eigen::RowMajor>, MapAlignment>>(new Eigen::Map<Eigen::Matrix<TNumType, -1, -1, Eigen::RowMajor>, MapAlignment>(nullptr, 0, 0));
     }
   }
 

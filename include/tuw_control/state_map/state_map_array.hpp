@@ -110,7 +110,7 @@ public:
   StateMapArray()
     : StateBaseCRTPType()
     , StateMapBaseVirt<NumericType>()
-    , DataBuffer<TNumericType, StateBaseCRTPType::MapSize>(std::make_shared<DataBufferContainterType>())
+    , DataBuffer<TNumericType, StateBaseCRTPType::MapSize>(std::shared_ptr<DataBufferContainterType>(new DataBufferContainterType))
     , map_(nullptr)
     , memStartRef_(nullptr)
     , mapElementSize_(StateBaseCRTPType::MapSize)
@@ -118,7 +118,7 @@ public:
   {
     for (auto& subI : this->subs_)
     {
-      subI = std::make_shared<LeafType>(this, this->dataBuffer_);
+      subI = std::shared_ptr<LeafType>(new LeafType(this, this->dataBuffer_));
     }
     this->bindToMemory(this->dataBuffer_->data());
   }
@@ -129,7 +129,7 @@ public:
   StateMapArray()
     : StateBaseCRTPType()
     , StateMapBaseVirt<NumericType>()
-    , DataBuffer<TNumericType, StateBaseCRTPType::MapSize>(std::make_shared<DataBufferContainterType>())
+    , DataBuffer<TNumericType, StateBaseCRTPType::MapSize>(std::shared_ptr<DataBufferContainterType>(new DataBufferContainterType))
     , map_(nullptr, 0)
     , memStartRef_(nullptr)
     , mapElementSize_(0)
@@ -137,7 +137,7 @@ public:
   {
     for (auto& subI : this->subs_)
     {
-      subI = std::make_shared<LeafType>(this, this->dataBuffer_);
+      subI = std::shared_ptr<LeafType>(new LeafType(this, this->dataBuffer_));
       mapElementSize_ += subI->mapElementSize_;
     }
     if (mapElementSize_ > 0)
@@ -153,7 +153,7 @@ public:
   StateMapArray()
     : StateBaseCRTPType()
     , StateMapBaseVirt<NumericType>()
-    , DataBuffer<TNumericType, StateBaseCRTPType::MapSize>(std::make_shared<DataBufferContainterType>())
+    , DataBuffer<TNumericType, StateBaseCRTPType::MapSize>(std::shared_ptr<DataBufferContainterType>(new DataBufferContainterType))
     , map_(nullptr)
     , memStartRef_(nullptr)
     , mapElementSize_(StateBaseCRTPType::MapSize)
@@ -177,7 +177,7 @@ public:
   {
     for (auto& subI : this->subs_)
     {
-      subI = std::make_shared<LeafType>(_root, _dataBuffer);
+      subI = std::shared_ptr<LeafType>(new LeafType(_root, _dataBuffer));
     }
   }
   // dynamic, not leaf
@@ -195,7 +195,7 @@ public:
   {
     for (auto& subI : this->subs_)
     {
-      subI = std::make_shared<LeafType>(_root, _dataBuffer);
+      subI = std::shared_ptr<LeafType>(new LeafType(_root, _dataBuffer));
       mapElementSize_ += subI->mapElementSize_;
     }
   }
@@ -260,7 +260,7 @@ private:
   {
     for (size_t i = 0; i < this->subs_.size(); ++i)
     {
-      this->subs_[i] = std::make_shared<LeafType>(*_rhs.subs_[i].get());
+      this->subs_[i] = std::shared_ptr<LeafType>(new LeafType(*_rhs.subs_[i].get()));
     }
   }
 
@@ -278,7 +278,7 @@ private:
   {
     for (size_t i = 0; i < this->subs_.size(); ++i)
     {
-      this->subs_[i] = std::make_shared<LeafType>(*_rhs.subs_[i].get());
+      this->subs_[i] = std::shared_ptr<LeafType>(new LeafType(*_rhs.subs_[i].get()));
     }
   }
 

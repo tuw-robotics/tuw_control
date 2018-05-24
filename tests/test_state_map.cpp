@@ -569,7 +569,7 @@ TEST(TestStateMap, VirtualBase)
   using NestedVectorArray6 = StateMapVector<double, NestedArray4>;
   using NestedArray4VectorArray6 = StateMapArray<double, NestedVectorArray6, 4>;
 
-  std::shared_ptr<StateMapBaseVirt<double>> nStateBaseVirt = std::make_shared<NestedArray4VectorArray6>();
+  std::shared_ptr<StateMapBaseVirt<double>> nStateBaseVirt = std::shared_ptr<NestedArray4VectorArray6>(new NestedArray4VectorArray6);
 
   nStateBaseVirt->sub(0).subResize(2);
   for (int i = 0; i < nStateBaseVirt->data().size(); ++i)
@@ -612,7 +612,7 @@ TEST(TestStateMap, VirtualBase)
 
   using NestedTupleArray4VectorArray6 = StateMapTuple<double, NestedArray4, NestedVectorArray6>;
 
-  std::shared_ptr<StateMapBaseVirt<double>> nStateTupBaseVirt = std::make_shared<NestedTupleArray4VectorArray6>();
+  std::shared_ptr<StateMapBaseVirt<double>> nStateTupBaseVirt = std::shared_ptr<NestedTupleArray4VectorArray6>(new NestedTupleArray4VectorArray6);
 
   nStateTupBaseVirt->sub(1).subResize(2);
   for (int i = 0; i < nStateTupBaseVirt->data().size(); ++i)

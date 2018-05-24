@@ -88,7 +88,7 @@ public:
 public:
   virtual StateSPtr cloneState() const override
   {
-    return std::make_shared<StateNestedVector<SubState> >(*this);
+    return std::shared_ptr<StateNestedVector<SubState> >(new StateNestedVector<SubState>(*this));
   }
 
 public:
@@ -156,7 +156,7 @@ public:
     {
       for (size_t i = states_.size(); i < _i; ++i)
       {
-        states_.emplace_back(std::make_shared<SubState>(this));
+        states_.emplace_back(std::shared_ptr<SubState>(new SubState(this)));
         statesBase_[i] = states_[i];
       }
     }

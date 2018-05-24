@@ -18,7 +18,7 @@ protected:
 
   ParamFuncManipSplineDistTest()
   {
-    funcs = std::make_shared<ParamFuncsSpline0Dist>();
+    funcs = std::shared_ptr<ParamFuncsSpline0Dist>(new ParamFuncsSpline0Dist);
   }
 
   virtual ~ParamFuncManipSplineDistTest()

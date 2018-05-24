@@ -266,7 +266,7 @@ protected:
   TrajectorySimulatorsTest()
   {
     // construct stateSim object and initalize the parametric functions object
-    sp = std::make_shared<StateSimTest>();
+    sp = std::shared_ptr<StateSimTest>(new StateSimTest);
     sp->setDiscrType(RungeKutta::DiscretizationType::EULER);
 
     vector<PFS> pf(2, PFS());
@@ -286,8 +286,8 @@ protected:
     sp->paramFuncsDist()->setDistCfMode(ParamFuncsDist::TraveledDistCfMode::V, idxClosedFormV);
 
     // construct trajectory simulator object
-    trajSim = std::make_shared<TrajectorySimulatorPrecalc>(sp);
-    trajSimOnline = std::make_shared<TrajectorySimulatorOnline>(sp);
+    trajSim = std::shared_ptr<TrajectorySimulatorPrecalc>(new TrajectorySimulatorPrecalc(sp));
+    trajSimOnline = std::shared_ptr<TrajectorySimulatorOnline>(new TrajectorySimulatorOnline(sp));
   }
 
   virtual ~TrajectorySimulatorsTest()
@@ -562,7 +562,7 @@ TEST_F(TrajectorySimulatorsTest, SimPrecalcFromNon0DtDsCtrlPt)
   partLatRef.resize(trajSim->partLattices_.size());
   for (auto& latRefI : partLatRef)
   {
-    latRefI = make_shared<TrajectorySimulator::LatticeVec>();
+    latRefI = shared_ptr<TrajectorySimulator::LatticeVec>(new TrajectorySimulator::LatticeVec);
   }
   for (size_t i = 0; i < trajSim->partLattices_.size(); ++i)
   {

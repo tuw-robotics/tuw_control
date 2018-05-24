@@ -191,7 +191,7 @@ protected:
 
   TrajOptTest()
   {
-    dummyMapData = make_shared<double>(0);
+    dummyMapData = shared_ptr<double>(new double(0));
 
     // initialize parametric functions structure
     using PFS = ParamFuncs::ParamFuncsStructure;
@@ -208,7 +208,7 @@ protected:
     pf[0].evalReq[asInt(FeM::INT2)] = false;
 
     // construct stateSim object and initalize the parametric functions object
-    stateSimPtr = std::make_shared<StateSimTest>();
+    stateSimPtr = std::shared_ptr<StateSimTest>(new StateSimTest);
     stateSimPtr->paramFuncs()->init(pf);
     stateSimPtr->paramFuncsDist()->setDistCfMode(ParamFuncsDist::TraveledDistCfMode::V, vector<size_t>(1, 0));
 
@@ -382,7 +382,7 @@ class OptimizationStateDiffDrive : public OptimizationState
 public:
   StateSPtr cloneState() const override
   {
-    return std::make_shared<OptimizationStateDiffDrive>(*this);
+    return std::shared_ptr<OptimizationStateDiffDrive>(new OptimizationStateDiffDrive(*this));
   }
 
 public:
@@ -425,8 +425,8 @@ public:
 
 TEST_F(TrajOptTest, GenericTest)
 {
-  trajOpt = make_shared<TrajectoryOptimizer>(stateSimPtr, std::make_unique<TestCostsEvaluatorT1>(dummyMapData),
-                                             std::make_shared<OptimizationStateDiffDrive>());
+  trajOpt = shared_ptr<TrajectoryOptimizer>(new TrajectoryOptimizer(stateSimPtr, std::make_unique<TestCostsEvaluatorT1>(dummyMapData),
+                                             std::shared_ptr<OptimizationStateDiffDrive>(new OptimizationStateDiffDrive)));
   stateSimPtr->setDiscrType(RungeKutta::DiscretizationType::HEUN);
   vector<vector<double*> > funcKnotsLattice(1, vector<double*>(stateSimPtr->paramFuncs()->funcsArcSize(0), 0));
   for (size_t i = 0; i < funcKnotsLattice[0].size(); ++i)

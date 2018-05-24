@@ -93,7 +93,7 @@ public:
 public:
   virtual StateSPtr cloneState() const override
   {
-    StateSPtr retState = std::make_shared<StateArray<StateSize>>();
+    StateSPtr retState = std::shared_ptr<StateArray<StateSize>>(new StateArray<StateSize>);
     const std::size_t sNmS = stateNm_.valueSize();
     for (std::size_t i = 0; i < sNmS; i++)
     {
@@ -116,7 +116,7 @@ public:
     }
     // 	for( std::size_t i = 0; i < stateCf_.valueSize(); i++ ){ stateCf_.value(i) = state0_.value(i+sNmS); }
     setStateCf(0, ParamFuncs::EvalArcGuarantee::AT_BEGIN);
-    rk = std::make_shared<boost::numeric::odeint::runge_kutta4<std::array<double, StateNmSize>>>();
+    rk = std::shared_ptr<boost::numeric::odeint::runge_kutta4<std::array<double, StateNmSize>>>(new boost::numeric::odeint::runge_kutta4<std::array<double, StateNmSize>>);
     arcOld = 0;
   }
 

@@ -54,7 +54,7 @@ protected:
   TrajectorySimulatorTest()
   {
     // construct stateSim object and initalize the parametric functions object
-    sp = std::make_shared<StateSimDiffDriveType>();
+    sp = std::shared_ptr<StateSimDiffDriveType>(new StateSimDiffDriveType);
     // 	sp->setDiscrType( RungeKutta::DiscretizationType::EULER );
 
     // 	vector<PFS> pf( 2 , PFS() );
@@ -75,7 +75,7 @@ protected:
     sp->paramStruct->paramFuncs.setDistCfMode(TraveledDistCfMode::V, idxClosedFormV);
 
     // construct trajectory simulator object
-    trajSim = std::make_shared<TrajectorySimulatorType>(sp);
+    trajSim = std::shared_ptr<TrajectorySimulatorType>(new TrajectorySimulatorType(sp));
   }
 
   virtual ~TrajectorySimulatorTest()

@@ -85,7 +85,7 @@ public:
 public:
   virtual StateSPtr cloneState() const override
   {
-    return std::make_shared<StateVector>(*this);
+    return std::shared_ptr<StateVector>(new StateVector(*this));
   }
 
 public:
