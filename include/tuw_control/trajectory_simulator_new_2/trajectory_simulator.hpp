@@ -181,7 +181,11 @@ public:
                    {
                      *_ansPtr = costFuncI.f(_x, _i, _sim, this->thisDerived());
                      _ansPtr++;
+#ifdef USE_MAP_ALIGNMENT
                      Eigen::Map<Eigen::Matrix<TNumType, -1, 1>, MapAlignment> map(_ansGradPtr, elSize, 1);
+#else
+                     Eigen::Map<Eigen::Matrix<TNumType, -1, 1>> map(_ansGradPtr, elSize, 1);
+#endif
                      costFuncI.gradF(map, _x, _gradX, _i, _sim, this->thisDerived());
                      _ansGradPtr += elSize;
                    });
@@ -296,8 +300,15 @@ public:
     for_each_tuple_class(partialLattices_, correctStateGradFunc);
     for (size_t i = 0; i < gradCostsMap_.size(); ++i)
     {
+#ifdef USE_MAP_ALIGNMENT
       gradCostsMap_[i] =
           std::shared_ptr<Eigen::Map<Eigen::Matrix<TNumType, -1, -1, Eigen::RowMajor>, MapAlignment>>(new Eigen::Map<Eigen::Matrix<TNumType, -1, -1, Eigen::RowMajor>, MapAlignment>(nullptr, 0, 0));
+#else
+     gradCostsMap_[i] =
+          std::shared_ptr<Eigen::Map<Eigen::Matrix<TNumType, -1, -1, Eigen::RowMajor>>>(new Eigen::Map<Eigen::Matrix<TNumType, -1, -1, Eigen::RowMajor>>(nullptr, 0, 0));
+
+#endif
+      
     }
   }
 
@@ -307,8 +318,13 @@ public:
     for_each_tuple_class(partialLattices_, correctStateGradFunc);
     for (size_t i = 0; i < gradCostsMap_.size(); ++i)
     {
+#ifdef USE_MAP_ALIGNMENT
       gradCostsMap_[i] =
           std::shared_ptr<Eigen::Map<Eigen::Matrix<TNumType, -1, -1, Eigen::RowMajor>, MapAlignment>>(new Eigen::Map<Eigen::Matrix<TNumType, -1, -1, Eigen::RowMajor>, MapAlignment>(nullptr, 0, 0));
+#else
+      gradCostsMap_[i] =
+          std::shared_ptr<Eigen::Map<Eigen::Matrix<TNumType, -1, -1, Eigen::RowMajor>>>(new Eigen::Map<Eigen::Matrix<TNumType, -1, -1, Eigen::RowMajor>>(nullptr, 0, 0));
+#endif
     }
   }
 
@@ -530,8 +546,13 @@ private:
         auto& gradCostsI = gradCosts_.sub(i);
         for (size_t j = 0; j < gradCostsI.subSize(); ++j)
         {
+#ifdef USE_MAP_ALIGNMENT
           new (gradCostsMap_[i].get()) Eigen::Map<Eigen::Matrix<TNumType, -1, -1, Eigen::RowMajor>, MapAlignment>(
               gradCostsI.memStartRef(), sizeCostsPerType_[i], _optParamSize);
+#else
+          new (gradCostsMap_[i].get()) Eigen::Map<Eigen::Matrix<TNumType, -1, -1, Eigen::RowMajor>>(
+              gradCostsI.memStartRef(), sizeCostsPerType_[i], _optParamSize);
+#endif
         }
       }
     }
@@ -812,8 +833,13 @@ public:
   StateMapArray<TNumType, StateMapVector<TNumType, StateMapVector<TNumType, TNumType>>, CostFuncsTypesNr> gradCosts_;
 
 public:
+#ifdef USE_MAP_ALIGNMENT
   std::array<std::shared_ptr<Eigen::Map<Eigen::Matrix<TNumType, -1, -1, Eigen::RowMajor>, MapAlignment>>,
              CostFuncsTypesNr> gradCostsMap_;
+#else
+  std::array<std::shared_ptr<Eigen::Map<Eigen::Matrix<TNumType, -1, -1, Eigen::RowMajor>>>,
+             CostFuncsTypesNr> gradCostsMap_;
+#endif
 
 private:
   std::array<size_t, sizeof...(TLatticeTypes)> sizeCosts_;

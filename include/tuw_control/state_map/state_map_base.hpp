@@ -39,6 +39,9 @@
 #include <memory>
 #include <eigen3/Eigen/Eigen>
 #include <stdexcept>
+
+
+#ifdef USE_MAP_ALIGNMENT
 #include <boost/align/aligned_allocator.hpp>
 
 namespace tuw
@@ -48,7 +51,11 @@ template <typename T, size_t N>
 struct __attribute__((aligned(16))) aligned_array : public std::array<T, N>
 {
 };
+};
+#endif
 
+namespace tuw
+{
 namespace
 {
 template <class TDerived>
@@ -135,8 +142,11 @@ template <class TNumericType>
 class DataBufferVector
 {
 public:
+#ifdef USE_MAP_ALIGNMENT
   using ContainerType = std::vector<TNumericType, boost::alignment::aligned_allocator<TNumericType, MapAlignment>>;
-
+#else
+  using ContainerType = std::vector<TNumericType>;
+#endif
   // special class member functions
 public:
   DataBufferVector(std::shared_ptr<ContainerType> _dataBuffer) : dataBuffer_(_dataBuffer)
@@ -186,7 +196,11 @@ template <class TNumericType, int TMapSize>
 class DataBufferArray
 {
 private:
+#ifdef USE_MAP_ALIGNMENT
   using ContainerType = aligned_array<TNumericType, TMapSize>;
+#else
+  using ContainerType = std::array<TNumericType, TMapSize>;
+#endif
 
   // special class member functions
 public:
@@ -305,7 +319,11 @@ public:
   using MatrixTypeCRTP = Eigen::Matrix<NumericType, MapSize, 1>;
 
 public:
+#ifdef USE_MAP_ALIGNMENT
   using MapTypeCRTP = Eigen::Map<MatrixTypeCRTP, MapAlignment>;
+#else
+  using MapTypeCRTP = Eigen::Map<MatrixTypeCRTP>;
+#endif
 
 private:
   static constexpr const bool IsDynamic = StateMapBaseCRTPTraits<TDerived>::isDynamic;
@@ -450,7 +468,11 @@ template <class TNumericType>
 class StateMapBaseVirt
 {
 private:
+#ifdef USE_MAP_ALIGNMENT
   using MapTypeVirt = Eigen::Map<Eigen::Matrix<TNumericType, Eigen::Dynamic, 1>, MapAlignment>;
+#else
+  using MapTypeVirt = Eigen::Map<Eigen::Matrix<TNumericType, Eigen::Dynamic, 1> >;
+#endif
 
 private:
   using StateBaseVirtualType = StateMapBaseVirt<TNumericType>;

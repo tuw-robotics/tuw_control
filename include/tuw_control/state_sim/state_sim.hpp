@@ -126,15 +126,26 @@ public:
 public:
   void bindMat()
   {
+
+#ifdef USE_MAP_ALIGNMENT
     new (&gradMatMap_) Eigen::Map<Eigen::Matrix<TNum, -1, -1, Eigen::RowMajor>, MapAlignment>(
         this->memStartRef(), this->stateNm().subSize() + this->stateCf().subSize(),
         this->stateNm().sub(0).data().size());
+#else
+    new (&gradMatMap_) Eigen::Map<Eigen::Matrix<TNum, -1, -1, Eigen::RowMajor>>(
+        this->memStartRef(), this->stateNm().subSize() + this->stateCf().subSize(),
+        this->stateNm().sub(0).data().size());    
+#endif
     this->stateNm().bindMat();
     this->stateCf().bindMat();
   }
 
 private:
+#ifdef USE_MAP_ALIGNMENT
   Eigen::Map<Eigen::Matrix<TNum, -1, -1, Eigen::RowMajor>, MapAlignment> gradMatMap_;
+#else
+  Eigen::Map<Eigen::Matrix<TNum, -1, -1, Eigen::RowMajor>> gradMatMap_;
+#endif
 };
 
 template <class TNum, class TstateGrad>
@@ -183,12 +194,21 @@ public:
 public:
   void bindMat()
   {
+#ifdef USE_MAP_ALIGNMENT
     new (&gradMatMap_) Eigen::Map<Eigen::Matrix<TNum, -1, -1, Eigen::RowMajor>, MapAlignment>(
         this->memStartRef(), this->subSize(), this->sub(0).data().size());
+#else
+    new (&gradMatMap_) Eigen::Map<Eigen::Matrix<TNum, -1, -1, Eigen::RowMajor>>(
+        this->memStartRef(), this->subSize(), this->sub(0).data().size());
+#endif
   }
 
 private:
+#ifdef USE_MAP_ALIGNMENT
   Eigen::Map<Eigen::Matrix<TNum, -1, -1, Eigen::RowMajor>, MapAlignment> gradMatMap_;
+#else
+  Eigen::Map<Eigen::Matrix<TNum, -1, -1, Eigen::RowMajor>> gradMatMap_;
+#endif
 };
 
 namespace /*<anonymous>*/

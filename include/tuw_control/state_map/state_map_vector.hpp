@@ -57,7 +57,11 @@ protected:
   }
 
 protected:
+#ifdef USE_MAP_ALIGNMENT
   std::vector<TLeafType, boost::alignment::aligned_allocator<TLeafType, MapAlignment>> subs_;
+#else
+  std::vector<TLeafType> subs_;
+#endif
 };
 class ContainerSubStateMapVectorEmpty
 {
