@@ -36,45 +36,66 @@
 #include <float.h>
 #include <memory>
 
-namespace tuw {
-
+namespace tuw
+{
 /*!@class Integrator
  * @brief Minimal class performing numerically stable integration (using the Kahan summation algorithm).
  */
-class Integrator {
-    
-    //special class member functions
-    public   : Integrator           ()                  = default;
-    public   : virtual ~Integrator  ()                  = default;
-    public   : Integrator           (const Integrator&) = default;
-    public   : Integrator& operator=(const Integrator&) = default;
-    public   : Integrator           (Integrator&&)      = default;
-    public   : Integrator& operator=(Integrator&&)      = default;
-    
-    /** @brief resets the integrated value and compensation variable.
-     *  @param _x0 Value the integrator is resetted to
-     */
-    public   : void          reset    ( const double& _x0 )       { x_ = _x0; comp_ = 0; }
-    /** @brief Returns the integrator value.
-     *  @return Const reference to integrated value.
-     */
-    public   : const double& intOutput()                    const { return x_; }
-    /** @brief Addds a new value to the integrated value.
-     *  @param _dx Added value
-     */
-    public   : void          integrate( const double& _dx  )       {
-	double y = _dx - comp_;
-        double t = x_ + y;    
-        comp_ = (t - x_) - y;
-        x_ = t;  
-    }
-    
-    private  : double x_;///< Integrated value
-    private  : double comp_;///< Summation compensation variable.
+class Integrator
+{
+  // special class member functions
+public:
+  Integrator() = default;
+
+public:
+  virtual ~Integrator() = default;
+
+public:
+  Integrator(const Integrator&) = default;
+
+public:
+  Integrator& operator=(const Integrator&) = default;
+
+public:
+  Integrator(Integrator&&) = default;
+
+public:
+  Integrator& operator=(Integrator&&) = default;
+
+  /** @brief resets the integrated value and compensation variable.
+   *  @param _x0 Value the integrator is resetted to
+   */
+public:
+  void reset(const double& _x0)
+  {
+    x_ = _x0;
+    comp_ = 0;
+  }
+  /** @brief Returns the integrator value.
+   *  @return Const reference to integrated value.
+   */
+public:
+  const double& intOutput() const
+  {
+    return x_;
+  }
+  /** @brief Addds a new value to the integrated value.
+   *  @param _dx Added value
+   */
+public:
+  void integrate(const double& _dx)
+  {
+    double y = _dx - comp_;
+    double t = x_ + y;
+    comp_ = (t - x_) - y;
+    x_ = t;
+  }
+
+private:
+  double x_;  ///< Integrated value
+private:
+  double comp_;  ///< Summation compensation variable.
 };
-
-
-
 }
 
-#endif // STATE_FEEDBACK_HPP
+#endif  // STATE_FEEDBACK_HPP

@@ -35,43 +35,75 @@
 
 #include <memory>
 
-namespace tuw {
-
+namespace tuw
+{
 class ModelStamps;
-using ModelStampsPtr      = std::shared_ptr<ModelStamps>;
+using ModelStampsPtr = std::shared_ptr<ModelStamps>;
 using ModelStampsConstPtr = std::shared_ptr<ModelStamps const>;
-class ModelStamps {
-    
-    //enums
-    ///@brief Stamp type.
-    public: enum class StampType { 
-	TIME, 
-	DIST 
-    };
-    
-    //default class functions
-    public: ModelStamps           () : s_ ( 0 ), t_ ( 0 ) {}
-    public: virtual ~ModelStamps  ()                   = default;
-    public: ModelStamps           (const ModelStamps&) = default;
-    public: ModelStamps& operator=(const ModelStamps&) = default;
-    public: ModelStamps           (ModelStamps&&)      = default;
-    public: ModelStamps& operator=(ModelStamps&&)      = default;
-    
-    ///@brief Arc length parameter reference.
-    public: double&       s ()       { return s_; }
-    ///@brief Const arc length parameter reference.
-    public: const double& s () const { return s_; }
-    ///@brief Temporal parameter reference.
-    public: double&       t ()       { return t_; }
-    ///@brief Const temporal parameter reference.
-    public: const double& t () const { return t_; }
-    
-    ///@brief Arc length parameter.
-    protected: double s_;
-    ///@brief Temporal parameter.
-    protected: double t_;
-};
+class ModelStamps
+{
+  // enums
+  ///@brief Stamp type.
+public:
+  enum class StampType
+  {
+    TIME,
+    DIST
+  };
 
+  // default class functions
+public:
+  ModelStamps() : s_(0), t_(0)
+  {
+  }
+
+public:
+  virtual ~ModelStamps() = default;
+
+public:
+  ModelStamps(const ModelStamps&) = default;
+
+public:
+  ModelStamps& operator=(const ModelStamps&) = default;
+
+public:
+  ModelStamps(ModelStamps&&) = default;
+
+public:
+  ModelStamps& operator=(ModelStamps&&) = default;
+
+  ///@brief Arc length parameter reference.
+public:
+  double& s()
+  {
+    return s_;
+  }
+  ///@brief Const arc length parameter reference.
+public:
+  const double& s() const
+  {
+    return s_;
+  }
+  ///@brief Temporal parameter reference.
+public:
+  double& t()
+  {
+    return t_;
+  }
+  ///@brief Const temporal parameter reference.
+public:
+  const double& t() const
+  {
+    return t_;
+  }
+
+  ///@brief Arc length parameter.
+protected:
+  double s_;
+  ///@brief Temporal parameter.
+protected:
+  double t_;
+};
 }
 
-#endif // MODEL_STAMPS_H
+#endif  // MODEL_STAMPS_H

@@ -38,61 +38,72 @@
 #include <functional>
 #include <tuw_control/utils.h>
 
-namespace tuw {
-
+namespace tuw
+{
 class StateSim;
 using StateSimPtr = std::shared_ptr<StateSim>;
-    
-namespace RungeKutta {
 
-    
-template<std::size_t StateNmSize, std::size_t RKOrder, typename... RKCoeff>
-void discretize      ( StateSim& _stateSim, const double& _arc );
-template<>
-void discretize<0,0> ( StateSim& _stateSim, const double& _arc );
+namespace RungeKutta
+{
+template <std::size_t StateNmSize, std::size_t RKOrder, typename... RKCoeff>
+void discretize(StateSim& _stateSim, const double& _arc);
+template <>
+void discretize<0, 0>(StateSim& _stateSim, const double& _arc);
 
-using DiscretizationFuncPtr = void (*)(StateSim& , const double& );
+using DiscretizationFuncPtr = void (*)(StateSim&, const double&);
 
 ///@brief Several discretization modes.
-enum class DiscretizationType {
-    USER_DEF,
-    EULER,
-    HEUN,
-    RK4,
-    RK4_38
+enum class DiscretizationType
+{
+  USER_DEF,
+  EULER,
+  HEUN,
+  RK4,
+  RK4_38
 };
 
-///@brief Returns a discretization function pointer for pre-defined Runge-Kutta specializations defined in @ref DiscretizationType
+///@brief Returns a discretization function pointer for pre-defined Runge-Kutta specializations defined in @ref
+///DiscretizationType
 template <std::size_t StateNmSize>
-DiscretizationFuncPtr getDiscrFunc (DiscretizationType _discrType) {
-    using Dtp = DiscretizationType;
-    switch(_discrType) {
-	case (Dtp::USER_DEF) : return discretize <0          , 0 
-								  >; break;
-								
-	case (Dtp::EULER   ) : return discretize <StateNmSize, 1, RatioEval<1,1> 
-								  >; break;
-								
-	case (Dtp::HEUN    ) : return discretize <StateNmSize, 2, RatioEval<1,2>,//ci  values
-								  RatioEval<0,1>, RatioEval<1,1>,//bj  values
-								  RatioEval<1,2>                 //aij values
-								  >; break;
-								
-	case (Dtp::RK4     ) : return discretize <StateNmSize, 4, RatioEval<1,2>, RatioEval< 1,2>, RatioEval<1,1>,//ci
-								  RatioEval<1,6>, RatioEval< 1,3>, RatioEval<1,3>, RatioEval<1,6>, //bj
-								  RatioEval<1,2>, RatioEval< 0,1>, RatioEval<1,2>, RatioEval<0,1>, RatioEval<0,1>, RatioEval<1,1>//aij
-								  >; break;
-								
-	case (Dtp::RK4_38  ) : return discretize <StateNmSize, 4, RatioEval<1,3>, RatioEval< 2,3>, RatioEval<1,1>,//ci
-								  RatioEval<1,8>, RatioEval< 3,8>, RatioEval<3,8>, RatioEval<1,8>, //bj
-								  RatioEval<1,3>, RatioEval<-1,3>, RatioEval<1,1>, RatioEval<1,1>, RatioEval<-1,1>, RatioEval<1,1>//aij
-								  >; break;
-    }
-    return nullptr;
+DiscretizationFuncPtr getDiscrFunc(DiscretizationType _discrType)
+{
+  using Dtp = DiscretizationType;
+  switch (_discrType)
+  {
+    case (Dtp::USER_DEF):
+      return discretize<0, 0>;
+      break;
+
+    case (Dtp::EULER):
+      return discretize<StateNmSize, 1, RatioEval<1, 1> >;
+      break;
+
+    case (Dtp::HEUN):
+      return discretize<StateNmSize, 2, RatioEval<1, 2>,  // ci  values
+                        RatioEval<0, 1>, RatioEval<1, 1>,  // bj  values
+                        RatioEval<1, 2>  // aij values
+                        >;
+      break;
+
+    case (Dtp::RK4):
+      return discretize<StateNmSize, 4, RatioEval<1, 2>, RatioEval<1, 2>, RatioEval<1, 1>,  // ci
+                        RatioEval<1, 6>, RatioEval<1, 3>, RatioEval<1, 3>, RatioEval<1, 6>,  // bj
+                        RatioEval<1, 2>, RatioEval<0, 1>, RatioEval<1, 2>, RatioEval<0, 1>, RatioEval<0, 1>,
+                        RatioEval<1, 1>  // aij
+                        >;
+      break;
+
+    case (Dtp::RK4_38):
+      return discretize<StateNmSize, 4, RatioEval<1, 3>, RatioEval<2, 3>, RatioEval<1, 1>,  // ci
+                        RatioEval<1, 8>, RatioEval<3, 8>, RatioEval<3, 8>, RatioEval<1, 8>,  // bj
+                        RatioEval<1, 3>, RatioEval<-1, 3>, RatioEval<1, 1>, RatioEval<1, 1>, RatioEval<-1, 1>,
+                        RatioEval<1, 1>  // aij
+                        >;
+      break;
+  }
+  return nullptr;
 }
-    
+}
 }
 
-}
-
-#endif// DISCRETIZATION_RUNGE_KUTTA_ALIAS_HPP
+#endif  // DISCRETIZATION_RUNGE_KUTTA_ALIAS_HPP

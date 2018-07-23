@@ -38,71 +38,138 @@
 #include <functional>
 #include <memory>
 
-namespace tuw {
-
+namespace tuw
+{
 class OptimizationState;
-using OptimizationStateSPtr      = std::shared_ptr<OptimizationState>;
+using OptimizationStateSPtr = std::shared_ptr<OptimizationState>;
 using OptimizationStateConstSPtr = std::shared_ptr<OptimizationState const>;
-using OptimizationStateUPtr      = std::unique_ptr<OptimizationState>;
+using OptimizationStateUPtr = std::unique_ptr<OptimizationState>;
 using OptimizationStateConstUPtr = std::unique_ptr<OptimizationState const>;
-    
-class OptimizationState : public State {
-    
-    public   : OptimizationState           ()                         = default;
-    public   : ~OptimizationState          ()                         = default;
-    public   : OptimizationState           (const OptimizationState&) = default;
-    public   : OptimizationState& operator=(const OptimizationState&) = default;
-    public   : OptimizationState           (OptimizationState&&)      = default;
-    public   : OptimizationState& operator=(OptimizationState&&)      = default;
-    
-    public   : virtual void toTrajState   (      TrajectorySimulator& _trajSim) = 0;
-    public   : virtual void fromTrajState (const TrajectorySimulator& _trajSim) = 0;
-    public   : double&       value      ( const std::size_t& _i )       override { return vars[_i]; }
-    public   : const double& value      ( const std::size_t& _i ) const override { return vars[_i]; }
-    public   : size_t        valueSize  ()                        const override { return vars.size(); }
-    
-    protected: std::vector<double>        vars;
-    protected: static constexpr const double valueZero = 0;
+
+class OptimizationState : public State
+{
+public:
+  OptimizationState() = default;
+
+public:
+  ~OptimizationState() = default;
+
+public:
+  OptimizationState(const OptimizationState&) = default;
+
+public:
+  OptimizationState& operator=(const OptimizationState&) = default;
+
+public:
+  OptimizationState(OptimizationState&&) = default;
+
+public:
+  OptimizationState& operator=(OptimizationState&&) = default;
+
+public:
+  virtual void toTrajState(TrajectorySimulator& _trajSim) = 0;
+
+public:
+  virtual void fromTrajState(const TrajectorySimulator& _trajSim) = 0;
+
+public:
+  double& value(const std::size_t& _i) override
+  {
+    return vars[_i];
+  }
+
+public:
+  const double& value(const std::size_t& _i) const override
+  {
+    return vars[_i];
+  }
+
+public:
+  size_t valueSize() const override
+  {
+    return vars.size();
+  }
+
+protected:
+  std::vector<double> vars;
+
+protected:
+  static constexpr const double valueZero = 0;
 };
-    
-    
+
 class TrajectoryOptimizer;
-using TrajectoryOptimizerSPtr      = std::shared_ptr<TrajectoryOptimizer>;
+using TrajectoryOptimizerSPtr = std::shared_ptr<TrajectoryOptimizer>;
 using TrajectoryOptimizerConstSPtr = std::shared_ptr<TrajectoryOptimizer const>;
-using TrajectoryOptimizerUPtr      = std::unique_ptr<TrajectoryOptimizer>;
+using TrajectoryOptimizerUPtr = std::unique_ptr<TrajectoryOptimizer>;
 using TrajectoryOptimizerConstUPtr = std::unique_ptr<TrajectoryOptimizer const>;
 
-class TrajectoryOptimizer : public TrajectorySimGrade {
-    public  : enum class AccessType {
-	STATE_0,
-	PARAM_CP,
-	PARAM_ARC,
-	ENUM_SIZE
-    };
-    
-    //special class member functions
-    public   : TrajectoryOptimizer           ( StateSimPtr& _stateSim, std::unique_ptr<TrajectorySimulator::CostsEvaluatorClass> _costsEvaluator, OptimizationStateSPtr _optState );
-    public   : ~TrajectoryOptimizer          ()                           = default;
-    public   : TrajectoryOptimizer           (const TrajectoryOptimizer&) = default;
-    public   : TrajectoryOptimizer& operator=(const TrajectoryOptimizer&) = default;
-    public   : TrajectoryOptimizer           (TrajectoryOptimizer&&)      = default;
-    public   : TrajectoryOptimizer& operator=(TrajectoryOptimizer&&)      = default;
-    
-    public   : virtual void optimize();
-    public   : virtual void initState0ParamFuncsHValid (const size_t& _optFailCount);
-    public   : void computeJacobian ();
-    public   : void computeJacobian1Entry ( size_t _idx );
-    public   : double& stepSize();
-    
-    public   : OptimizationStateSPtr optState_;
-    public   : double fCache;
-    public   : std::vector<double> hCache;
-    public   : std::vector<double> gCache;
-    private  : std::vector< TrajectorySimulator::LatticePointType > simulationLattice;
-    private  : TrajectorySimulator::LatticeVecSPtrVec               partLattices;
-    private  : double stepSize_;
-};
+class TrajectoryOptimizer : public TrajectorySimGrade
+{
+public:
+  enum class AccessType
+  {
+    STATE_0,
+    PARAM_CP,
+    PARAM_ARC,
+    ENUM_SIZE
+  };
 
+  // special class member functions
+public:
+  TrajectoryOptimizer(StateSimPtr& _stateSim, std::unique_ptr<TrajectorySimulator::CostsEvaluatorClass> _costsEvaluator,
+                      OptimizationStateSPtr _optState);
+
+public:
+  ~TrajectoryOptimizer() = default;
+
+public:
+  TrajectoryOptimizer(const TrajectoryOptimizer&) = default;
+
+public:
+  TrajectoryOptimizer& operator=(const TrajectoryOptimizer&) = default;
+
+public:
+  TrajectoryOptimizer(TrajectoryOptimizer&&) = default;
+
+public:
+  TrajectoryOptimizer& operator=(TrajectoryOptimizer&&) = default;
+
+public:
+  virtual void optimize();
+
+public:
+  virtual void initState0ParamFuncsHValid(const size_t& _optFailCount);
+
+public:
+  void computeJacobian();
+
+public:
+  void computeJacobian1Entry(size_t _idx);
+
+public:
+  double& stepSize();
+
+public:
+  OptimizationStateSPtr optState_;
+
+public:
+  double fCache;
+
+public:
+  std::vector<double> hCache;
+
+public:
+  std::vector<double> gCache;
+
+private:
+  std::vector<TrajectorySimulator::LatticePointType> simulationLattice;
+
+private:
+  TrajectorySimulator::LatticeVecSPtrVec partLattices;
+
+private:
+  double stepSize_;
+};
 }
 
-#endif // TRAJECTORY_OPTIMIZER_H
+#endif  // TRAJECTORY_OPTIMIZER_H

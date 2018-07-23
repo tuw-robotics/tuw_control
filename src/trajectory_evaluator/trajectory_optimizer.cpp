@@ -40,58 +40,70 @@
 using namespace std;
 using namespace tuw;
 
-TrajectoryOptimizer::TrajectoryOptimizer ( StateSimPtr& _stateSim, unique_ptr< TrajectorySimulator::CostsEvaluatorClass > _costsEvaluator, OptimizationStateSPtr _optState ) :
-      TrajectorySimGrade(_stateSim, std::move(_costsEvaluator) ), 
-      optState_         (_optState) {
+TrajectoryOptimizer::TrajectoryOptimizer(StateSimPtr& _stateSim,
+                                         unique_ptr<TrajectorySimulator::CostsEvaluatorClass> _costsEvaluator,
+                                         OptimizationStateSPtr _optState)
+  : TrajectorySimGrade(_stateSim, std::move(_costsEvaluator)), optState_(_optState)
+{
 }
 
-void TrajectoryOptimizer::optimize() {
-    throw "not implemented";
+void TrajectoryOptimizer::optimize()
+{
+  throw "not implemented";
 }
 
-double& TrajectoryOptimizer::stepSize() {
-    return stepSize_;
+double& TrajectoryOptimizer::stepSize()
+{
+  return stepSize_;
 }
-void TrajectoryOptimizer::computeJacobian() {
-    
-    evaluateTrajectory(0);
-    
-    auto& costsEvaluator = trajSim()->costsEvaluator_;
-    
-    costsEvaluator->gradF.resize( optState_->valueSize() );
-    costsEvaluator->gradG.resize( costsEvaluator->g.size(), optState_->valueSize() );
-    costsEvaluator->gradH.resize( costsEvaluator->h.size(), optState_->valueSize() );
-    
-    fCache = costsEvaluator->f;
-    gCache = costsEvaluator->g;
-    hCache = costsEvaluator->h;
-    
-    for ( size_t i = 0; i < optState_->valueSize(); ++i ) {
-	computeJacobian1Entry( i );
-    }
-    optState_->toTrajState( *trajSim() );
-    
-    costsEvaluator->f = fCache;
-    costsEvaluator->g = gCache;
-    costsEvaluator->h = hCache;
+void TrajectoryOptimizer::computeJacobian()
+{
+  evaluateTrajectory(0);
+
+  auto& costsEvaluator = trajSim()->costsEvaluator_;
+
+  costsEvaluator->gradF.resize(optState_->valueSize());
+  costsEvaluator->gradG.resize(costsEvaluator->g.size(), optState_->valueSize());
+  costsEvaluator->gradH.resize(costsEvaluator->h.size(), optState_->valueSize());
+
+  fCache = costsEvaluator->f;
+  gCache = costsEvaluator->g;
+  hCache = costsEvaluator->h;
+
+  for (size_t i = 0; i < optState_->valueSize(); ++i)
+  {
+    computeJacobian1Entry(i);
+  }
+  optState_->toTrajState(*trajSim());
+
+  costsEvaluator->f = fCache;
+  costsEvaluator->g = gCache;
+  costsEvaluator->h = hCache;
 }
 
-void TrajectoryOptimizer::computeJacobian1Entry ( std::size_t _idx ) {
-    
-    const double optStateIFix = optState_->value(_idx);
-    optState_->value(_idx) += stepSize_;
-    optState_->toTrajState( *trajSim() );
-    
-    evaluateTrajectory( 0 );
-    
-    auto& costsEvaluator = trajSim()->costsEvaluator_;
-    costsEvaluator->gradF[_idx] = (costsEvaluator->f - fCache) / stepSize_;
-    for ( int j = 0; j < costsEvaluator->gradG.rows(); ++j ){ costsEvaluator->gradG(j,_idx) = ( costsEvaluator->g[j] - gCache[j] ) / stepSize_; }
-    for ( int j = 0; j < costsEvaluator->gradH.rows(); ++j ){ costsEvaluator->gradH(j,_idx) = ( costsEvaluator->h[j] - hCache[j] ) / stepSize_; }
-    
-    optState_->value(_idx) = optStateIFix;
+void TrajectoryOptimizer::computeJacobian1Entry(std::size_t _idx)
+{
+  const double optStateIFix = optState_->value(_idx);
+  optState_->value(_idx) += stepSize_;
+  optState_->toTrajState(*trajSim());
+
+  evaluateTrajectory(0);
+
+  auto& costsEvaluator = trajSim()->costsEvaluator_;
+  costsEvaluator->gradF[_idx] = (costsEvaluator->f - fCache) / stepSize_;
+  for (int j = 0; j < costsEvaluator->gradG.rows(); ++j)
+  {
+    costsEvaluator->gradG(j, _idx) = (costsEvaluator->g[j] - gCache[j]) / stepSize_;
+  }
+  for (int j = 0; j < costsEvaluator->gradH.rows(); ++j)
+  {
+    costsEvaluator->gradH(j, _idx) = (costsEvaluator->h[j] - hCache[j]) / stepSize_;
+  }
+
+  optState_->value(_idx) = optStateIFix;
 }
 
-void TrajectoryOptimizer::initState0ParamFuncsHValid( const std::size_t& _optFailCount ) {
-    return;
+void TrajectoryOptimizer::initState0ParamFuncsHValid(const std::size_t& _optFailCount)
+{
+  return;
 }

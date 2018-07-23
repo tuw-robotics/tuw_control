@@ -37,32 +37,52 @@
 
 #include <functional>
 
-namespace tuw {
+namespace tuw
+{
+class TrajectorySimulatorOnline : public TrajectorySimulator
+{
+  // special class member functions
+public:
+  TrajectorySimulatorOnline(StateSimPtr _stateSim);
 
-class TrajectorySimulatorOnline : public TrajectorySimulator {
-    
-    //special class member functions
-    public   : TrajectorySimulatorOnline           ( StateSimPtr _stateSim );
-    public   : TrajectorySimulatorOnline           ( StateSimPtr _stateSim, std::unique_ptr<CostsEvaluatorClass> _costsEvaluator );
-    public   : virtual ~TrajectorySimulatorOnline  ()                                 = default;
-    public   : TrajectorySimulatorOnline           (const TrajectorySimulatorOnline&) = default;
-    public   : TrajectorySimulatorOnline& operator=(const TrajectorySimulatorOnline&) = default;
-    public   : TrajectorySimulatorOnline           (TrajectorySimulatorOnline&&)      = default;
-    public   : TrajectorySimulatorOnline& operator=(TrajectorySimulatorOnline&&)      = default;
-    
-    public   : void simulateTrajectory ( double _lastValidArc = 0 ) override;
-    
-    private  : void populatePartSimLatticesGeneral (  std::size_t _firstLaticeInvalidIdx,  double _arcParamMax, double _minArcLatticeVal ) override;   
-    private  : void populatePartSimLatticesDtOnly  ( const size_t& _firstLaticeInvalidIdx, double _arcParamMax ) override;
-    
-    ///@brief Performs lattices resizing relevant to the general online simulation algorithm.
-    private  : void resizeBeginGeneral( const double& _arcParamMax );
-    ///@brief Performs lattices resizing relevant to the DT-only online simulation algorithm.
-    private  : void resizeBeginDtOnly ( const double& _arcParamMax );
-    ///@brief Numeric safe incremental rounding of x (finds the smallest multiple of @param _dx larger than @param _x).
-    private  : double toNextIntMult   ( const double& _x, const double& _dx ) const;
+public:
+  TrajectorySimulatorOnline(StateSimPtr _stateSim, std::unique_ptr<CostsEvaluatorClass> _costsEvaluator);
+
+public:
+  virtual ~TrajectorySimulatorOnline() = default;
+
+public:
+  TrajectorySimulatorOnline(const TrajectorySimulatorOnline&) = default;
+
+public:
+  TrajectorySimulatorOnline& operator=(const TrajectorySimulatorOnline&) = default;
+
+public:
+  TrajectorySimulatorOnline(TrajectorySimulatorOnline&&) = default;
+
+public:
+  TrajectorySimulatorOnline& operator=(TrajectorySimulatorOnline&&) = default;
+
+public:
+  void simulateTrajectory(double _lastValidArc = 0) override;
+
+private:
+  void populatePartSimLatticesGeneral(std::size_t _firstLaticeInvalidIdx, double _arcParamMax,
+                                      double _minArcLatticeVal) override;
+
+private:
+  void populatePartSimLatticesDtOnly(const size_t& _firstLaticeInvalidIdx, double _arcParamMax) override;
+
+  ///@brief Performs lattices resizing relevant to the general online simulation algorithm.
+private:
+  void resizeBeginGeneral(const double& _arcParamMax);
+  ///@brief Performs lattices resizing relevant to the DT-only online simulation algorithm.
+private:
+  void resizeBeginDtOnly(const double& _arcParamMax);
+  ///@brief Numeric safe incremental rounding of x (finds the smallest multiple of @param _dx larger than @param _x).
+private:
+  double toNextIntMult(const double& _x, const double& _dx) const;
 };
-
 }
 
-#endif // TRAJECTORY_SIMULATOR_ONLINE_H
+#endif  // TRAJECTORY_SIMULATOR_ONLINE_H

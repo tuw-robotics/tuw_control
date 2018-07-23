@@ -40,64 +40,83 @@
 using namespace std;
 using namespace tuw;
 
-TrajectorySimGrade::TrajectorySimGrade ( StateSimPtr& _stateSim ): 
-      stateSim_(_stateSim), 
-      simMode_(TrajectorySimulator::SimMode::ONLINE) {
-    trajSim_ = make_shared<TrajectorySimulatorOnline >(stateSim_);
+TrajectorySimGrade::TrajectorySimGrade(StateSimPtr& _stateSim)
+  : stateSim_(_stateSim), simMode_(TrajectorySimulator::SimMode::ONLINE)
+{
+  trajSim_ = make_shared<TrajectorySimulatorOnline>(stateSim_);
 }
 
-TrajectorySimGrade::TrajectorySimGrade ( StateSimPtr& _stateSim, unique_ptr< TrajectorySimulator::CostsEvaluatorClass > _costsEvaluator ) : 
-	stateSim_(_stateSim), 
-	simMode_(TrajectorySimulator::SimMode::ONLINE) {
-    trajSim_ = make_shared<TrajectorySimulatorOnline >(stateSim_, std::move(_costsEvaluator) );
+TrajectorySimGrade::TrajectorySimGrade(StateSimPtr& _stateSim,
+                                       unique_ptr<TrajectorySimulator::CostsEvaluatorClass> _costsEvaluator)
+  : stateSim_(_stateSim), simMode_(TrajectorySimulator::SimMode::ONLINE)
+{
+  trajSim_ = make_shared<TrajectorySimulatorOnline>(stateSim_, std::move(_costsEvaluator));
 }
 
-
-void TrajectorySimGrade::modifyTrajSimMode() {
-    double dt = -1, ds = -1;
-    std::vector< TrajectorySimulator::LatticePointType > simulationLattice;
-    TrajectorySimulator::LatticeVecSPtrVec               partLattices;
-    bool copy = false;
-    if( trajSim_ != nullptr ) {
-	copy = true;
-	dt = trajSim_->dtBase();
-	ds = trajSim_->dsBase();
-	simulationLattice     = trajSim_->simLattice();
-	partLattices          = trajSim_->partLattices_;
-	userPartLattices_     = trajSim_->userDefPartLattices_;
+void TrajectorySimGrade::modifyTrajSimMode()
+{
+  double dt = -1, ds = -1;
+  std::vector<TrajectorySimulator::LatticePointType> simulationLattice;
+  TrajectorySimulator::LatticeVecSPtrVec partLattices;
+  bool copy = false;
+  if (trajSim_ != nullptr)
+  {
+    copy = true;
+    dt = trajSim_->dtBase();
+    ds = trajSim_->dsBase();
+    simulationLattice = trajSim_->simLattice();
+    partLattices = trajSim_->partLattices_;
+    userPartLattices_ = trajSim_->userDefPartLattices_;
+  }
+  if (simMode_ == TrajectorySimulator::SimMode::ONLINE)
+  {
+    trajSim_ = make_shared<TrajectorySimulatorOnline>(trajSim_->stateSim(), std::move(trajSim_->costsEvaluator_));
+  }
+  else if (simMode_ == TrajectorySimulator::SimMode::PRECALC)
+  {
+    trajSim_ = make_shared<TrajectorySimulatorPrecalc>(trajSim_->stateSim(), std::move(trajSim_->costsEvaluator_));
+  }
+  if (copy)
+  {
+    trajSim_->dtBase() = dt;
+    trajSim_->dsBase() = ds;
+    trajSim_->simLattice() = simulationLattice;
+    trajSim_->partLattices_ = partLattices;
+    trajSim_->userDefPartLattices_ = userPartLattices_;
+    if (trajSim_->costsEvaluator_)
+    {
+      trajSim_->updateUserDefLattice();
+      initCostsEvaluator();
     }
-    if      ( simMode_ == TrajectorySimulator::SimMode::ONLINE  ) { trajSim_ = make_shared<TrajectorySimulatorOnline >(trajSim_->stateSim(), std::move(trajSim_->costsEvaluator_) ); }
-    else if ( simMode_ == TrajectorySimulator::SimMode::PRECALC ) { trajSim_ = make_shared<TrajectorySimulatorPrecalc>(trajSim_->stateSim(), std::move(trajSim_->costsEvaluator_) ); }
-    if ( copy ) {
-	trajSim_->dtBase() = dt;
-	trajSim_->dsBase() = ds;
-	trajSim_->simLattice()   = simulationLattice;
-	trajSim_->partLattices_  = partLattices;
-	trajSim_->userDefPartLattices_ = userPartLattices_;
-	if( trajSim_->costsEvaluator_ ) { trajSim_->updateUserDefLattice(); initCostsEvaluator(); }
-    }
+  }
 }
 
-void TrajectorySimGrade::initCostsEvaluator() {
-    trajSim_->costsEvaluator_->init(trajSim_->partLattices_);
+void TrajectorySimGrade::initCostsEvaluator()
+{
+  trajSim_->costsEvaluator_->init(trajSim_->partLattices_);
 }
 
-void TrajectorySimGrade::setSimMode( const TrajectorySimulator::SimMode& _simMode ) {
-    if ( simMode_ != _simMode ) { simMode_ = _simMode; modifyTrajSimMode(); }
+void TrajectorySimGrade::setSimMode(const TrajectorySimulator::SimMode& _simMode)
+{
+  if (simMode_ != _simMode)
+  {
+    simMode_ = _simMode;
+    modifyTrajSimMode();
+  }
 }
 
-const TrajectorySimulator::SimMode& TrajectorySimGrade::simMode() const {
-    return simMode_;
+const TrajectorySimulator::SimMode& TrajectorySimGrade::simMode() const
+{
+  return simMode_;
 }
 
-TrajectorySimulatorSPtr& TrajectorySimGrade::trajSim() {
-    return trajSim_;
+TrajectorySimulatorSPtr& TrajectorySimGrade::trajSim()
+{
+  return trajSim_;
 }
 
-void TrajectorySimGrade::evaluateTrajectory( const double& _arcBegin ) {
-    trajSim_->stateSim()->paramFuncs()->precompute(); 
-    trajSim_->simulateTrajectory(_arcBegin);
+void TrajectorySimGrade::evaluateTrajectory(const double& _arcBegin)
+{
+  trajSim_->stateSim()->paramFuncs()->precompute();
+  trajSim_->simulateTrajectory(_arcBegin);
 }
-
-
-
