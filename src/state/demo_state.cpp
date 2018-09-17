@@ -127,9 +127,9 @@ int main(int argc, char **argv)
   using LeafVec = LeafAccessTreeBase<double, double, -1>;
 
   LeafAccessTreeBase<double, std::tuple<LeafArr3, LeafVec>> state0;
-  LeafAccessTreeBaseVirt &state0Virt = state0;
-  //     LeafAccessTreeBaseVirt& subState0Virt = state0.sub(0);
-  //     LeafAccessTreeBaseVirt& subState1Virt = state0.sub<0>();
+  // LeafAccessTreeBaseVirt &state0Virt = state0;
+  // LeafAccessTreeBaseVirt& subState0Virt = state0.sub(0);
+  // LeafAccessTreeBaseVirt& subState1Virt = state0.sub<0>();
   Eigen::VectorXd xx;
   xx.resize(5);
   xx(0) = 0;
@@ -178,11 +178,9 @@ int main(int argc, char **argv)
             << std::endl;
 
   xx.conservativeResize(8);
-  double *p;
 
   new (&xMap2) MapType(&xx(2), xMap2.outerStride() + 3);
   new (&xMap4) MapType(&xMap2(2), xMap4.outerStride());
-  double *p2;
   // xMap2.cast_to_pointer_type(p2);
   // xMap4.cast_to_pointer_type(p); p =&xx(2)+7;+xMap2.outerStride();
   // xMap4.
