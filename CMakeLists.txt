@@ -33,7 +33,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 find_package(Threads REQUIRED)
-find_package(Boost REQUIRED COMPONENTS timer date_time program_options system thread iostreams regex signals date_time serialization filesystem )
+find_package(Boost REQUIRED COMPONENTS timer date_time program_options system thread iostreams regex date_time serialization filesystem )
 find_package(OpenCV REQUIRED)
  
 find_file(MATHGL_HEADER mgl2/qt.h PATHS)
